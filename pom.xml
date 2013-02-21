@@ -5,7 +5,7 @@
 	<version>0.0.1</version>
 	<name>twister</name>
 	<description>mobile api storm starter access log</description>
-	<url>https://github.com/nathanmarz/storm-starter</url>
+	<url>https://github.com/zhouguoqing917/twister</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
