@@ -46,6 +46,7 @@ public class Tail extends TailerListenerAdapter {
 	 * Command-line launcher
 	 */
 	public static void main(String[] args) {	
+		//  echo  "time `date -d "0 day ago" +%Y%m%d%S`" >>/tmp/tailer.log 
 		String[] infiles = new String[] { "/tmp/tailer.log" };
 		if (args.length < 1) {
 			System.out.println("Usage: Tail <filename>");
