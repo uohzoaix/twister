@@ -33,7 +33,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
 
 	protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final static int DEFAULT_SYSLOG_UDP_PORT = 514;
+    private final static int DEFAULT_SYSLOG_UDP_PORT = 1234;
     // This limit stems from the maximum supported UDP size of 65535 octets specified in RFC 768
     private final static int MAX_SESSAGE_SIZE = 65535;
 
@@ -78,6 +78,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
         DatagramPacket dp = new DatagramPacket(buffer, MAX_SESSAGE_SIZE);
         while (true) {
             try {
+            	//接收syslog-udp的套接字
                 socket.receive(dp);
                 String packet = new String(dp.getData(), 0, dp.getLength());
                 if (packet == null) continue;
