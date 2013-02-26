@@ -11,7 +11,7 @@ import com.twister.io.input.LogFileTailer;
 
 public class Tail extends TailerListenerAdapter {
 	/**
-	 * The log file tailer
+	 * The log file tailer test 
 	 */
 	private LogFileTailer tailer;	
 	public static Logger logger = LoggerFactory.getLogger(Tail.class);
@@ -53,6 +53,7 @@ public class Tail extends TailerListenerAdapter {
 			args=infiles;
 		}		    
 		Tail tail = new Tail(args[0]);
+	 
 	}
 	
 	

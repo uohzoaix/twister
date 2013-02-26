@@ -2,13 +2,14 @@ package com.twister.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 import backtype.storm.Constants;
 import backtype.storm.tuple.Tuple;
 
-public final class TupleHelpers {
+public final class TupleUtils {
 
-    private TupleHelpers() {
+    private TupleUtils() {
     }
 
     public static boolean isTickTuple(Tuple tuple) {
@@ -24,5 +25,18 @@ public final class TupleHelpers {
         }
         return values;
     }
+    
+    public static final void StringToList(String message, List<String> list) {
+		if(message == null) {
+			return;
+		}
+		synchronized (list) {
+			list.clear();
+			String[] domains = message.split(",");
+			if(domains != null) {
+				list.addAll(Arrays.asList(domains));
+			}
+		}
+	}
 
 }

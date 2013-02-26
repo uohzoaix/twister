@@ -27,6 +27,7 @@ import java.util.Map;
 public class TextFileSpout extends BaseRichSpout {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+    
 
     private SpoutOutputCollector collector;
     private RandomAccessFile reader;
@@ -48,8 +49,8 @@ public class TextFileSpout extends BaseRichSpout {
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
         try {
             this.collector = collector;
-            this.reader = new RandomAccessFile(file, "r");
-            logger.info("Opening TextFileSpout on file " + filename);
+            logger.info("opening TextFileSpout on file " + filename);
+            this.reader = new RandomAccessFile(file, "r");            
             open = true;
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
@@ -86,9 +87,11 @@ public class TextFileSpout extends BaseRichSpout {
     }
 
     public void ack(Object msgId) {
+    	 logger.info("TextFileSpout ack ok,msgid " + msgId.toString() );
     }
 
     public void fail(Object msgId) {
+    	logger.info("TextFileSpout fail, msgid " + msgId.toString() );
     }
 
 

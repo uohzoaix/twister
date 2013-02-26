@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 
 import storm.starter.tools.Rankings;
 
-import com.twister.utils.TupleHelpers;
+import com.twister.utils.TupleUtils;
 
 import backtype.storm.Config;
 import backtype.storm.topology.BasicOutputCollector;
@@ -65,7 +65,7 @@ public abstract class AbstractRankerBolt extends BaseBasicBolt {
      */
     @Override
     public final void execute(Tuple tuple, BasicOutputCollector collector) {
-        if (TupleHelpers.isTickTuple(tuple)) {
+        if (TupleUtils.isTickTuple(tuple)) {
             getLogger().info("Received tick tuple, triggering emit of current rankings");
             emitRankings(collector);
         }

@@ -28,7 +28,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class TailFileSpout extends BaseRichSpout {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8115378162243614973L;
+	protected final Logger logger = LoggerFactory.getLogger(getClass());
     public static final int DEFAULT_DELAY = 1000;
 
     private File file;
@@ -84,7 +88,11 @@ public class TailFileSpout extends BaseRichSpout {
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector collector) {
         this.collector = collector;
         TailerListener listener = new QueueSender(); // This listener send each file line in the queue
-        tailer = Tailer.create(file, listener, interval); // Start a tailer thread
+        tailer =new Tailer(file, listener, interval); 
+        // Start a tailer thread
+        Thread thread = new Thread(tailer);
+        thread.setDaemon(true);
+        thread.start();
         logger.info("Opening TailFileSpout on file " + file.getAbsolutePath() + " with an interval of " + interval + " ms.");
     }
 

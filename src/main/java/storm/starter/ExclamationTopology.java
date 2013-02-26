@@ -46,10 +46,8 @@ public class ExclamationTopology {
         TopologyBuilder builder = new TopologyBuilder();
         
         builder.setSpout("word", new TestWordSpout(), 10);        
-        builder.setBolt("exclaim1", new ExclamationBolt(), 3)
-                .shuffleGrouping("word");
-        builder.setBolt("exclaim2", new ExclamationBolt(), 2)
-                .shuffleGrouping("exclaim1");
+        builder.setBolt("exclaim1", new ExclamationBolt(), 3).shuffleGrouping("word");
+        builder.setBolt("exclaim2", new ExclamationBolt(), 2).shuffleGrouping("exclaim1");
                 
         Config conf = new Config();
         conf.setDebug(true);

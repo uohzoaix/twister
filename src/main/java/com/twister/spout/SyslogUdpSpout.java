@@ -14,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Map;
 
 /**
@@ -40,14 +42,34 @@ public class SyslogUdpSpout extends BaseRichSpout {
     private int port;
     private SpoutOutputCollector collector;
     private DatagramSocket socket;
+    private InetAddress ip;
 
 
     public SyslogUdpSpout() {
         this.port = DEFAULT_SYSLOG_UDP_PORT;
+        try {
+			this.ip = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {			 
+			e.printStackTrace();
+		}
     }
-
+    
     public SyslogUdpSpout(int port) {
         this.port = port;
+        try {
+			this.ip = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {			 
+			e.printStackTrace();
+		}
+    }
+    
+    public SyslogUdpSpout(int port,InetAddress ip) {
+        this.port = port;
+        try {
+			this.ip =ip;
+		} catch (Exception e) {			 
+			e.printStackTrace();
+		}
     }
 
 
@@ -55,9 +77,10 @@ public class SyslogUdpSpout extends BaseRichSpout {
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector collector) {
         this.collector = collector;
         try {
-            this.socket = new DatagramSocket(port);
+        	// bound ip:port 创建接收方的套接字,并制定端口号和IP地址
+            this.socket = new DatagramSocket(port,ip);
             Preconditions.checkState(socket.isBound(), "Socket on port "+ port +" already bound.");
-            logger.info("Opening SyslogUdpSpout on port " + port);
+            logger.info("Opening SyslogUdpSpout on port " + port+" ip:"+ip);
         } catch (SocketException e) {
             throw new RuntimeException(e);
             // TODO

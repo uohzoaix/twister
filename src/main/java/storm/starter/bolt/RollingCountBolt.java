@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import storm.starter.tools.NthLastModifiedTimeTracker;
 import storm.starter.tools.SlidingWindowCounter;
 
-import com.twister.utils.TupleHelpers;
+import com.twister.utils.TupleUtils;
 
 import backtype.storm.Config;
 import backtype.storm.task.OutputCollector;
@@ -81,7 +81,7 @@ public class RollingCountBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        if (TupleHelpers.isTickTuple(tuple)) {
+        if (TupleUtils.isTickTuple(tuple)) {
             LOG.info("Received tick tuple, triggering emit of current window counts");
             emitCurrentWindowCounts();
         }

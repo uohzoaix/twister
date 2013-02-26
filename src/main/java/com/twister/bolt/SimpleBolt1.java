@@ -25,7 +25,7 @@ public class SimpleBolt1 extends BaseBasicBolt {
     
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("info"));
+        declarer.declare(new Fields("line"));
     }
 
 }
