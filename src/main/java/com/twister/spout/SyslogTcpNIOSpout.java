@@ -33,7 +33,7 @@ import java.util.Map;
  * @author guoqing  
  * 
  */
-public class SyslogTcpSpout extends BaseRichSpout {
+public class SyslogTcpNIOSpout extends BaseRichSpout {
 
     /**
 	 * 
@@ -48,7 +48,7 @@ public class SyslogTcpSpout extends BaseRichSpout {
     private int port;
     private InetAddress ip;
 
-    public SyslogTcpSpout() {
+    public SyslogTcpNIOSpout() {
         this.port = DEFAULT_SYSLOG_TCP_PORT;
         try {
 			this.ip = InetAddress.getLocalHost();
@@ -57,7 +57,7 @@ public class SyslogTcpSpout extends BaseRichSpout {
 		}
     }
 
-    public SyslogTcpSpout(int port) {
+    public SyslogTcpNIOSpout(int port) {
         this.port = port;
         try {
 			this.ip = InetAddress.getLocalHost();
@@ -66,7 +66,7 @@ public class SyslogTcpSpout extends BaseRichSpout {
 		}
     }
     
-    public SyslogTcpSpout(int port,InetAddress ip) {
+    public SyslogTcpNIOSpout(int port,InetAddress ip) {
         this.port = port;
         try {
 			this.ip =ip;

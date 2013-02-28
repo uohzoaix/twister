@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import com.twister.bolt.SimpleRedisBolt;
 import com.twister.bolt.WordCountBolt;
 import com.twister.bolt.WordExtractorBolt;
+import com.twister.spout.SyslogTcpSpout;
 import com.twister.spout.SyslogUdpSpout;
 import com.twister.spout.TailFileSpout;
 import com.twister.spout.TextFileSpout;
@@ -42,7 +43,9 @@ public class TwisterTopology {
 		
 		//TailFileSpout spout = new TailFileSpout("src/main/resources/words.txt");	
 		
-		SyslogUdpSpout spout = new SyslogUdpSpout(10234,InetAddress.getLocalHost());	
+		//SyslogUdpSpout spout = new SyslogUdpSpout(10234,InetAddress.getLocalHost());	
+		
+		SyslogTcpSpout spout = new SyslogTcpSpout(10236,InetAddress.getLocalHost());	
 		
 		builder.setSpout("twister", spout);		 
 		// Initial filter		 
@@ -52,7 +55,7 @@ public class TwisterTopology {
 		 
 		// config
 		Config conf = new Config();
-		conf.setDebug(true);
+		conf.setDebug(false);
 
 		if (null != args && args.length > 0) {
 			// 使用集群模式运行

@@ -23,6 +23,10 @@ import java.util.Map;
  * <p>
  * This spout emits tuples containing only one field, named "line" for each file line.
  * </p>
+ * <pre></pre>
+ * 
+ * @author guoqing  
+ * 
  */
 public class TextFileSpout extends BaseRichSpout {
 

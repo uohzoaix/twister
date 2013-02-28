@@ -18,7 +18,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Map;
-
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.charset.Charset;
 /**
  * Spout to feed messages into Storm from an UDP Socket.
  * <p>
@@ -30,7 +35,7 @@ import java.util.Map;
  * @author guoqing  
  * 
  */
-public class SyslogUdpSpout extends BaseRichSpout {
+public class SyslogUdpNIOSpout extends BaseRichSpout {
 
     /**
 	 * 
@@ -45,11 +50,16 @@ public class SyslogUdpSpout extends BaseRichSpout {
 
     private int port;
     private SpoutOutputCollector collector;
-    private DatagramSocket socket;
+    private DatagramChannel channel = null;
+    private DatagramSocket socket=null;
+    private Selector selector = null;
     private InetAddress ip;
+   
+	 
+	
 
 
-    public SyslogUdpSpout() {
+    public SyslogUdpNIOSpout() {
         this.port = DEFAULT_SYSLOG_UDP_PORT;
         try {
 			this.ip = InetAddress.getLocalHost();
@@ -58,7 +68,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
 		}
     }
     
-    public SyslogUdpSpout(int port) {
+    public SyslogUdpNIOSpout(int port) {
         this.port = port;
         try {
 			this.ip = InetAddress.getLocalHost();
@@ -67,7 +77,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
 		}
     }
     
-    public SyslogUdpSpout(int port,InetAddress ip) {
+    public SyslogUdpNIOSpout(int port,InetAddress ip) {
         this.port = port;
         try {
 			this.ip =ip;

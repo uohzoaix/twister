@@ -25,7 +25,12 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * This spout emits tuples containing only one field, named "line" for each file line.
  * </p>
+ * <pre></pre>
+ * 
+ * @author guoqing  
+ * 
  */
+
 public class TailFileSpout extends BaseRichSpout {
 
     /**

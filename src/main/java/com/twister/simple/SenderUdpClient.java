@@ -12,14 +12,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import backtype.storm.utils.Utils;
-
+/**
+ * 普通的udp,没有用nio,模拟syslog-ng
+ * @author guoqing
+ *
+ */
 public class SenderUdpClient {
 	public static Logger logger = LoggerFactory.getLogger(SenderUdpClient.class);
 
 	public static void main(String[] args) {
 		try {
 
-			int port = 10239;			// 客户端发送数据端口		 
+			int port = 10234;			// 客户端发送数据端口		 
 			InetAddress ip = InetAddress.getLocalHost();
 			DatagramSocket socket = new DatagramSocket();
 
@@ -33,7 +37,7 @@ public class SenderUdpClient {
 			int packetLength = 50;
 			List<String> packets = new ArrayList<String>(numberOfPackets);			 
 			for (int i = 0; i < numberOfPackets; i++) {
-				String packet = randomAlphanumeric(packetLength);
+				String packet ="test "+randomAlphanumeric(packetLength);
 				logger.info(packet);
 				packets.add(packet);
 				// 创建发送类型的数据报：
