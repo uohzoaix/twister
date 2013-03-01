@@ -9,10 +9,12 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.Iterator; 
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * 
@@ -26,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  * @author zhouguoqing
  * 
  */
-public class IOLoopEvent {
+public class NIOEvent {
 
 	private static final int MIN_SELECT_TIMEOUT = 1; 
 	public static int SELECT_TIMEOUT = 3000;
@@ -49,9 +51,14 @@ public class IOLoopEvent {
 				throws Exception;
 
 	}
-	 
-	public static abstract class EventHandlerAdapter implements EventHandler {
+	
+	public static abstract class EventHandlerAdapter  implements EventHandler{	
 		 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3471455628848488916L;
+
 		@Override
 		public void handleEvents(int opts, SelectionKey selectionKey)
 				throws Exception {
@@ -134,10 +141,12 @@ public class IOLoopEvent {
 			throw new UnsupportedOperationException();
 		}
 
+	
 	}
+	 
 	
 	private Selector selector; 
-	public IOLoopEvent(){
+	public NIOEvent(){
 		try {
 			this.selector = Selector.open();
 		} catch (IOException e) {			 

@@ -2,9 +2,14 @@ package com.twister.topology;
 
 import java.net.InetAddress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.twister.bolt.SimpleRedisBolt;
 import com.twister.bolt.WordCountBolt;
 import com.twister.bolt.WordExtractorBolt;
+import com.twister.spout.SyslogNioTcpSpout;
+import com.twister.spout.SyslogNioUdpSpout;
 import com.twister.spout.SyslogTcpSpout;
 import com.twister.spout.SyslogUdpSpout;
 import com.twister.spout.TailFileSpout;
@@ -36,6 +41,7 @@ import backtype.storm.tuple.Fields;
  */
 
 public class TwisterTopology {
+	public static Logger logger = LoggerFactory.getLogger(TwisterTopology.class);
 	public static void main(String[] args) throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout
@@ -44,10 +50,12 @@ public class TwisterTopology {
 		//TailFileSpout spout = new TailFileSpout("src/main/resources/words.txt");	
 		
 		//SyslogUdpSpout spout = new SyslogUdpSpout(10234,InetAddress.getLocalHost());	
+		//SyslogTcpSpout spout = new SyslogTcpSpout(10236);	
+		//SyslogNioTcpSpout spout = new SyslogNioTcpSpout(10236);	
+		SyslogNioUdpSpout spout = new SyslogNioUdpSpout(10234);
 		
-		SyslogTcpSpout spout = new SyslogTcpSpout(10236,InetAddress.getLocalHost());	
-		
-		builder.setSpout("twister", spout);		 
+		builder.setSpout("twister", spout);
+		 
 		// Initial filter		 
 		builder.setBolt("extract", new WordExtractorBolt(), 3).shuffleGrouping("twister");
 		// bolt
@@ -55,17 +63,19 @@ public class TwisterTopology {
 		 
 		// config
 		Config conf = new Config();
-		conf.setDebug(false);
-
+		conf.setDebug(true);
+		
 		if (null != args && args.length > 0) {
 			// 使用集群模式运行
 			conf.setNumWorkers(3);
 			StormSubmitter.submitTopology(args[0], conf,builder.createTopology());
+			logger.debug("集群模式运行");
 		} else {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(3);
-			LocalCluster cluster = new LocalCluster();			 
+			LocalCluster cluster = new LocalCluster();		 
 			cluster.submitTopology("twister", conf, builder.createTopology());
+			logger.debug("本地模式运行"); 
 			Thread.sleep(10 * 1000);
 			//cluster.shutdown();
 

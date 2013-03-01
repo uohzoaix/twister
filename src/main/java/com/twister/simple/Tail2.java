@@ -19,8 +19,11 @@ public class Tail2 {
    
 	/**
 	 * Command-line launcher
+	 * @return 
 	 */
+  
 	public static void main(String[] args) {	
+		
 		String[] infiles = new String[] { "/tmp/tailer.log" };
 		if (args.length < 1) {
 			System.out.println("Usage: Tail <filename>");

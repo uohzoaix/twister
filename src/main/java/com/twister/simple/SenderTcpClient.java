@@ -49,7 +49,7 @@ public class SenderTcpClient {
 			List<String> packets = new ArrayList<String>(numberOfPackets);
 			for (int i = 0; i < numberOfPackets; i++) {			 
 				socket = new Socket(host, PORT);	
-				socket.setSoTimeout(10*1000);			 
+				//socket.setSoTimeout(10*1000);			 
 				PrintWriter out = new PrintWriter(socket.getOutputStream(),true); // 创建数据传输流	
 				
 				logger.info(i+" tcp send to " + host + " port " + PORT);	
@@ -58,7 +58,7 @@ public class SenderTcpClient {
 				packets.add(packet);
 				logger.info(packet);							 
 				out.println(packet);
-				Utils.sleep(10);
+				Utils.sleep(100);
 				out.flush();
 				
 //				// read feedback
