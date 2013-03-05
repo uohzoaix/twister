@@ -24,8 +24,11 @@ import java.util.Map;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 /**
  * Spout to feed messages into Storm from an UDP Socket.
@@ -58,6 +61,8 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
     private Selector selector = null;
     private InetAddress ip; 
     private ByteBuffer byteBuffer;
+   
+    
     public SyslogNioUdpSpout() {
         this.port = DEFAULT_SYSLOG_UDP_PORT;
         try {
@@ -133,25 +138,36 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 			Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
 			while (iter.hasNext()) {
 				SelectionKey sk = (SelectionKey)iter.next();
-				iter.remove();
+				iter.remove();			 
 				if (sk.isReadable()) {
 					// 在这里datagramChannel与channel实际是同一个对象
 					DatagramChannel clientChannel = (DatagramChannel) sk.channel();
+					String remoteip = clientChannel.toString();					
+					StringBuffer packet = new StringBuffer();	
+					boolean isreader =true;
 					byteBuffer.clear();
-					SocketAddress sa = clientChannel.receive(byteBuffer);
-					// 将缓冲区准备为数据传出状态
-					byteBuffer.flip();				 
-					// 测试：通过将收到的ByteBuffer首先通过缺省的编码解码成CharBuffer 再输出
-					CharBuffer charBuffer = Charset.defaultCharset().decode(byteBuffer);					
-					if (charBuffer.length()>0){
-						logger.info("receive message:"+ charBuffer.toString());
-						collector.emit(new Values(charBuffer.toString()));
+					while (isreader) {						
+						clientChannel.receive(byteBuffer);
+						byteBuffer.flip();
+						CharBuffer charBuffer = Charset.defaultCharset().decode(byteBuffer);
+						if (charBuffer.length()==0 || charBuffer.toString()==null){
+							isreader=false;
+						}				 
+						packet.append(charBuffer.toString());
+						// 复位，清空
+						byteBuffer.clear();
+					}
+					String line=packet.toString();
+					if (packet.length()>0){
+						logger.info("nio UDP服务器端接受客户端数据 " + remoteip +line + " bf " +packet.length());
+						collector.emit(new Values(line));
 					}
 					clientChannel.register(selector, SelectionKey.OP_READ);					 
 				}
 			}
         } catch (IOException e) {
             // TODO
+        	e.printStackTrace();
             throw new RuntimeException(e);
         }	 
         

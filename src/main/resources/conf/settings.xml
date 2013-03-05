@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>default settings properties</comment>
+    <entry key="apimsdb.driver">com.mysql.jdbc.Driver</entry>
+    <entry key="apimsdb.url">jdbc:mysql://10.103.13.18:3306/mobile_production?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true</entry>
+    <entry key="apimsdb.user">api</entry>
+    <entry key="apimsdb.password">youku</entry>      
+   
+    <entry key="hdfs.dir">hdfs.dir</entry>  
+    <entry key="hdfs.path">hdfs.dir</entry>  
+    <entry key="hdfs.user">mobile</entry>   
+    <entry key="hdfs.password">mobile123</entry>   
+    <entry key="access.log.matches">videos|search|shows|user|channels</entry>    
+</properties>

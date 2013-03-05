@@ -7,6 +7,7 @@ import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
@@ -14,7 +15,7 @@ import backtype.storm.utils.Utils;
 /**
  * Class implementing a test spout emitting a stream of tuples, each having a String and an integer
  */
-public class SampleSpout implements IRichSpout {
+public class SampleSpout extends BaseRichSpout {
 	private static final long serialVersionUID = 1L;
 	SpoutOutputCollector _collector;
 	boolean _isDistributed;

@@ -49,10 +49,11 @@ public class TwisterTopology {
 		
 		//TailFileSpout spout = new TailFileSpout("src/main/resources/words.txt");	
 		
-		//SyslogUdpSpout spout = new SyslogUdpSpout(10234,InetAddress.getLocalHost());	
+		//SyslogUdpSpout spout = new SyslogUdpSpout(10237,InetAddress.getLocalHost());	
 		//SyslogTcpSpout spout = new SyslogTcpSpout(10236);	
-		//SyslogNioTcpSpout spout = new SyslogNioTcpSpout(10236);	
-		SyslogNioUdpSpout spout = new SyslogNioUdpSpout(10234);
+		SyslogNioTcpSpout spout = new SyslogNioTcpSpout(10236);	
+		
+		//SyslogNioUdpSpout spout = new SyslogNioUdpSpout(10237);
 		
 		builder.setSpout("twister", spout);
 		 

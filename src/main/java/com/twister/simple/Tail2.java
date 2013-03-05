@@ -31,9 +31,9 @@ public class Tail2 {
 		}		 
 		File file=new File(args[0]);
 		TailerListener listener = new MyTailerListener();
-		Tailer tailer = new Tailer(file, listener, 100,true);		 
+		Tailer tailer = new Tailer(file, listener, 100,false);		 
 		Thread tt = new Thread(tailer); 
-		tt.start();
+		tt.start();		 
 		 	 
 	}
 	

@@ -20,16 +20,16 @@ public class MyTailerListener extends TailerListenerAdapter {
 	 */
 	 
 	public static Logger logger = LoggerFactory.getLogger(MyTailerListener.class);
+	public int port=10237;
 
     @Override
     public void handle(String line) {           
-          logger.debug("File handle new line" +line);   
-    	
-       	   // 创建发送方的套接字，IP默认为本地，端口号随机			
+          logger.info("File handle new line" +line);   
+    	  
+       	   // 创建发送方的udp套接字，IP默认为本地，端口号随机			
 			try {
 				 // Given
-		        int count = 10;
-		        int port = 1234;
+		        int count = 10;    
 		     
 		        // When
 		        DatagramSocket sendSocket = new DatagramSocket();		       

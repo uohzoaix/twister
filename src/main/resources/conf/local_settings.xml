@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>local settings properties,is over settings</comment>
+     <!--
+       <entry key="apimsdb.url">jdbc:mysql://127.0.0.1:3306/mobile_production?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true</entry>
+     -->
+    <entry key="apimsdb.driver">com.mysql.jdbc.Driver2</entry>
+    <entry key="apimsdb.url">jdbc:mysql://127.0.0.1:3306/mobile_production?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true</entry>
+    <entry key="apimsdb.user">api</entry>
+    <entry key="apimsdb.password">youku</entry>   
+</properties>

@@ -31,24 +31,13 @@ public class DemoSpout implements IRichSpout {
 	private TopologyContext context;
 
 
-	/* (non-Javadoc)
-	 * @see backtype.storm.topology.IRichSpout#isDistributed()
-	 */
-
-
-	/* (non-Javadoc)
-	 * @see backtype.storm.spout.ISpout#ack(java.lang.Object)
-	 */
-	@Override
+ 
 	public void ack(Object arg0) {
 		// TODO Auto-generated method stub
 		log.debug("ack-----> "+arg0);
 	}
 
-	/* (non-Javadoc)
-	 * @see backtype.storm.spout.ISpout#close()
-	 */
-	@Override
+ 
 	public void close() {
 		// TODO Auto-generated method stub
 		log.debug("close-----> ");
