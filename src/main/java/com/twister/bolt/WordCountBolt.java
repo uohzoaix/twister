@@ -16,58 +16,56 @@ import backtype.storm.tuple.Values;
 
 /**
  * @author guoqing
- *
+ * 
  */
 public class WordCountBolt extends BaseRichBolt {
 	private static final Logger LOG = LoggerFactory.getLogger(WordCountBolt.class);
-    private static final long serialVersionUID = 2246728833921545675L;
-    Integer taskid;
-    String name;   
-    
+	private static final long serialVersionUID = 2246728833921545675L;
+	Integer taskid;
+	String name;
+	
 	OutputCollector collector;
 	Map<String, Integer> wordCountMap;
- 
+	
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void prepare(Map stormConf, TopologyContext context,OutputCollector collector) {
-		this.collector=collector;
-		this.name=context.getThisComponentId();
-        this.taskid=context.getThisTaskId();
-        this.wordCountMap=new HashMap<String, Integer>();
-        LOG.info(String.format(" WordCountBolt componentId name :%s,task id :%s ",this.name,this.taskid));        
+	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+		this.collector = collector;
+		this.name = context.getThisComponentId();
+		this.taskid = context.getThisTaskId();
+		this.wordCountMap = new HashMap<String, Integer>();
+		LOG.info(String.format(" WordCountBolt componentId name :%s,task id :%s ", this.name, this.taskid));
 	}
-	  
- 
+	
 	@Override
 	public void execute(Tuple input) {
-		//提取单词出现次数
-		String word=input.getString(0);
-		int count=0;
-		if(wordCountMap.containsKey(word)){
-			count=wordCountMap.get(word).intValue();			 
+		// 提取单词出现次数
+		String word = input.getString(0);
+		
+		LOG.info(word);
+		int count = 0;
+		if (wordCountMap.containsKey(word)) {
+			count = wordCountMap.get(word).intValue();
 		}
-		//更新单词出现次数
-		count+=1;
+		// 更新单词出现次数
+		count += 1;
 		wordCountMap.put(word, count);
 		
-		//发射统计结果
-		collector.emit(new Values(word,wordCountMap.get(word)));
-		LOG.info(String.format("WordCountBolt execute result is:%s : %s ", word,wordCountMap.get(word)));
+		// 发射统计结果
+		collector.emit(new Values(word, wordCountMap.get(word)));
+		LOG.info(String.format("WordCountBolt execute result is:%s : %s ", word, wordCountMap.get(word)));
 		// send ok
-		collector.ack(input);        
+		collector.ack(input);
 	}
- 
+	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("word","count"));
+		declarer.declare(new Fields("word", "count"));
 	}
-
-
+	
 	@Override
-	public void cleanup() {	 
-		 
+	public void cleanup() {
+		
 	}
 	
-	
-
 }

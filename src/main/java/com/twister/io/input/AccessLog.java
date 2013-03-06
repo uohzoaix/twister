@@ -1,44 +1,37 @@
 package com.twister.io.input;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.net.Socket;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import backtype.storm.utils.Utils;
-
 public class AccessLog extends AbstractAccessLog {
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLog.class);
 	
-	public static String vv = "112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/home\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Tudou; 3.0; Android; 2.3.4; LT18i\" 10.103.13.18";
-	public static String vv2 = "Mar  5 10:59:59 a02 112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/home\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Mozilla/5.0 (X11; Linux x86_64; rv:10.0.5) Gecko/20120606 Firefox/10.0.5\"";
+	public static String vv = "112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/home\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Tudou;3.0;Android;2.3.4;LT18i\"";
+	public static String vv2 = "Mar  5 10:59:59 a02 112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/videos/XMjI3MzIwMzU2/download\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Mozilla/5.0 (X11; Linux x86_64; rv:10.0.5) Gecko/20120606 Firefox/10.0.5\" 10.103.13.18";
 	public ArrayList uriRegex = null;
-
+	
 	public AccessLog() {
 	}
-
+	
 	public AccessLog(String line) {
-		ArrayList<String> alog=parseLog(line);
-		this.logToObject(alog);
+		this.initSettings();
+		ArrayList<String> alog = parseLog(line);
+		this.logExpandsToObject(alog);
 	}
-
+	
 	public static void main(String[] args) {
-		IAccessLog alog = new AccessLog(vv);
-		System.out.println(alog.repr());
-		alog.logSplit(vv, " ");
-		System.out.println(alog.logMatcher(vv2));
-
+		try {
+			testBytext();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
-
+	
 	public static void testBytext() throws Exception {
 		String logfile = "src/main/resources/accessLog.txt";
 		RandomAccessFile file = new RandomAccessFile(logfile, "r");
@@ -59,7 +52,9 @@ public class AccessLog extends AbstractAccessLog {
 					i++;
 					if (i == 100)
 						return;
-
+					AccessLog alog = new AccessLog(packet);
+					System.out.println(alog.repr());
+					
 				}
 				filePointer = file.getFilePointer();
 				if (line == null) {
@@ -69,7 +64,6 @@ public class AccessLog extends AbstractAccessLog {
 			}
 		}
 		file.close();
-
+		
 	}
-
 }
