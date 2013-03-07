@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+
 import com.twister.utils.Common;
 
-public interface IAccessLog<T> {
+public interface IAccessLog {
 	// accesslog
 	public static final String RealLogEntryPattern = "^([\\d.]+) \"(\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2})\" (\\S+) \"(\\S+)\" \"(.+)\" \"(\\S*)\" ([\\d]+) ([\\d]+) ([\\d]+\\.[\\d]+) \"(.*)\"(.*)";
 	// syslog-ng add per
@@ -27,6 +29,8 @@ public interface IAccessLog<T> {
 	
 	public String repr();
 	
+	public String valToString(String delm);
+	
 	public ArrayList<String> logMatcher(String line);
 	
 	public ArrayList<String> logSplit(String str, String regex);
@@ -39,4 +43,5 @@ public interface IAccessLog<T> {
 	@SuppressWarnings("rawtypes")
 	public void logExpandsToObject(ArrayList<String> itr);
 	
+	public Logger getLogger();
 }

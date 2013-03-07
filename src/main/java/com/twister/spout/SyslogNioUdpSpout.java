@@ -12,6 +12,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
 
 import com.google.common.base.Preconditions;
 import com.twister.io.input.AccessLog;
@@ -60,6 +62,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	private Selector selector = null;
 	private InetAddress ip;
 	private ByteBuffer byteBuffer;
+	private long cc = 0l;
 	
 	public SyslogNioUdpSpout() {
 		this.port = DEFAULT_SYSLOG_UDP_PORT;
@@ -127,6 +130,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	@Override
 	public void nextTuple() {
 		byteBuffer = ByteBuffer.allocate(readChunckSize);
+		cc += 1;
 		try {
 			// 选择一组键，并且相应的通道已经打开
 			int lks = selector.select();
@@ -140,31 +144,47 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 					// 在这里datagramChannel与channel实际是同一个对象
 					DatagramChannel clientChannel = (DatagramChannel) sk.channel();
 					String remoteip = clientChannel.toString();
-					StringBuffer packet = new StringBuffer();
+					StringBuffer vec = new StringBuffer();
 					boolean isreader = true;
 					byteBuffer.clear();
 					while (isreader) {
 						clientChannel.receive(byteBuffer);
 						byteBuffer.flip();
-						CharBuffer charBuffer = Charset.defaultCharset().decode(byteBuffer);
+						CharBuffer charBuffer = Charset.forName("UTF-8").decode(byteBuffer);
 						if (charBuffer.length() == 0 || charBuffer.toString() == null) {
 							isreader = false;
 						}
-						packet.append(charBuffer.toString());
+						String packet = charBuffer.toString();
+						vec.append(packet);
 						// 复位，清空
 						byteBuffer.clear();
 					}
-					String line = packet.toString();
-					if (packet.length() > 0) {
-						logger.info("nio UDP服务器端接受客户端数据 " + remoteip + line + " bf " + packet.length());
-						System.out.println(line);
-						AccessLog alog = new AccessLog(line);
-						// System.out.println(alog.repr());
-						collector.emit(new Values("hello"));
+					
+					if (vec.length() > 0) {
+						logger.info("nio UDP服务器端接受客户端数据 " + vec.length());
+						String text = vec.toString();
+						String[] lines = text.split("\n");
+						for (int i = 0; i < lines.length; i++) {
+							String line = lines[i];
+							if (line == null || line.length() < 1) {
+								continue;
+							}
+							logger.info(line);
+							AccessLog alog = new AccessLog(line);
+							logger.info("" + alog.repr());
+							// send tuple to bolt, rt that was sent task ids
+							List<Integer> taskids = collector.emit(new Values(alog));
+							logger.info("was sent to task ids " + taskids.toString());
+						}
+						
+					} else {
+						logger.info("我的心在等待，永远在等待!");
 					}
 					clientChannel.register(selector, SelectionKey.OP_READ);
+					Utils.sleep(100);
 				}
 			}
+			System.out.println("cc " + cc);
 		} catch (IOException e) {
 			// TODO
 			e.printStackTrace();
@@ -179,15 +199,16 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("packet"));
+		declarer.declare(new Fields("AccessLog"));
 	}
 	
 	@Override
-	public void ack(Object o) {
+	public void ack(Object msgid) {
+		logger.debug("ack msgid " + msgid.toString());
 	}
 	
 	@Override
-	public void fail(Object o) {
-		// TODO log ?
+	public void fail(Object msgid) {
+		logger.debug("fail msgid " + msgid.toString());
 	}
 }

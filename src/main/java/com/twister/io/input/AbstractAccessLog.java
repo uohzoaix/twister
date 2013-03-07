@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -16,7 +19,10 @@ import org.slf4j.LoggerFactory;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 
-public abstract class AbstractAccessLog implements IAccessLog {
+public abstract class AbstractAccessLog implements Serializable, IAccessLog {
+	
+	private static final long serialVersionUID = 7308710264744648037L;
+	
 	public static Logger LOGR = LoggerFactory.getLogger(AbstractAccessLog.class);
 	
 	// fields
@@ -420,23 +426,66 @@ public abstract class AbstractAccessLog implements IAccessLog {
 	
 	@Override
 	public String repr() {
-		String report = String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", getIp(), getDate_time(), getMethod(),
-				getUri_name(), getResponse_code(), getContent_length(), getRequest_time(), getServer());
+		String report = String.format("%s", this.valToString("|"));
 		return report;
+	}
+	
+	@Override
+	public String toString() {
+		return this.valToString("|");
+	}
+	
+	/**
+	 * is base to string
+	 * 
+	 * @param delm
+	 * @return base field
+	 */
+	@Override
+	public String valToString(String delm) {
+		StringBuffer val = new StringBuffer();
+		val.append(getIp()).append(delm);
+		val.append(getDate_time()).append(delm);
+		val.append(getMethod()).append(delm);
+		val.append(getUri_name()).append(delm);
+		val.append(getResponse_code()).append(delm);
+		val.append(getContent_length()).append(delm);
+		val.append(getRequest_time()).append(delm);
+		val.append(getServer());
+		return val.toString();
 	}
 	
 	public char getLogVersion() {
 		return logVersion;
 	}
 	
+	/**
+	 * 日志文件的版本，这里的版本号是指日志文件里面标识的版本号，这个版本号代表了日志格式的改变 可能会改变某些字段的含义，或者增加减少字段等。
+	 * 
+	 * @param logVersion
+	 */
 	public void setLogVersion(char logVersion) {
-		this.logVersion = logVersion;
+		if (logVersion == 0) {
+			this.logVersion = '0';
+		} else {
+			this.logVersion = logVersion;
+		}
 	}
 	
+	/**
+	 * 获取访问者IP地址
+	 * 
+	 * @return
+	 */
 	public String getIp() {
 		return ip;
 	}
 	
+	/**
+	 * 访问者的IP地址
+	 * 
+	 * @param ip
+	 */
 	public void setIp(String ip) {
 		this.ip = ip;
 	}
@@ -450,11 +499,23 @@ public abstract class AbstractAccessLog implements IAccessLog {
 	}
 	
 	public String getDate_time() {
-		return date_time;
+		try {
+			if (this.date_time != null && this.date_time.length() > 20) {
+				this.date_time = this.date_time.replace("T", " ");
+				this.date_time = date_time.replace("+08:00", "");
+			}
+		} catch (Exception e) {
+			// e.printStackTrace();
+		}
+		return this.date_time;
 	}
 	
-	public void setDate_time(String date_time) {
-		this.date_time = date_time;
+	public void setDate_time(String date) {
+		if (date != null && date.length() > 20) {
+			date = date.replace("T", " ");
+			date = date.replace("+08:00", "");
+		}
+		this.date_time = date;
 	}
 	
 	public String getMethod() {
@@ -585,4 +646,88 @@ public abstract class AbstractAccessLog implements IAccessLog {
 		this.rely = rely;
 	}
 	
+	/**
+	 * 获取日志日期,格式为yyyyMMdd
+	 * 
+	 * @return
+	 */
+	public String getDateStr() {
+		return yyyyMMdd_sdf.format(new Date(time));
+	}
+	
+	private static final SimpleDateFormat yyyyMMdd_sdf = new SimpleDateFormat("yyyyMMdd");
+	
+	/**
+	 * 获取访问者IP地址,以int的形式
+	 * 
+	 * @return
+	 */
+	public int getIpInt() {
+		int iip = ipToInt(this.ip.split("\\."));
+		return iip;
+	}
+	
+	/**
+	 * 获取日志时间，{@link java.util.Calendar}
+	 * 
+	 * @return
+	 */
+	public Calendar getTimeCalendar() {
+		Calendar c = Calendar.getInstance();
+		c.setTimeInMillis(time);
+		return c;
+	}
+	
+	/**
+	 * 获取日志时间，{@link java.util.Date}
+	 * 
+	 * @return
+	 */
+	public Date getTimeDate() {
+		return new Date(time);
+	}
+	
+	/**
+	 * 获取日志时间，格式化为Long的字符串格式
+	 * 
+	 * @return
+	 */
+	public String getTimeStr() {
+		return String.valueOf(time);
+	}
+	
+	private int ipToInt(String[] strs) {
+		if (strs.length != 4) {
+			return 0;
+		}
+		int ipInt = (parseInt(strs[0]) << 24) | (parseInt(strs[1]) << 16) | (parseInt(strs[2]) << 8)
+				| (parseInt(strs[3]));
+		return ipInt;
+	}
+	
+	/**
+	 * 所记录的IP是否有代理信息
+	 * 
+	 * @return
+	 */
+	public boolean isProxyIp() {
+		return ip.contains(",");
+	}
+	
+	private static final int parseInt(String str) {
+		if (str == null || str.length() == 0) {
+			return 0;
+		} else {
+			try {
+				return Integer.parseInt(str);
+			} catch (Exception e) {
+				return 0;
+			}
+		}
+	}
+	
+	@Override
+	public Logger getLogger() {
+		return LOGR;
+	}
 }

@@ -464,9 +464,25 @@ public final class Common {
 			
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			t = dateFormat.parse(timestr).getTime();
+			
 		} catch (ParseException e) {
 		}
 		return t;
+	}
+	
+	/**
+	 * @param long time
+	 * 
+	 * @return string yyyy-MM-dd HH:mm:ss
+	 */
+	public static String longDateStr(long time) {
+		String dt = "";
+		try {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			dt = dateFormat.format(new Date(time));
+		} catch (Exception e) {
+		}
+		return dt;
 	}
 	
 	public static int validate_Response_code(String response_code) {

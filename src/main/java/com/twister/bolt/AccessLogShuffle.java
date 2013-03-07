@@ -16,10 +16,14 @@ import backtype.storm.tuple.Values;
 import com.twister.io.input.AccessLog;
 
 /**
- * @author zhouguoqing
+ * 随机分发tuple到Bolt的任务，保证每个任务获得相等数量的tuple
+ * 
+ * @author guoqing
  * 
  */
-public class WordExtractorBolt extends BaseRichBolt {
+public class AccessLogShuffle extends BaseRichBolt {
+	
+	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(WordExtractorBolt.class);
 	OutputCollector collector;
 	
@@ -30,23 +34,20 @@ public class WordExtractorBolt extends BaseRichBolt {
 	
 	@Override
 	public void execute(Tuple input) {
-		AccessLog alog = (AccessLog) input.getValue(0);
-		LOGR.debug(alog.toString());
-		collector.emit(new Values("hello "));
-		// if (line != null) {
-		// StringTokenizer st = new StringTokenizer(line, " ,.;");
-		// while (st.hasMoreTokens()) {
-		// String word = st.nextToken();
-		// collector.emit(new Values(word));
-		// }
-		// }
+		for (int i = 0; i < input.size(); i++) {
+			AccessLog alog = (AccessLog) input.getValue(i);
+			System.out.println(input.size());
+			LOGR.debug(alog.toString());
+			collector.emit(new Values(alog));
+		}
 		// 通过ack操作确认这个tuple被成功处理
 		collector.ack(input);
 	}
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("word"));
+		// out object
+		declarer.declare(new Fields("AccessLog"));
 	}
 	
 }

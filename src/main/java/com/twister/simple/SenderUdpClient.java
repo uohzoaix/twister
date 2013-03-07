@@ -51,14 +51,19 @@ public class SenderUdpClient {
 					int i = 0;
 					while ((line = file.readLine()) != null) {
 						// 8859_1
-						String packet = new String(line.getBytes("8859_1"), charSet); // 编码转换
+						
+						StringBuffer packet = new StringBuffer(new String(line.getBytes("8859_1"), charSet)); // 编码转换
+						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
+							packet.append("\n");
+						}
 						if (i > 20) {
 							line = null;
 							break;
 						}
-						logger.info(i + " port " + port + " " + packet + " len " + packet.length());
+						System.out.print(i + " " + packet.toString());
 						// 创建发送类型的数据报：
-						DatagramPacket datagramPacket = new DatagramPacket(packet.getBytes(), packet.length(), ip, port);
+						DatagramPacket datagramPacket = new DatagramPacket(packet.toString().getBytes(charSet),
+								packet.length(), ip, port);
 						// 通过套接字发送数据：
 						socket.send(datagramPacket);
 						i++;

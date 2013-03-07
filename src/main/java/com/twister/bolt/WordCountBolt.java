@@ -19,7 +19,7 @@ import backtype.storm.tuple.Values;
  * 
  */
 public class WordCountBolt extends BaseRichBolt {
-	private static final Logger LOG = LoggerFactory.getLogger(WordCountBolt.class);
+	private static final Logger LOGR = LoggerFactory.getLogger(WordCountBolt.class);
 	private static final long serialVersionUID = 2246728833921545675L;
 	Integer taskid;
 	String name;
@@ -34,7 +34,7 @@ public class WordCountBolt extends BaseRichBolt {
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		this.wordCountMap = new HashMap<String, Integer>();
-		LOG.info(String.format(" WordCountBolt componentId name :%s,task id :%s ", this.name, this.taskid));
+		LOGR.info(String.format(" WordCountBolt componentId name :%s,task id :%s ", this.name, this.taskid));
 	}
 	
 	@Override
@@ -42,7 +42,7 @@ public class WordCountBolt extends BaseRichBolt {
 		// 提取单词出现次数
 		String word = input.getString(0);
 		
-		LOG.info(word);
+		LOGR.info(word);
 		int count = 0;
 		if (wordCountMap.containsKey(word)) {
 			count = wordCountMap.get(word).intValue();
@@ -53,7 +53,7 @@ public class WordCountBolt extends BaseRichBolt {
 		
 		// 发射统计结果
 		collector.emit(new Values(word, wordCountMap.get(word)));
-		LOG.info(String.format("WordCountBolt execute result is:%s : %s ", word, wordCountMap.get(word)));
+		LOGR.info(String.format("WordCountBolt execute result is:%s : %s ", word, wordCountMap.get(word)));
 		// send ok
 		collector.ack(input);
 	}

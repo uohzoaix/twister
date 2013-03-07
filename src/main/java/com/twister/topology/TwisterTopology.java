@@ -9,8 +9,8 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
-import com.twister.bolt.WordCountBolt;
-import com.twister.bolt.WordExtractorBolt;
+import com.twister.bolt.AccessLogCounter;
+import com.twister.bolt.AccessLogShuffle;
 import com.twister.spout.SyslogNioUdpSpout;
 
 /**
@@ -38,6 +38,7 @@ public class TwisterTopology {
 	public static int Uport = 10237;
 	
 	public static void main(String[] args) throws Exception {
+		long startTime = System.currentTimeMillis();
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		// setup your spout
@@ -50,16 +51,18 @@ public class TwisterTopology {
 		// SyslogUdpSpout spout = new
 		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
 		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-		// SyslogNioTcpSpout spout = new SyslogNioTcpSpout(10236);
+		// SyslogNioTcpSpout spout = new SyslogNioTcpSpout(Tport);
 		
 		SyslogNioUdpSpout spout = new SyslogNioUdpSpout(Uport);
 		
 		builder.setSpout("twister", spout);
 		
 		// Initial filter
-		builder.setBolt("extract", new WordExtractorBolt(), 3).shuffleGrouping("twister");
+		// String id, IRichBolt, thread num
+		builder.setBolt("extractShuffle", new AccessLogShuffle(), 3).shuffleGrouping("twister");
 		// bolt
-		builder.setBolt("wordcounter", new WordCountBolt(), 3).fieldsGrouping("extract", new Fields("word"));
+		builder.setBolt("AccessLogStatis", new AccessLogCounter(), 3).fieldsGrouping("extractShuffle",
+				new Fields("AccessLog"));
 		
 		// config
 		Config conf = new Config();
