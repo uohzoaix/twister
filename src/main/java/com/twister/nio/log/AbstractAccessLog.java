@@ -1,4 +1,4 @@
-package com.twister.io.input;
+package com.twister.nio.log;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -28,6 +28,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	// fields
 	public char logVersion = '0';
 	public String ip = "";
+	// 毫秒
 	public long time = 0L;
 	public String date_time = "";
 	public String method = "";
@@ -85,22 +86,42 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 		String srcline = line;
 		try {
 			// default RealLogPattern
-			Matcher pm2 = syslogExtPer.matcher(line);
 			String server = "00";
 			boolean aserflag = false;
+			String isTudou = "0";
+			Matcher pm2 = syslogExtPer.matcher(line);
+			Matcher ipv4 = Ipv4.matcher(line);
+			String syslogper = "";
+			// 从syslog增加的2列里取hostname序号
 			if (pm2.find()) {
+				syslogper = pm2.group();
 				server = pm2.group(2);
 				// get运维hostid
-				server = server.replaceAll("[^\\d]+", "");
-				// 去掉运维加的2列
-				line = line.replaceAll(syslogExtPer.toString(), "");
-				line = line.trim();
+				int attudou = server.indexOf('-');
+				if (attudou > 0) {
+					// tudo ser
+					server = server.substring(0, attudou);
+				} else {
+					server = server.replaceAll("[^\\d]+", "");
+				}
+				if (line.indexOf("Tudou") > 0 || line.indexOf("tudou") > 0) {
+					isTudou = "1";
+				}
 				aserflag = true;
+				
 			}
 			
+			// 去掉运维加的2列,从ip开始算正试日志
+			if (ipv4.find()) {
+				line = line.substring(ipv4.start());
+			} else {
+				line = line.replaceAll(syslogExtPer.toString(), "");
+				
+			}
+			
+			// System.out.println(line);
 			Matcher realMatcher = RealLogPattern.matcher(line);
 			if (realMatcher.matches()) {
-				
 				vec.add(new String(realMatcher.group(1).getBytes(), charSet));
 				vec.add(new String(realMatcher.group(2).getBytes(), charSet));
 				vec.add(new String(realMatcher.group(3).getBytes(), charSet));
@@ -110,17 +131,22 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				vec.add(new String(realMatcher.group(7).getBytes(), charSet));
 				vec.add(new String(realMatcher.group(8).getBytes(), charSet));
 				vec.add(new String(realMatcher.group(9).getBytes(), charSet));
-				vec.add(new String(realMatcher.group(10).getBytes(), charSet));
+				String ua = new String(realMatcher.group(10).getBytes(), charSet);
+				if (ua.contains("Tudou")) {
+					isTudou = "1";
+				}
+				vec.add(ua);
 				if (realMatcher.groupCount() > 10 && realMatcher.group(11).length() > 0) {
+					// server ip
 					String[] lastcols = realMatcher.group(11).toString().trim().split("\\s");
 					server = lastcols[0];
 				}
 				vec.add(server.toString());
+				vec.add(isTudou);
 			} else {
 				return new ArrayList<String>();
 			}
-			// System.out.println("metcher " + vec.size() + " " +
-			// vec.toString());
+			System.out.println("metcher " + vec.size() + " " + vec.toString());
 			return formatAccessLog(vec);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -136,16 +162,39 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 		try {
 			// str = new String(str.getBytes("8859_1"), charSet); // 编码转换
 			// default RealLogPattern
-			Matcher pm2 = syslogExtPer.matcher(str);
 			String server = "00";
+			boolean aserflag = false;
+			String isTudou = "0";
+			Matcher pm2 = syslogExtPer.matcher(str);
+			Matcher ipv4 = Ipv4.matcher(str);
+			String syslogper = "";
+			// 从syslog增加的2列里取hostname序号
 			if (pm2.find()) {
+				syslogper = pm2.group();
 				server = pm2.group(2);
 				// get运维hostid
-				server = server.replaceAll("[^\\d]+", "");
-				// 去掉运维加的2列
-				str = str.replaceAll(syslogExtPer.toString(), "");
-				str = str.trim();
+				int attudou = server.indexOf('-');
+				if (attudou > 0) {
+					// tudo
+					server = server.substring(0, attudou);
+				} else {
+					server = server.replaceAll("[^\\d]+", "");
+				}
+				if (str.indexOf("Tudou") > 0 || str.indexOf("tudou") > 0) {
+					isTudou = "1";
+				}
+				aserflag = true;
+				
 			}
+			
+			// 去掉运维加的2列,从ip开始算正试日志
+			if (ipv4.find()) {
+				str = str.substring(ipv4.start());
+			} else {
+				str = str.replaceAll(syslogExtPer.toString(), "");
+			}
+			
+			// split
 			int len = str.length();
 			int start = 0;
 			int end = 0;
@@ -209,6 +258,9 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 			start = end + 2;
 			end = str.indexOf("\"", start + 1);
 			v = sublogString(str, start, end);
+			if (v.contains("Tudou")) {
+				isTudou = "1";
+			}
 			vec.add(v);
 			
 			// req serve
@@ -220,6 +272,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 			} else {
 				vec.add(v);
 			}
+			vec.add(isTudou);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ArrayList<String>();
@@ -285,6 +338,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				this.setRequest_time(dw.longValue());
 				this.setUser_agent(itr.get(9).toString());
 				this.setServer(itr.get(10).toString());
+				this.setRely(itr.get(11).toString());
 			}
 			
 		} catch (Exception e) {
@@ -328,9 +382,9 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				// 去掉开始的/,再用/分割，再取数组的第一个字段做为kls
 				String[] uriarr = uri.toString().trim().replaceFirst("\\/", "").split("\\/");
 				String kls = uriarr.length > 0 ? uriarr[0] : uri;
-				String rely = "0";
+				
 				if (this.getUser_agent().matches("Tudo")) {
-					rely = "1";
+					this.setRely("1");
 				}
 				String mats = AppsConfig.getInstance().getValue("access.log.matches").toString();
 				if (Pattern.compile("videos|search|shows|user|channels").matcher(uri).find()) {
@@ -352,7 +406,6 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				kls = kls.toLowerCase();
 				this.setUri_name(uri_name);
 				this.setKls(kls);
-				this.setRely(rely);
 				String prov = "0000000000";
 				String city = "0000000000";
 				
@@ -445,14 +498,25 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	public String valToString(String delm) {
 		StringBuffer val = new StringBuffer();
 		val.append(getIp()).append(delm);
-		val.append(getDate_time()).append(delm);
+		val.append(getTime()).append(delm);
 		val.append(getMethod()).append(delm);
 		val.append(getUri_name()).append(delm);
 		val.append(getResponse_code()).append(delm);
 		val.append(getContent_length()).append(delm);
 		val.append(getRequest_time()).append(delm);
-		val.append(getServer());
+		val.append(getDate_time()).append(delm);
+		val.append(getServer()).append(delm);
+		val.append(getRely());
 		return val.toString();
+	}
+	
+	public String jiekouKey() {
+		// jiekou
+		StringBuffer sb = new StringBuffer();
+		String SEPARATOR = "|";
+		sb.append(getTime()).append(SEPARATOR).append(getMethod()).append(SEPARATOR).append(getUri_name())
+				.append(SEPARATOR).append(getRely());
+		return sb.toString();
 	}
 	
 	public char getLogVersion() {

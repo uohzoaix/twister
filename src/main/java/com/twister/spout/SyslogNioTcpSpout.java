@@ -27,7 +27,7 @@ import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
 import com.google.common.base.Preconditions;
-import com.twister.io.input.AccessLog;
+import com.twister.nio.log.AccessLog;
 
 /**
  * Spout to feed messages into Storm from an TCP Socket.

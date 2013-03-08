@@ -16,7 +16,8 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
-import com.twister.io.input.AccessLog;
+import com.twister.nio.log.AccessLog;
+import com.twister.nio.log.AccessLogStatics;
 
 public class AccessLogCounter extends BaseRichBolt {
 	private static final Logger LOGR = LoggerFactory.getLogger(WordCountBolt.class);
@@ -26,6 +27,7 @@ public class AccessLogCounter extends BaseRichBolt {
 	
 	OutputCollector collector;
 	Map<String, Integer> icountMap;
+	AccessLogStatics alogstat;
 	
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -34,6 +36,7 @@ public class AccessLogCounter extends BaseRichBolt {
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		this.icountMap = new HashMap<String, Integer>();
+		alogstat = new AccessLogStatics();
 		LOGR.info(String.format(" AccessLogCounter componentId name :%s,task id :%s ", this.name, this.taskid));
 	}
 	

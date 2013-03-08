@@ -1,4 +1,4 @@
-package com.twister.hdfs;
+package com.twister.storage.hdfs;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;

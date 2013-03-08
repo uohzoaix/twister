@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import backtype.storm.tuple.Fields;
 
-import com.twister.io.input.LogFileTailer;
+import com.twister.nio.log.LogFileTailer;
 
 public class Tail3 extends TailerListenerAdapter {
 	/**

@@ -47,6 +47,7 @@ public class WordCountBolt extends BaseRichBolt {
 		if (wordCountMap.containsKey(word)) {
 			count = wordCountMap.get(word).intValue();
 		}
+		
 		// 更新单词出现次数
 		count += 1;
 		wordCountMap.put(word, count);

@@ -1,4 +1,4 @@
-package com.twister.rdbms;
+package com.twister.storage.db;
 
 import java.util.Map;
 import java.util.Random;

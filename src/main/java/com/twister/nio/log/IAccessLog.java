@@ -1,4 +1,4 @@
-package com.twister.io.input;
+package com.twister.nio.log;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;
@@ -14,8 +14,11 @@ public interface IAccessLog {
 	// accesslog
 	public static final String RealLogEntryPattern = "^([\\d.]+) \"(\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2})\" (\\S+) \"(\\S+)\" \"(.+)\" \"(\\S*)\" ([\\d]+) ([\\d]+) ([\\d]+\\.[\\d]+) \"(.*)\"(.*)";
 	// syslog-ng add per
-	public static Pattern syslogExtPer = Pattern.compile("^(\\w+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+\\w(\\d+)");
+	public static Pattern syslogExtPer = Pattern
+			.compile("^(\\w+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+\\w([a-zA-Z_0-9\\-]+) ");
 	public static Pattern RealLogPattern = Pattern.compile(RealLogEntryPattern);
+	public static Pattern Ipv4 = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
+	public static Pattern Ipv6 = Pattern.compile("\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:");
 	
 	public Charset charSet = Charset.forName("UTF-8");
 	public final String SPACE = " "; // 空格键

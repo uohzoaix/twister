@@ -1,4 +1,4 @@
-package com.twister.io.input;
+package com.twister.nio.log;
 
 import java.io.File;
 import java.io.IOException;

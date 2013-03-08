@@ -1,4 +1,4 @@
-package com.twister.rdbms;
+package com.twister.storage.db;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

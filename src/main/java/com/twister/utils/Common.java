@@ -456,7 +456,7 @@ public final class Common {
 	/**
 	 * @param string
 	 *            yyyy-MM-dd HH:mm:ss
-	 * @return Long times
+	 * @return Long times 毫秒
 	 */
 	public static Long dateLong(String timestr) {
 		Long t = 0l;
@@ -471,7 +471,7 @@ public final class Common {
 	}
 	
 	/**
-	 * @param long time
+	 * @param long time 毫秒
 	 * 
 	 * @return string yyyy-MM-dd HH:mm:ss
 	 */
@@ -492,6 +492,45 @@ public final class Common {
 			code_flag = 1;
 		}
 		return code_flag;
+	}
+	
+	/**
+	 * 提据resp code 和resp time 评估接口性能,(异常,优秀,良好,达标,不达标,超时 )
+	 * 
+	 * @param response_code
+	 * @param request_time
+	 * @return list<long> (异常,优秀,良好,达标,不达标,超时 )
+	 * 
+	 */
+	public static int[] assess_request_time(int response_code, long request_time) {
+		// requesttime 优秀 良好 达标 超时 异常
+		int[] art = { 0, 0, 0, 0, 0, 0 };
+		if (Common.validate_Response_code(String.valueOf(response_code)) != 1) {
+			// cnterr=1 异常
+			art[0] = 1;
+		} else {
+			if (request_time > 0) {
+				// t＜15ms,优；15ms≤t<60ms ,良好； 60ms≤t<3000ms ,达标 ； 3000ms≤t<6000ms
+				// ,慢； t≥6000ms,超时； cnterr=1 异常
+				if (request_time < Common.TMIN) {
+					// t<15ms,优秀
+					art[1] = 1;
+				} else if (request_time >= Common.TMIN && request_time < Common.TB) {
+					// 15ms≤t<60ms ,良好
+					art[2] = 1;
+				} else if (request_time >= Common.TB && request_time < Common.TC) {
+					// 60ms≤t<3000ms ,达标
+					art[3] = 1;
+				} else if (request_time >= Common.TC && request_time < Common.TMAX) {
+					// 3000ms≤t ,不达标，慢
+					art[4] = 1;
+				} else if (request_time > Common.TMAX) {
+					// t≥6000ms,超时
+					art[5] = 1;
+				}
+			}
+		}
+		return art;
 	}
 	
 	/**
@@ -547,6 +586,17 @@ public final class Common {
 		cfg.put("16", new String[] { "a16.api.3g.b28.youku", "10.103.13.161", "211.151.50.192", "api.3g.youku.com" });
 		cfg.put("17", new String[] { "a17.api.3g.b28.youku", "10.103.13.162", "211.151.50.193", "api.3g.youku.com" });
 		cfg.put("18", new String[] { "a18.api.3g.b28.youku", "10.103.13.163", "211.151.50.194", "api.3g.youku.com" });
+		return cfg;
+		
+	}
+	
+	public static Map<String, String[]> tudo_server_config() {
+		Map<String, String[]> cfg = new HashMap<String, String[]>();
+		// 序号 主机名 内网IP 外网IP 域名
+		cfg.put("00", new String[] { "a00.api.3g.b28.youku", "10.103.13.18", "00.00.00.00", "api.3g.youku.com" });
+		cfg.put("01", new String[] { "a01-api-3g-b28-tudou", "10.103.28.81", "211.151.50.217", "a01.api.3g.b28.tudou" });
+		cfg.put("02", new String[] { "a02-api-3g-b28-tudou", "10.103.28.82", "211.151.50.151", "a02.api.3g.b28.tudou" });
+		
 		return cfg;
 		
 	}
