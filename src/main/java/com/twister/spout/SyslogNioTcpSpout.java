@@ -13,6 +13,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -58,6 +59,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	private ServerSocket server = null;
 	private Selector selector = null;
 	private ByteBuffer readBuffer;
+	private long cc = 0l;
 	
 	public SyslogNioTcpSpout() {
 		this.port = DEFAULT_SYSLOG_TCP_PORT;
@@ -92,6 +94,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 		Preconditions.checkState(server == null, "SyslogTcpSpout already open on port " + port);
 		this.collector = collector;
 		this.readBuffer = ByteBuffer.allocate(readChunckSize);
+		cc=0l;
 		try {
 			// TCPServer accept, 监听端口，准备连接客户端
 			logger.info(" SyslogNioTcpSpout server start,will bind on port " + port);
@@ -106,6 +109,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 			serverSocketChannel.configureBlocking(false);
 			// 设置侦听端所选的异步信号OP_ACCEPT
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+			System.out.println("nio tcp server start! " + " ip:" + ip.getHostAddress()+" port "+ port);
 			logger.info("register SyslogNioTcpSpout on port " + port + " ip:" + ip.getHostAddress());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -114,6 +118,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	
 	@Override
 	public void close() {
+		cc=0l;
 		try {
 			if (!server.isClosed()) {
 				server.close();
@@ -131,7 +136,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	
 	@Override
 	public void nextTuple() {
-		
+		cc+=1;
 		try {
 			// 选择一组键，并且相应的通道已经打开
 			int lks = selector.select();
@@ -160,9 +165,9 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 					// logger.info("服务器端接受客户端数据  isReadable "+remoteip);
 					while ((len = clientChannel.read(readBuffer)) > 0) {
 						readBuffer.flip();
-						String receiveText = new String(readBuffer.array(), 0, len, charSet);
-						System.out.println("receiveText " + receiveText);
-						vec.append(receiveText);
+						String packet = new String(readBuffer.array(), 0, len, charSet);
+						//System.out.println("receiveText " + receiveText);
+						vec.append(packet);
 						// 复位，清空
 						readBuffer.clear();
 					}
@@ -179,16 +184,19 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 							logger.info(line);
 							AccessLog alog = new AccessLog(line);
 							logger.info(alog.repr());
-							collector.emit(new Values(line));
+							// send tuple to bolt, rt that was sent task ids
+							List<Integer> taskids = collector.emit(new Values(alog));
+							
 						}
 					} else {
-						logger.info("我的心在等待，永远在等待!");
+						logger.info("SyslogNioTcpSpout "+port+" 我的心在等待，永远在等待!");
+						Utils.sleep(1*1000);
 					}
 					clientChannel.register(selector, SelectionKey.OP_READ);
-					Utils.sleep(100);
+					
 				}
 			}
-			
+			logger.info("tcp cc " + cc);	
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} finally {
@@ -206,16 +214,17 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("packet"));
+		declarer.declare(new Fields("AccessLog"));
 	}
 	
 	@Override
-	public void ack(Object o) {
+	public void ack(Object msgid) {
+		logger.debug("ack msgid " + msgid.toString());
 	}
 	
 	@Override
-	public void fail(Object o) {
-		
+	public void fail(Object msgid) {
+		logger.debug("fail msgid " + msgid.toString());		
 	}
 	
 }

@@ -9,4 +9,13 @@
     <entry key="apimsdb.url">jdbc:mysql://127.0.0.1:3306/mobile_production?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true</entry>
     <entry key="apimsdb.user">api</entry>
     <entry key="apimsdb.password">youku</entry>   
+    
+    <entry key="redis.master.host">127.0.0.1</entry>  
+    <entry key="redis.master.port">6379</entry>
+    <entry key="redis.master.password">no</entry>
+    
+    <entry key="redis.slave.host">127.0.0.1</entry>  
+    <entry key="redis.slave.port">6379</entry>
+    <entry key="redis.slave.password">no</entry>
+    
 </properties>

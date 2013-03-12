@@ -17,17 +17,18 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.twister.nio.log.AccessLog;
-import com.twister.nio.log.AccessLogStatics;
+import com.twister.nio.log.AccessLogAlgorithm;
 
-public class AccessLogCounter extends BaseRichBolt {
-	private static final Logger LOGR = LoggerFactory.getLogger(WordCountBolt.class);
+public class AccessLogStatistic extends BaseRichBolt {
+	private static final Logger LOGR = LoggerFactory.getLogger(AccessLogStatistic.class);
 	private static final long serialVersionUID = 2246728833921545677L;
 	Integer taskid;
 	String name;
 	
 	OutputCollector collector;
-	Map<String, Integer> icountMap;
-	AccessLogStatics alogstat;
+	AccessLogAlgorithm alg;
+	Fields vfields=new Fields("cnt_pv", "cnt_bytes", "cnt_time", "avg_time", "max_time", "min_time",
+			"cnt_error", "a", "b", "c", "d", "e");
 	
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -35,48 +36,53 @@ public class AccessLogCounter extends BaseRichBolt {
 		this.collector = collector;
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		this.icountMap = new HashMap<String, Integer>();
-		alogstat = new AccessLogStatics();
+		// Fields, <String, Values>		 
+		this.alg = new AccessLogAlgorithm();		
 		LOGR.info(String.format(" AccessLogCounter componentId name :%s,task id :%s ", this.name, this.taskid));
 	}
 	
 	@Override
 	public void execute(Tuple input) {
-		// 提取单词出现次数
-		int count = 0;
+		// this tuple 提取次数
+		int count = input.size();
 		for (int i = 0; i < input.size(); i++) {
 			AccessLog alog = (AccessLog) input.getValue(i);
-			String ikey = alog.jiekouKey();
-			System.out.println(input.size());
+			String ikey = alog.jiekouKey();			 
 			LOGR.debug(alog.toString());
-			if (icountMap.containsKey(ikey)) {
-				count = icountMap.get(ikey).intValue();
-			}
-			// 更新单词出现次数
-			count += 1;
-			icountMap.put(ikey, count);
+			 
 		}
 		
-		ArrayList<String> keys = new ArrayList<String>(icountMap.keySet());
-		Collections.sort(keys);
-		for (String ikey : keys) {
-			// 发射统计结果
-			collector.emit(new Values(ikey, icountMap.get(ikey)));
-			LOGR.info(String.format("AccessLogCounter execute result is:%s : %s ", ikey, icountMap.get(ikey)));
-		}
+//		ArrayList<String> keys = new ArrayList<String>(alg.get_Keys());
+//		for (String ukey : keys) {
+//			// 发射统计结果
+//			Values vals = alg.get_Values(ukey);
+//			if (vals.size() > 0) {
+//				Values allval = new Values(ukey);
+//				allval.addAll(vals);
+//				collector.emit(allval);
+//				LOGR.info(String.format("tuple size %s, AccessLogCounter execute result %s ",count,allval.toString()));
+//			}
+//		}
 		
 		// send ok
-		collector.ack(input);
+		collector.ack(input);		
 	}
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("ikey", "cnt"));
+		ArrayList<String> allfields=new ArrayList<String>();
+		allfields.add("ukey");
+		allfields.addAll(vfields.toList());
+		//ukey=>fields
+		LOGR.info(String.format("AccessLogCounter OutputFieldsDeclarer is %s",allfields.toString()));
+		declarer.declare(new Fields(allfields)); 
+	 
 	}
 	
 	@Override
 	public void cleanup() {
-		
+		System.out.println("==cleanup==");
+		System.out.println(alg);
 	}
 	
 }

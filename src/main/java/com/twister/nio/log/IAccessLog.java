@@ -14,15 +14,15 @@ public interface IAccessLog {
 	// accesslog
 	public static final String RealLogEntryPattern = "^([\\d.]+) \"(\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2})\" (\\S+) \"(\\S+)\" \"(.+)\" \"(\\S*)\" ([\\d]+) ([\\d]+) ([\\d]+\\.[\\d]+) \"(.*)\"(.*)";
 	// syslog-ng add per
-	public static Pattern syslogExtPer = Pattern
+	public static final Pattern syslogExtPer = Pattern
 			.compile("^(\\w+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+\\w([a-zA-Z_0-9\\-]+) ");
-	public static Pattern RealLogPattern = Pattern.compile(RealLogEntryPattern);
-	public static Pattern Ipv4 = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
-	public static Pattern Ipv6 = Pattern.compile("\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:");
+	public static final Pattern RealLogPattern = Pattern.compile(RealLogEntryPattern);
+	public static final Pattern Ipv4 = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
+	public static final Pattern Ipv6 = Pattern.compile("\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:");
 	
-	public Charset charSet = Charset.forName("UTF-8");
-	public final String SPACE = " "; // 空格键
-	public static ArrayList<Map<String, Serializable>> uriRegex = Common.getUriRegexConf(Common.UriRegexFile);
+	public static final Charset charSet = Charset.forName("UTF-8");
+	public static final String SPACE = " "; // 空格键
+	public static final ArrayList<Map<String, Serializable>> uriRegex = Common.getUriRegexConf(Common.UriRegexFile);
 	
 	public void initSettings();
 	

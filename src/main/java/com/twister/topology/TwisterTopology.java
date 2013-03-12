@@ -9,8 +9,10 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
-import com.twister.bolt.AccessLogCounter;
+import com.twister.bolt.AccessLogStatistic;
 import com.twister.bolt.AccessLogShuffle;
+import com.twister.bolt.RedisStorageBolt;
+import com.twister.spout.SyslogNioTcpSpout;
 import com.twister.spout.SyslogNioUdpSpout;
 
 /**
@@ -51,19 +53,22 @@ public class TwisterTopology {
 		// SyslogUdpSpout spout = new
 		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
 		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-		// SyslogNioTcpSpout spout = new SyslogNioTcpSpout(Tport);
+	     SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport);
 		
-		SyslogNioUdpSpout spout = new SyslogNioUdpSpout(Uport);
-		
-		builder.setSpout("twister", spout);
+		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport);
+		//收集日志分发
+		builder.setSpout("tcpTwister", tcpspout,10);
+		builder.setSpout("udpTwister", udpspout,10);
 		
 		// Initial filter
-		// String id, IRichBolt, thread num
-		builder.setBolt("extractShuffle", new AccessLogShuffle(), 3).shuffleGrouping("twister");
-		// bolt
-		builder.setBolt("AccessLogStatis", new AccessLogCounter(), 3).fieldsGrouping("extractShuffle",
-				new Fields("AccessLog"));
+		//随机分组，平衡计算结点 String id, IRichBolt, thread num
+		builder.setBolt("alogShuffle", new AccessLogShuffle(), 20).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
+		 
+		//统计结点 bolt
+		builder.setBolt("statistic", new AccessLogStatistic(), 20).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
+		//汇总结点及入redis内存 bolt
 		
+		//builder.setBolt("storage", new RedisStorageBolt(), 20).fieldsGrouping("statistic",new Fields("AccessLog"));
 		// config
 		Config conf = new Config();
 		conf.setDebug(true);
@@ -72,13 +77,13 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(3);
 			StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
-			logger.debug("集群模式运行 ");
+			logger.debug("集群模式运行 " +"udp port:" +Uport +" tcp port:"+Tport);
 		} else {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(3);
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology("twister", conf, builder.createTopology());
-			logger.debug("本地模式运行 " + Uport);
+			logger.debug("本地模式运行 " +"udp port:" +Uport +" tcp port:"+Tport);
 			Thread.sleep(10 * 1000);
 			// cluster.shutdown();
 			

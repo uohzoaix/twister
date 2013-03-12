@@ -56,7 +56,7 @@ public class SenderTcpClient {
 					int i = 0;
 					while ((line = file.readLine()) != null) {
 						socket = new Socket(host, PORT);
-						socket.setSoTimeout(30 * 1000);
+						//socket.setSoTimeout(30 * 1000);
 						StringBuffer packet = new StringBuffer(new String(line.getBytes("8859_1"), charSet)); // 编码转换
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");

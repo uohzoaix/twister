@@ -102,7 +102,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 			channel.socket().setReuseAddress(true);
 			socket = channel.socket();
 			socket.bind(new InetSocketAddress(port));
-			System.out.println("server start! " + port);
+			System.out.println("nio udp server start! " + port);
 			channel.register(selector, SelectionKey.OP_READ); // 向通道注册选择器和对应事件标识,返回对应的SelectionKey
 			Preconditions.checkState(socket.isBound(), "Socket on port " + port + " already bound.");
 			logger.info("Opening SyslogNioUdpSpout on port " + port + " ip:" + ip);
@@ -114,6 +114,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	
 	@Override
 	public void close() {
+		cc=0l;
 		if (!socket.isClosed()) {
 			try {
 				channel.close();
@@ -178,13 +179,14 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 						}
 						
 					} else {
-						logger.info("我的心在等待，永远在等待!");
+						logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
+						Utils.sleep(1*1000);
 					}
 					clientChannel.register(selector, SelectionKey.OP_READ);
-					Utils.sleep(100);
+					
 				}
 			}
-			System.out.println("cc " + cc);
+			logger.info("udp cc " + cc);
 		} catch (IOException e) {
 			// TODO
 			e.printStackTrace();

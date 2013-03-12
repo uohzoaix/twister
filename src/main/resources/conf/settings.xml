@@ -10,6 +10,16 @@
     <entry key="hdfs.dir">hdfs.dir</entry>  
     <entry key="hdfs.path">hdfs.dir</entry>  
     <entry key="hdfs.user">mobile</entry>   
-    <entry key="hdfs.password">mobile123</entry>   
-    <entry key="access.log.matches">videos|search|shows|user|channels</entry>    
+    <entry key="hdfs.password">mobile123</entry>  
+     
+    <entry key="access.log.matches">videos|search|shows|user|channels</entry>  
+    
+    <entry key="redis.master.host">127.0.0.1</entry>  
+    <entry key="redis.master.port">6379</entry>
+    <entry key="redis.master.password">no</entry>
+    
+    <entry key="redis.slave.host">127.0.0.1</entry>  
+    <entry key="redis.slave.port">6379</entry>
+    <entry key="redis.slave.password">no</entry>
+    
 </properties>

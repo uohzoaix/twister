@@ -463,7 +463,7 @@ public final class Common {
 		try {
 			
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			t = dateFormat.parse(timestr).getTime();
+			t = dateFormat.parse(timestr).getTime();			 
 			
 		} catch (ParseException e) {
 		}
@@ -485,6 +485,22 @@ public final class Common {
 		return dt;
 	}
 	
+	/**
+	 * 将long毫秒转成long分，抛弃秒值
+	 * @param  long time 毫秒	 * 
+	 * @return string yyyy-MM-dd HH:mm:ss
+	 */
+	public static Long longMinute(String timestr) {
+		Long t = 0l;
+		try {
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+			t = dateFormat.parse(timestr).getTime();			
+		} catch (ParseException e) {
+		}
+		return t;
+	}
+	
 	public static int validate_Response_code(String response_code) {
 		int v = Integer.parseInt(response_code);
 		int code_flag = 0;
@@ -503,7 +519,8 @@ public final class Common {
 	 * 
 	 */
 	public static int[] assess_request_time(int response_code, long request_time) {
-		// requesttime 优秀 良好 达标 超时 异常
+		// requesttime
+		// 优秀 良好 达标 超时 异常
 		int[] art = { 0, 0, 0, 0, 0, 0 };
 		if (Common.validate_Response_code(String.valueOf(response_code)) != 1) {
 			// cnterr=1 异常

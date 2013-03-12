@@ -1,22 +1,25 @@
 package com.twister.nio.log;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Values;
-
 import com.twister.utils.Common;
 
-public class AccessLogStatics {
-	/**
-	 * 统计类
-	 * 
-	 * @author zhouguoqing
-	 * 
-	 */
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
+ 
+/**
+ * 统计类
+ * 
+ * @author zhouguoqing
+ * 
+ */ 
+
+public class AccessLogAlgorithmHasMap {	 
 	
 	private Fields _fields = new Fields("cnt_pv", "cnt_bytes", "cnt_time", "avg_time", "max_time", "min_time",
 			"cnt_error", "a", "b", "c", "d", "e");
@@ -24,14 +27,14 @@ public class AccessLogStatics {
 	private static Map<String, Values> _result = new ConcurrentHashMap<String, Values>();
 	private static long rs_cnt = 0l;
 	
-	public AccessLogStatics() {
+	public AccessLogAlgorithmHasMap() {
 	}
 	
-	public AccessLogStatics(List<String> fields) {
+	public AccessLogAlgorithmHasMap(List<String> fields) {
 		this._fields = new Fields(fields);
 	}
 	
-	public AccessLogStatics(String... fields) {
+	public AccessLogAlgorithmHasMap(String... fields) {
 		this._fields = new Fields(fields);
 	}
 	
@@ -40,8 +43,10 @@ public class AccessLogStatics {
 		
 		// init
 		Values vals = new Values(0l, 0l, 0l, 0.0, Long.MIN_VALUE, Long.MAX_VALUE, 0, 0, 0, 0, 0, 0);
-		if (_result.containsKey(key)) {
+		if (_result.containsKey(key)) {			 
 			vals = _result.get(key);
+		}else{
+			// not exists
 		}
 		
 		long cnt_pv = (long) vals.get(_fields.fieldIndex("cnt_pv")) + 1l;
@@ -97,6 +102,12 @@ public class AccessLogStatics {
 		}
 	}
 	
+	public ArrayList<String> get_Keys() {
+		ArrayList<String> keys = new ArrayList<String>(get_result().keySet());
+		Collections.sort(keys);
+		return keys;
+	}
+	
 	@Override
 	public String toString() {
 		String str = "rs_cnt: " + rs_cnt + " ,ConcurrentHashMap: " + get_result().size() + "\n"
@@ -104,12 +115,12 @@ public class AccessLogStatics {
 		return str;
 	}
 	
-	public static void main(String vs[]) {
-		// AccessLogStatics als = new AccessLogStatics();
-		// als.calculate("aaa", 200, 4, 15);
-		// als.calculate("aaa", 408, 1, 100);
-		// als.calculate("aaa", 200, 105, 80);
-		// System.out.println(als.toString());
-	}
+//	public static void main(String vs[]) {
+//		 AccessLogStatics als = new AccessLogStatics();
+//		 als.calculate("aaa", 200, 4, 15);
+//		 als.calculate("aaa", 408, 1, 100);
+//		 als.calculate("aaa", 200, 105, 80);
+//		 System.out.println(als.toString());
+//	}
 	
 }

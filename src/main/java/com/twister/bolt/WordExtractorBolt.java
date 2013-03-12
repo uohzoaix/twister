@@ -1,6 +1,7 @@
 package com.twister.bolt;
 
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,16 +31,15 @@ public class WordExtractorBolt extends BaseRichBolt {
 	
 	@Override
 	public void execute(Tuple input) {
-		AccessLog alog = (AccessLog) input.getValue(0);
-		LOGR.debug(alog.toString());
-		collector.emit(new Values("hello "));
-		// if (line != null) {
-		// StringTokenizer st = new StringTokenizer(line, " ,.;");
-		// while (st.hasMoreTokens()) {
-		// String word = st.nextToken();
-		// collector.emit(new Values(word));
-		// }
-		// }
+		String line = (String) input.getValue(0);
+		
+		if (line != null) {
+			StringTokenizer st = new StringTokenizer(line, " ,.;");
+			while (st.hasMoreTokens()) {
+				String word = st.nextToken();
+				collector.emit(new Values(word));
+			}
+		}
 		// 通过ack操作确认这个tuple被成功处理
 		collector.ack(input);
 	}

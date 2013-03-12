@@ -23,32 +23,32 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	
 	private static final long serialVersionUID = 7308710264744648037L;
 	
-	public static Logger LOGR = LoggerFactory.getLogger(AbstractAccessLog.class);
+	private static Logger LOGR = LoggerFactory.getLogger(AbstractAccessLog.class);
 	
 	// fields
-	public char logVersion = '0';
-	public String ip = "";
+	private char logVersion = '0';
+	private String ip = "";
 	// 毫秒
-	public long time = 0L;
-	public String date_time = "";
-	public String method = "";
-	public String uri = "";
-	public String request_args = "";
-	public String request_body = "";
-	public int response_code = 0;
-	public long content_length = 0l; // 总流量kb
-	public long request_time = 0l; // 响应ms
-	public String user_agent = "";
-	public String server = "00";
+	private long time = 0L;
+	private String date_time = "";
+	private String method = "";
+	private String uri = "";
+	private String request_args = "";
+	private String request_body = "";
+	private int response_code = 0;
+	private long content_length = 0l; // 总流量kb
+	private long request_time = 0l; // 响应ms
+	private String user_agent = "";
+	private String server = "00";
 	// ext base args pid, match uri_name klsname
-	public String pid = "";
-	public String kls = "other";
-	public String uri_name = "other";
-	public String prov = "0000000000";
-	public String city = "0000000000";
-	public String guid = "";
-	public String rely = "0";
-	public ArrayList<Map<String, Serializable>> uriRegex = new ArrayList<Map<String, Serializable>>();
+	private String pid = "";
+	private String kls = "other";
+	private String uri_name = "other";
+	private String prov = "0000000000";
+	private String city = "0000000000";
+	private String guid = "";
+	private String rely = "0";
+	private ArrayList<Map<String, Serializable>> uriRegex = new ArrayList<Map<String, Serializable>>();
 	
 	public AbstractAccessLog() {
 	}
@@ -104,7 +104,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				} else {
 					server = server.replaceAll("[^\\d]+", "");
 				}
-				if (line.indexOf("Tudou") > 0 || line.indexOf("tudou") > 0) {
+				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
 				}
 				aserflag = true;
@@ -132,7 +132,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				vec.add(new String(realMatcher.group(8).getBytes(), charSet));
 				vec.add(new String(realMatcher.group(9).getBytes(), charSet));
 				String ua = new String(realMatcher.group(10).getBytes(), charSet);
-				if (ua.contains("Tudou")) {
+				if (ua.contains("Tudou") || ua.contains("tudou")) {
 					isTudou = "1";
 				}
 				vec.add(ua);
@@ -180,7 +180,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				} else {
 					server = server.replaceAll("[^\\d]+", "");
 				}
-				if (str.indexOf("Tudou") > 0 || str.indexOf("tudou") > 0) {
+				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
 				}
 				aserflag = true;
@@ -258,7 +258,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 			start = end + 2;
 			end = str.indexOf("\"", start + 1);
 			v = sublogString(str, start, end);
-			if (v.contains("Tudou")) {
+			if (v.contains("Tudou") || v.contains("tudou")) {
 				isTudou = "1";
 			}
 			vec.add(v);
@@ -498,24 +498,26 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	public String valToString(String delm) {
 		StringBuffer val = new StringBuffer();
 		val.append(getIp()).append(delm);
-		val.append(getTime()).append(delm);
+		val.append(getDate_time()).append(delm);
 		val.append(getMethod()).append(delm);
 		val.append(getUri_name()).append(delm);
 		val.append(getResponse_code()).append(delm);
 		val.append(getContent_length()).append(delm);
 		val.append(getRequest_time()).append(delm);
-		val.append(getDate_time()).append(delm);
 		val.append(getServer()).append(delm);
 		val.append(getRely());
 		return val.toString();
 	}
 	
 	public String jiekouKey() {
-		// jiekou
+		// jiekou,转成long分，抛弃秒值
+		// key=datestr_yyyymmdd hh:mm:ss
+		// ukey=time|method|uriname|code|rely|server|getProv
 		StringBuffer sb = new StringBuffer();
 		String SEPARATOR = "|";
-		sb.append(getTime()).append(SEPARATOR).append(getMethod()).append(SEPARATOR).append(getUri_name())
-				.append(SEPARATOR).append(getRely());
+		sb.append(Common.longMinute(getDate_time())).append(SEPARATOR).append(getMethod()).append(SEPARATOR)
+				.append(getUri_name()).append(SEPARATOR).append(getResponse_code()).append(SEPARATOR).append(getRely())
+				.append(SEPARATOR).append(getServer()).append(SEPARATOR).append(getProv());
 		return sb.toString();
 	}
 	

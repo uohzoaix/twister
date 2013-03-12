@@ -16,7 +16,7 @@ import backtype.storm.tuple.Values;
 import com.twister.nio.log.AccessLog;
 
 /**
- * 随机分发tuple到Bolt的任务，保证每个任务获得相等数量的tuple
+ * 将分析结果随机分发到Bolt的任务，保证每个任务获得相等数量的tuple
  * 
  * @author guoqing
  * 
@@ -24,7 +24,7 @@ import com.twister.nio.log.AccessLog;
 public class AccessLogShuffle extends BaseRichBolt {
 	
 	private static final long serialVersionUID = 1896733498701080791L;
-	public static Logger LOGR = LoggerFactory.getLogger(WordExtractorBolt.class);
+	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
 	
 	@Override
