@@ -2,7 +2,6 @@ package com.twister.nio.log;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +49,12 @@ public class AccessLog extends AbstractAccessLog {
 		String logfile = "src/main/resources/accessLog.txt";
 		RandomAccessFile file = new RandomAccessFile(logfile, "r");
 		long filePointer = 0;
-		boolean issend = true;
-		AccessLogAlgorithm als = new AccessLogAlgorithm();
+		boolean issend = true;	 
 		//AccessLog alog2 = new AccessLog(vv);		 
-		//issend = false;
+		 
+		//String jstr="{\"key\":\"1362240000000|GET|/home|200|1|01|0000000000\",\"day\":\"20130303\",\"cnt_pv\":1,\"cnt_bytes\":3326,\"cnt_time\":12,\"avg_time\":12.0,\"cnt_error\":0,\"a\":1,\"b\":0,\"c\":0,\"d\":0,\"e\":0}";
+		//System.out.println(JacksonUtils.jsonToObject(alys.objectToJson(),AccessLogAnalysis.class));
+		issend = false;
 		while (issend) {
 			long fileLength = logfile.length();
 			if (fileLength < filePointer) {
@@ -71,7 +72,7 @@ public class AccessLog extends AbstractAccessLog {
 					if (i == 100)
 						return;
 					AccessLog alog = new AccessLog(packet); 
-					System.out.println(alog.repr() + "\n" + als);
+					System.out.println(alog.repr());
 					
 				}
 				filePointer = file.getFilePointer();

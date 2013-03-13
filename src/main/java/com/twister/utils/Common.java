@@ -453,6 +453,8 @@ public final class Common {
 		
 	}
 	
+ 
+	
 	/**
 	 * @param string
 	 *            yyyy-MM-dd HH:mm:ss
@@ -480,6 +482,7 @@ public final class Common {
 		try {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			dt = dateFormat.format(new Date(time));
+			 
 		} catch (Exception e) {
 		}
 		return dt;

@@ -14,6 +14,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.twister.nio.log.AccessLog;
+import com.twister.nio.log.AccessLogAnalysis;
 
 /**
  * 将分析结果随机分发到Bolt的任务，保证每个任务获得相等数量的tuple
@@ -26,6 +27,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
+	 
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -38,7 +40,10 @@ public class AccessLogShuffle extends BaseRichBolt {
 			AccessLog alog = (AccessLog) input.getValue(i);
 			System.out.println(input.size());
 			LOGR.debug(alog.toString());
-			collector.emit(new Values(alog));
+			//转化成少的pojo
+			AccessLogAnalysis logalys=new AccessLogAnalysis(alog.jiekouKey(),alog.getDateStr(),alog.getResponse_code(),alog.getContent_length(),alog.getRequest_time());
+			LOGR.debug(logalys.toString());
+			collector.emit(new Values(logalys));
 		}
 		// 通过ack操作确认这个tuple被成功处理
 		collector.ack(input);

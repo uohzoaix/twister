@@ -22,7 +22,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.twister.nio.log.AccessLog;
-import com.twister.nio.log.AccessLogAlgorithm;
+ 
 import com.twister.utils.RedisUtils;
 import redis.clients.jedis.Jedis; 
  
@@ -31,72 +31,4 @@ import redis.clients.jedis.Jedis;
  * @author guoqing
  * 
  */
-public class RedisStorageBolt extends BaseRichBolt {
-	private static final Logger LOGR = LoggerFactory.getLogger(AccessLogStatistic.class);
-	private static final long serialVersionUID = 2246728833921545677L;
-	Integer taskid;
-	String name;
-	private Jedis jedis;
-	
-	OutputCollector collector;
-	AccessLogAlgorithm alg;
-	Fields vfields=new Fields("cnt_pv", "cnt_bytes", "cnt_time", "avg_time", "max_time", "min_time",
-			"cnt_error", "a", "b", "c", "d", "e");
-	
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-		this.collector = collector;
-		this.name = context.getThisComponentId();
-		this.taskid = context.getThisTaskId();
-		// Fields, <String, Values>		 
-		this.alg = new AccessLogAlgorithm(vfields.toList());	
-		jedis =RedisUtils.jedis;
-		LOGR.info(String.format(" AccessLogCounter componentId name :%s,task id :%s ", this.name, this.taskid));
-	}
-	
-	@Override
-	public void execute(Tuple input) {
-		// this tuple 提取次数
-		int count = input.size();
-		for (int i = 0; i < input.size(); i++) {
-			AccessLog alog = (AccessLog) input.getValue(i);
-			String ikey = alog.jiekouKey();			 
-			LOGR.debug(alog.toString());
-			alg.calculate(ikey, alog.getResponse_code(), alog.getContent_length(), alog.getRequest_time());
-		}
-		
-		ArrayList<String> keys = new ArrayList<String>(alg.get_Keys());
-		for (String ukey : keys) {
-			// 发射统计结果
-			Values vals = alg.get_Values(ukey);
-			if (vals.size() > 0) {
-				Values allval = new Values(ukey);
-				allval.addAll(vals);
-				collector.emit(allval);
-				LOGR.info(String.format("tuple size %s, AccessLogCounter execute result %s ",count,allval.toString()));
-			}
-		}
-		
-		// send ok
-		collector.ack(input);		
-	}
-	
-	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		ArrayList<String> allfields=new ArrayList<String>();
-		allfields.add("ukey");
-		allfields.addAll(vfields.toList());
-		//ukey=>fields
-		LOGR.info(String.format("AccessLogCounter OutputFieldsDeclarer is %s",allfields.toString()));
-		declarer.declare(new Fields(allfields)); 
-	 
-	}
-	
-	@Override
-	public void cleanup() {
-		System.out.println("==cleanup==");
-		System.out.println(alg);
-	}
-	
-}
+

@@ -512,12 +512,12 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	public String jiekouKey() {
 		// jiekou,转成long分，抛弃秒值
 		// key=datestr_yyyymmdd hh:mm:ss
-		// ukey=time|method|uriname|code|rely|server|getProv
+		// ukey=time|method|uriname|code|rely|server
 		StringBuffer sb = new StringBuffer();
 		String SEPARATOR = "|";
 		sb.append(Common.longMinute(getDate_time())).append(SEPARATOR).append(getMethod()).append(SEPARATOR)
 				.append(getUri_name()).append(SEPARATOR).append(getResponse_code()).append(SEPARATOR).append(getRely())
-				.append(SEPARATOR).append(getServer()).append(SEPARATOR).append(getProv());
+				.append(SEPARATOR).append(getServer());
 		return sb.toString();
 	}
 	

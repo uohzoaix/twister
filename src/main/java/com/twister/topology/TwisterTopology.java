@@ -11,7 +11,6 @@ import backtype.storm.tuple.Fields;
 
 import com.twister.bolt.AccessLogStatistic;
 import com.twister.bolt.AccessLogShuffle;
-import com.twister.bolt.RedisStorageBolt;
 import com.twister.spout.SyslogNioTcpSpout;
 import com.twister.spout.SyslogNioUdpSpout;
 
@@ -40,7 +39,7 @@ public class TwisterTopology {
 	public static int Uport = 10237;
 	
 	public static void main(String[] args) throws Exception {
-		long startTime = System.currentTimeMillis();
+		
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		// setup your spout
@@ -56,16 +55,17 @@ public class TwisterTopology {
 	     SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport);
 		
 		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport);
+		
 		//收集日志分发
-		builder.setSpout("tcpTwister", tcpspout,10);
-		builder.setSpout("udpTwister", udpspout,10);
+		builder.setSpout("tcpTwister", tcpspout);
+		builder.setSpout("udpTwister", udpspout);
 		
 		// Initial filter
 		//随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("alogShuffle", new AccessLogShuffle(), 20).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
-		 
+		builder.setBolt("alogShuffle", new AccessLogShuffle(), 3).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
+		System.out.println("==============="); 
 		//统计结点 bolt
-		builder.setBolt("statistic", new AccessLogStatistic(), 20).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
+		builder.setBolt("statistic", new AccessLogStatistic(), 3).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
 		//汇总结点及入redis内存 bolt
 		
 		//builder.setBolt("storage", new RedisStorageBolt(), 20).fieldsGrouping("statistic",new Fields("AccessLog"));

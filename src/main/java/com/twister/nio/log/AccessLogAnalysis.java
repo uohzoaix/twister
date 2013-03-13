@@ -1,8 +1,11 @@
 package com.twister.nio.log;
 
 import java.io.Serializable;
-
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import com.twister.utils.Common;
+ 
  
 /**
  * pojo 
@@ -10,19 +13,18 @@ import com.twister.utils.Common;
  *
  */
 @SuppressWarnings("serial")
-public class AccessLogAnalysis implements Serializable {
+public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> implements Serializable {
 	
 	// jiekou,转成long分，抛弃秒值
 	// key=datestr_yyyymmdd hh:mm:ss
-	// ukey=time|method|uriname|code|rely|server|getProv
-	private String ukey;
+	// ukey=time|method|uriname|code|rely|server|getProv	
+	private String key;
 	private String day = "19700101";
+	 
 	private long cnt_pv = 1l;
 	private long cnt_bytes = 0l; // 流量kb
 	private long cnt_time = 0l; // 响应ms
-	private double avg_time = 0l;
-	private long max_time = 0l;
-	private long min_time = 0l;
+	private double avg_time = 0l;	
 	private long cnt_error = 0l;
 	// requesttime 优秀 良好 达标 超时 异常
 	private long a = 0l;
@@ -31,9 +33,7 @@ public class AccessLogAnalysis implements Serializable {
 	private long d = 0l;
 	private long e = 0l;
 	 
-	public AccessLogAnalysis(){
-		
-	}
+	public AccessLogAnalysis(){}
 	/**
 	 * default
 	 * @param ukey
@@ -43,68 +43,16 @@ public class AccessLogAnalysis implements Serializable {
 	 * @param request_time
 	 */
 	public AccessLogAnalysis(String ukey,String day,int response_code, long content_length, long request_time){
-		// cnt_error 优秀 良好 达标 超时 异常
-		int[] art = Common.assess_request_time(response_code, request_time);
-		this.ukey=ukey;
+		// cnt_error 优秀 良好 达标 超时 异常		
+		this.key=ukey;
 		this.day=day;
 		this.cnt_pv = 1l;
 		this.cnt_bytes = content_length;
 		this.cnt_time = request_time;
-		this.avg_time = request_time;
-		this.max_time = request_time;
-		this.min_time = request_time;
-		this.cnt_error = art[0];
-		this.a = art[1];
-		this.b = art[2];
-		this.c = art[3];
-		this.d = art[4];
-		this.e = art[5];
+		this.setAvg_time(request_time);
+		this.assess_request_time(response_code, request_time);
 	}
-	
-	/**
-	 * auto constructor
-	 * @param ukey
-	 * @param day
-	 * @param cnt_pv
-	 * @param cnt_bytes
-	 * @param cnt_time
-	 * @param avg_time
-	 * @param max_time
-	 * @param min_time
-	 * @param cnt_error
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @param d
-	 * @param e
-	 *  
-	 */
-	public AccessLogAnalysis(String ukey, String day, long cnt_pv, long cnt_bytes, long cnt_time, double avg_time,
-			long max_time, long min_time, long cnt_error, long a, long b, long c, long d, long e) {
-		super();
-		this.ukey = ukey;
-		this.day = day;
-		this.cnt_pv = cnt_pv;
-		this.cnt_bytes = cnt_bytes;
-		this.cnt_time = cnt_time;
-		this.avg_time = avg_time;
-		this.max_time = max_time;
-		this.min_time = min_time;
-		this.cnt_error = cnt_error;
-		this.a = a;
-		this.b = b;
-		this.c = c;
-		this.d = d;
-		this.e = e;
-	}
-
-	public String getUkey() {
-		return ukey;
-	}
-	
-	public void setUkey(String ukey) {
-		this.ukey = ukey;
-	}
+ 
 	
 	public long getCnt_pv() {
 		return cnt_pv;
@@ -134,25 +82,12 @@ public class AccessLogAnalysis implements Serializable {
 		return avg_time;
 	}
 	
-	public void setAvg_time(double avg_time) {
-		this.avg_time = avg_time;
+	public void setAvg_time(double cnt_time) {
+		BigDecimal bd = new BigDecimal(cnt_time);
+		this.avg_time = this.cnt_pv == 0 ? 0 : bd.divide(BigDecimal.valueOf(this.cnt_pv), 2, BigDecimal.ROUND_FLOOR).doubleValue();		 
 	}
 	
-	public long getMax_time() {
-		return max_time;
-	}
-	
-	public void setMax_time(long max_time) {
-		this.max_time = max_time;
-	}
-	
-	public long getMin_time() {
-		return min_time;
-	}
-	
-	public void setMin_time(long min_time) {
-		this.min_time = min_time;
-	}
+	 
 	
 	public long getCnt_error() {
 		return cnt_error;
@@ -209,5 +144,71 @@ public class AccessLogAnalysis implements Serializable {
 	public void setDay(String day) {
 		this.day = day;
 	}
+	
+	@Override
+	public void assess_request_time(int response_code, long request_time) {
+		int[] art = Common.assess_request_time(response_code, request_time);	 
+		this.cnt_error = art[0];
+		this.a = art[1];
+		this.b = art[2];
+		this.c = art[3];
+		this.d = art[4];
+		this.e = art[5];		
+	}
+	 
+	@Override
+	public String getKey() {		 
+		return key;
+	}
+	@Override
+	public void setKey(String ukey) {
+		this.key=ukey;		
+	}
+ 
+	@Override
+	public Map<String,Object> objectToMap() {
+		Map<String,Object> mp=new HashMap<String,Object>();	 
+		mp.put("key",key);
+		mp.put("day",day);
+		mp.put("cnt_pv",cnt_pv);
+		mp.put("cnt_bytes",cnt_bytes);
+		mp.put("cnt_time",cnt_time);
+		mp.put("avg_time",avg_time);
+		mp.put("cnt_error",cnt_error);
+		mp.put("a",a);
+		mp.put("b",b);
+		mp.put("c",c);
+		mp.put("d",d);
+		mp.put("e",e);		
+		return mp;
+	}
+	
+	@Override
+	public AccessLogAnalysis calculate(AccessLogAnalysis obj) {
+		if (this.key.equals(obj.key)){
+			this.cnt_pv += obj.cnt_pv;
+			this.cnt_bytes +=obj.cnt_bytes;
+			this.cnt_time +=obj.cnt_time;
+			this.avg_time=
+			this.cnt_error +=obj.cnt_error;
+			this.a+=obj.a;
+			this.b+=obj.b;
+			this.c+=obj.c;
+			this.d+=obj.d;
+			this.e+=obj.e;			
+			return this;
+		}else{
+			return obj;
+		}
+	}
+	
+	@Override
+	public String toString() {
+		return "AccessLogAnalysis [key=" + key + ", day=" + day + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes
+				+ ", cnt_time=" + cnt_time + ", avg_time=" + avg_time + ", cnt_error=" + cnt_error + ", a=" + a
+				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "]";
+	}
+	
+   
 	
 }
