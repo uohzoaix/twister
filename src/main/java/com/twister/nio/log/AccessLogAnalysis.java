@@ -166,7 +166,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	}
  
 	@Override
-	public Map<String,Object> objectToMap() {
+	public Map<String,Object> valuesToMap() {
 		Map<String,Object> mp=new HashMap<String,Object>();	 
 		mp.put("key",key);
 		mp.put("day",day);

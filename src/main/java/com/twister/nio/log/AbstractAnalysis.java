@@ -12,7 +12,7 @@ public abstract class AbstractAnalysis<T> implements IAnalysisAlgorithm<T> {
 
 	@Override
 	public void setKey(String ukey) {
-		this.key=key;		
+		this.key=ukey;		
 	}
 
 	@Override

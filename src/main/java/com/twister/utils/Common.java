@@ -24,22 +24,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+ 
 
 /**
  * @author guoqing
  * 
  */
 
-public final class Common {
-	
-	/**
-	 * @param args
-	 */
+public final class Common {	 
+	public static final Pattern DateStrPat = Pattern.compile("(\\d{4})\\-(\\d{2})\\-(\\d{2})\\s{1}(\\d{2}):(\\d{2}):(\\d{2})");	
 	public static String UriRegexFile = "conf/uriRegex.conf"; // target uri
 	public static String UriRegexHDFSFile = "/workspace/mobile/Statis/mapi/conf/uriRegex.conf"; // on
 																								// hdfs
@@ -120,66 +113,7 @@ public final class Common {
 		return cf;
 	}
 	
-	public static ArrayList<Map<String, Serializable>> UriRegexFactory(Configuration conf, String filename,
-			boolean inhdfs) {
-		System.out.println("Common.UriRegexFactory: " + filename + " inhdfs :" + inhdfs);
-		if (inhdfs) {
-			return Common.getHDFSUriRegex(conf, filename);
-		} else {
-			return Common.getUriRegexConf(filename);
-		}
-	}
-	
-	public static ArrayList<Map<String, Serializable>> getHDFSUriRegex(Configuration conf, String hdfsPath) {
-		System.out.println("Common.getHDFSUriRegex: " + hdfsPath);
-		ArrayList<Map<String, Serializable>> reglist = new ArrayList<Map<String, Serializable>>();
-		try {
-			FileSystem fs = FileSystem.get(conf);
-			FSDataInputStream in = fs.open(new Path(hdfsPath));
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				// System.out.println(line);
-				String val[] = line.split("\t");
-				String meth = val[0];
-				String lable = val[1];
-				String regex = val[2];
-				if (!regex.startsWith("^")) {
-					regex = "^" + regex;
-				}
-				if (!regex.endsWith("$")) {
-					regex = regex + "$";
-				}
-				String groups = "";
-				if (val.length > 3) {
-					groups = val[3];
-				}
-				String rely = "0";
-				if (val.length > 4) {
-					rely = val[4];
-				}
-				Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-				String gp[] = groups.split(",");
-				regex = StrEscape(regex);
-				@SuppressWarnings("unused")
-				String tmpv = "" + meth + "\t" + lable + "\t" + regex + "\t" + groups + "\t" + rely;
-				// System.out.println(tmpv);
-				Map<String, Serializable> map = new HashMap<String, Serializable>();
-				map.put("method", meth.toUpperCase());
-				map.put("lable", lable);
-				map.put("pattern", p);
-				map.put("groups", gp);
-				map.put("rely", rely);
-				reglist.add(map);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return reglist;
-	}
-	
+	 
 	public static ArrayList<Map<String, Serializable>> getUriRegexConf(String filename) {
 		System.out.println("Common.getUriRegexConf: " + filename);
 		ArrayList<Map<String, Serializable>> reglist = new ArrayList<Map<String, Serializable>>();
@@ -504,6 +438,60 @@ public final class Common {
 		return t;
 	}
 	
+	/**
+	 *  抛弃分秒值
+	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * @return string 20130318#10:03:00
+	 */
+	public static String formatDataTimeStr2(String datetimestr) {
+		String dt="";
+		try {
+			Matcher pm = DateStrPat.matcher(datetimestr);
+			if (pm.matches()) {
+				dt=String.format("%s%s%s#%s:00:00",pm.group(1),pm.group(2),pm.group(3),pm.group(4));			 
+			}  
+			 			
+		} catch (Exception e) {
+		}
+		return dt;
+	}
+	
+	/**
+	 *  抛弃秒值
+	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * @return string 20130318#10:03:00
+	 */
+	public static String formatDataTimeStr1(String datetimestr) {
+		String dt="";
+		try {
+			Matcher pm = DateStrPat.matcher(datetimestr);
+			if (pm.matches()) {
+				dt=String.format("%s%s%s#%s:%s:00",pm.group(1),pm.group(2),pm.group(3),pm.group(4),pm.group(5));			 
+			}  
+			 			
+		} catch (Exception e) {
+		}
+		return dt;
+	}
+	
+	/**
+	 *   
+	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * @return string 20130318#10:03:03
+	 */
+	public static String formatDataTimeStr(String datetimestr) {
+		String dt="";
+		try {
+			Matcher pm = DateStrPat.matcher(datetimestr);
+			if (pm.matches()) {
+				dt=String.format("%s%s%s#%s:%s:%s",pm.group(1),pm.group(2),pm.group(3),pm.group(4),pm.group(5),pm.group(6));			 
+			}  
+			 			
+		} catch (Exception e) {
+		}
+		return dt;
+	}
+	
 	public static int validate_Response_code(String response_code) {
 		int v = Integer.parseInt(response_code);
 		int code_flag = 0;
@@ -626,6 +614,7 @@ public final class Common {
 		String str = "/openapi-wireless/videos/XMzg5MzYxMjYw/playurl.json";
 		ArrayList<Map<String, Serializable>> ur = Common.getUriRegexConf(Common.UriRegexFile);
 		HashMap m = (HashMap) MatcherUri(ur, str, "GET");
+		System.out.println(formatDataTimeStr("2012-06-13 10:01:14"));
 		System.out.println(m);
 		
 	}

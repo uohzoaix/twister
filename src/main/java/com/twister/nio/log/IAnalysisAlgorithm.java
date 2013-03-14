@@ -1,20 +1,10 @@
 package com.twister.nio.log;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.twister.utils.Common;
-
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Values;
-import com.twister.nio.log.AccessLogAnalysis;
+ 
  
 /**
- * 统计类
+ * 计算
  * 
  * @author zhouguoqing
  * 
@@ -23,10 +13,9 @@ import com.twister.nio.log.AccessLogAnalysis;
 public interface IAnalysisAlgorithm<T>{	 
 	public String getKey();
 	public void setKey(String ukey);	
-	public String objectToJson();
-	public <T> T fromJson(String json, Class<T> c);
-	@SuppressWarnings("rawtypes")
-	public Map<String,Object> objectToMap();	 
+	public String objectToJson();	 
+	public <T> T fromJson(String json, Class<T> c);	 
+	public Map<String,Object> valuesToMap();	 
 	public void assess_request_time(int response_code, long request_time);	
 	 
 	/**

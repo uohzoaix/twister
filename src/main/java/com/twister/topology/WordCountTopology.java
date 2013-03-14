@@ -34,7 +34,7 @@ public class WordCountTopology {
 
 	public static void main(String[] args) throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
-		TextFileSpout textSpout = new TextFileSpout("src/main/resources/words.txt");
+		TextFileSpout textSpout = new TextFileSpout("words.txt");
 				
 		builder.setSpout("spouter", textSpout);
 		builder.setBolt("extract", new WordExtractorBolt(), 3).shuffleGrouping("spouter");

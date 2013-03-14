@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 
 import com.twister.utils.Common;
 
-public interface IAccessLog {
+public interface IAccessLog<T> {
 	// accesslog
 	public static final String RealLogEntryPattern = "^([\\d.]+) \"(\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2})\" (\\S+) \"(\\S+)\" \"(.+)\" \"(\\S*)\" ([\\d]+) ([\\d]+) ([\\d]+\\.[\\d]+) \"(.*)\"(.*)";
 	// syslog-ng add per
@@ -40,10 +40,8 @@ public interface IAccessLog {
 	
 	public String sublogString(String str, int start, int end);
 	
-	@SuppressWarnings("rawtypes")
 	public ArrayList<String> formatAccessLog(ArrayList<String> alog);
 	
-	@SuppressWarnings("rawtypes")
 	public void logExpandsToObject(ArrayList<String> itr);
 	
 	public Logger getLogger();

@@ -11,6 +11,7 @@ import backtype.storm.tuple.Fields;
 
 import com.twister.bolt.AccessLogStatistic;
 import com.twister.bolt.AccessLogShuffle;
+import com.twister.bolt.RedisStorageBolt;
 import com.twister.spout.SyslogNioTcpSpout;
 import com.twister.spout.SyslogNioUdpSpout;
 
@@ -62,13 +63,14 @@ public class TwisterTopology {
 		
 		// Initial filter
 		//随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("alogShuffle", new AccessLogShuffle(), 3).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
-		System.out.println("==============="); 
+		builder.setBolt("alogShuffle", new AccessLogShuffle(), 5).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
+		 
 		//统计结点 bolt
-		builder.setBolt("statistic", new AccessLogStatistic(), 3).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
-		//汇总结点及入redis内存 bolt
+		builder.setBolt("statistic", new AccessLogStatistic(), 5).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
 		
-		//builder.setBolt("storage", new RedisStorageBolt(), 20).fieldsGrouping("statistic",new Fields("AccessLog"));
+		//汇总结点及入redis内存 bolt		
+		builder.setBolt("storage", new RedisStorageBolt(), 20).fieldsGrouping("statistic",new Fields("AccessLog"));
+		
 		// config
 		Config conf = new Config();
 		conf.setDebug(true);
@@ -82,9 +84,9 @@ public class TwisterTopology {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(3);
 			LocalCluster cluster = new LocalCluster();
-			cluster.submitTopology("twister", conf, builder.createTopology());
 			logger.debug("本地模式运行 " +"udp port:" +Uport +" tcp port:"+Tport);
-			Thread.sleep(10 * 1000);
+			cluster.submitTopology("twister", conf, builder.createTopology());			
+			Thread.sleep(2 * 1000);
 			// cluster.shutdown();
 			
 		}

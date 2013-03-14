@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 
-public abstract class AbstractAccessLog implements Serializable, IAccessLog {
+public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T> {
 	
 	private static final long serialVersionUID = 7308710264744648037L;
 	
@@ -86,8 +86,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 		String srcline = line;
 		try {
 			// default RealLogPattern
-			String server = "00";
-			boolean aserflag = false;
+			String server = "00";		 
 			String isTudou = "0";
 			Matcher pm2 = syslogExtPer.matcher(line);
 			Matcher ipv4 = Ipv4.matcher(line);
@@ -106,8 +105,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				}
 				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
-				}
-				aserflag = true;
+				}			
 				
 			}
 			
@@ -162,8 +160,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 		try {
 			// str = new String(str.getBytes("8859_1"), charSet); // 编码转换
 			// default RealLogPattern
-			String server = "00";
-			boolean aserflag = false;
+			String server = "00";		 
 			String isTudou = "0";
 			Matcher pm2 = syslogExtPer.matcher(str);
 			Matcher ipv4 = Ipv4.matcher(str);
@@ -182,8 +179,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				}
 				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
-				}
-				aserflag = true;
+				}			 
 				
 			}
 			
@@ -194,8 +190,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 				str = str.replaceAll(syslogExtPer.toString(), "");
 			}
 			
-			// split
-			int len = str.length();
+			// split			 
 			int start = 0;
 			int end = 0;
 			end = str.indexOf(space);
@@ -303,7 +298,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	}
 	
 	@Override
-	public void logExpandsToObject(ArrayList itr) {
+	public void logExpandsToObject(ArrayList<String> itr) {
 		// 其本字段to obj
 		this.logToObject(itr);
 		// 扩展log字段 and to obj
@@ -313,7 +308,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	/**
 	 * to object and logExpands
 	 */
-	public void logToObject(ArrayList itr) {
+	public void logToObject(ArrayList<String> itr) {
 		try {
 			if (itr.size() >= 10) {
 				// ip datetime method uri args req_body code req_length req_time
@@ -348,7 +343,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 		}
 	}
 	
-	public void logExpands(ArrayList itr) {
+	public void logExpands(ArrayList<String> itr) {
 		try {
 			if (itr.size() >= 10) {
 				String method = new String(itr.get(2).toString().getBytes(), charSet);
@@ -418,7 +413,7 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	}
 	
 	@Override
-	public ArrayList formatAccessLog(ArrayList alog) {
+	public ArrayList<String> formatAccessLog(ArrayList<String> alog) {
 		try {
 			for (int i = 0; i < alog.size(); i++) {
 				switch (i) {
@@ -479,13 +474,13 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	
 	@Override
 	public String repr() {
-		String report = String.format("%s", this.valToString("|"));
+		String report = String.format("%s", this.valToString("#"));
 		return report;
 	}
 	
 	@Override
 	public String toString() {
-		return this.valToString("|");
+		return this.valToString("#");
 	}
 	
 	/**
@@ -510,16 +505,17 @@ public abstract class AbstractAccessLog implements Serializable, IAccessLog {
 	}
 	
 	public String jiekouKey() {
-		// jiekou,转成long分，抛弃秒值
-		// key=datestr_yyyymmdd hh:mm:ss
-		// ukey=time|method|uriname|code|rely|server
+		// 请勿随意改动
+		// jiekou,转成long分，抛弃秒值set00
+		// ukey=time#rely#server#uriname
+		// 20120613#10:01:00#0#01#/home
 		StringBuffer sb = new StringBuffer();
 		String SEPARATOR = "|";
-		sb.append(Common.longMinute(getDate_time())).append(SEPARATOR).append(getMethod()).append(SEPARATOR)
-				.append(getUri_name()).append(SEPARATOR).append(getResponse_code()).append(SEPARATOR).append(getRely())
-				.append(SEPARATOR).append(getServer());
+		sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
+				.append(getServer()).append(SEPARATOR).append(getUri_name());
 		return sb.toString();
 	}
+ 
 	
 	public char getLogVersion() {
 		return logVersion;
