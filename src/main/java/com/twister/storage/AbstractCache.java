@@ -7,9 +7,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
@@ -20,7 +17,7 @@ import com.twister.utils.RedisUtils;
 
 public abstract class AbstractCache<T> implements Icache<T>{
 	
-	private static Logger logger = LoggerFactory.getLogger(AbstractCache.class);
+	 
 	
 	public final AtomicInteger atomicInteger = new AtomicInteger(0);
 	
@@ -46,7 +43,7 @@ public abstract class AbstractCache<T> implements Icache<T>{
 		    String jsonStr = jedis.get(key);
 			return JacksonUtils.jsonToObject(jsonStr,valueType);
 		}else{			 	
-			logger.debug("restoreObjectFromJson key "+key +" is not exists redis.");
+			 
 			return null;
 		}
 	}
