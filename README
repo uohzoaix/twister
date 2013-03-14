@@ -49,9 +49,12 @@ Storm ui 已经正确的显示出来，还没有跑例子。下面的事情就�
     http://xumingming.sinaapp.com/179/twitter-storm-搭建storm集群/
 下面开始运行 storm-starter的wordcount例子。
 在Storm 客户端，进入storm-starter的target文件夹，
-在终端输入  
+在终端输入 
+cd twister
 git clone https://github.com/zhouguoqing917/twister.git twister
 mvn -Dmaven.test.skip=true clean package
 storm jar storm-starter-0.0.1-SNAPSHOT-jar-with-dependencies.jar storm.starter.WordCountTopology wordCountTopology
-
+or
+storm jar twister-0.0.1-jar-with-dependencies.jar com.twister.topology.TwisterTopology
+java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar:. com.twister.simple.SenderUdpClient
 
