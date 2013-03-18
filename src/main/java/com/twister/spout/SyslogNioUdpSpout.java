@@ -182,7 +182,9 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 						logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
 						Utils.sleep(1*1000);
 					}
-					clientChannel.register(selector, SelectionKey.OP_READ);
+					if (!clientChannel.isRegistered()) {
+						clientChannel.register(selector, SelectionKey.OP_READ);
+					}
 					
 				}
 			}
@@ -190,6 +192,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 		} catch (IOException e) {
 			// TODO
 			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw new RuntimeException(e);
 		}
 		

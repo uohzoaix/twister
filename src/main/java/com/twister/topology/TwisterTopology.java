@@ -3,13 +3,15 @@ package com.twister.topology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import storm.trident.TridentTopology;
+
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
-import com.twister.bolt.AccessLogStatistic;
+import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
 import com.twister.bolt.RedisStorageBolt;
 import com.twister.spout.SyslogNioTcpSpout;
@@ -19,7 +21,7 @@ import com.twister.spout.SyslogNioUdpSpout;
  * <p>
  * Description : TwisterTopology <br>
  * usage: Topology
- * 
+ * 不支持事务，没有批量提交
  * storm jar target/twister-0.0.1-jar-with-dependencies.jar
  * com.twister.topology.TwisterTopology *
  * </p>
@@ -40,7 +42,8 @@ public class TwisterTopology {
 	public static int Uport = 10237;
 	
 	public static void main(String[] args) throws Exception {
-		
+		 
+		 
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		// setup your spout
@@ -53,23 +56,23 @@ public class TwisterTopology {
 		// SyslogUdpSpout spout = new
 		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
 		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-	     SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport);
+	     SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport);		
+		 SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport);	 
 		
-		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport);
 		
 		//收集日志分发
-		builder.setSpout("tcpTwister", tcpspout);
-		builder.setSpout("udpTwister", udpspout);
+		builder.setSpout("tcpTwisterSpout", tcpspout);
+		builder.setSpout("udpTwisterSpout", udpspout);
 		
 		// Initial filter
 		//随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("alogShuffle", new AccessLogShuffle(), 5).shuffleGrouping("tcpTwister").shuffleGrouping("udpTwister");
+		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("tcpTwisterSpout").shuffleGrouping("udpTwisterSpout");
 		 
 		//统计结点 bolt
-		builder.setBolt("statistic", new AccessLogStatistic(), 5).fieldsGrouping("alogShuffle",new Fields("AccessLog"));
+		builder.setBolt("statisBolt", new AccessLogStatis(), 5).fieldsGrouping("shuffleBolt",new Fields("ukey","AccessLogAnalysis"));
 		
 		//汇总结点及入redis内存 bolt		
-		builder.setBolt("storage", new RedisStorageBolt(), 20).fieldsGrouping("statistic",new Fields("AccessLog"));
+		builder.setBolt("storageBolt", new RedisStorageBolt(), 20).globalGrouping("statisBolt");
 		
 		// config
 		Config conf = new Config();

@@ -16,15 +16,14 @@ import com.twister.utils.Common;
 public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> implements Serializable {
 	
 	// jiekou,转成long分，抛弃秒值
-	// key=datestr_yyyymmdd hh:mm:ss
-	// ukey=time|method|uriname|code|rely|server|getProv	
+	// ukey=time#rely#server#uriname
+	// 20120613#10:01:00#0#/home
 	private String key;
-	private String day = "19700101";
-	 
 	private long cnt_pv = 1l;
 	private long cnt_bytes = 0l; // 流量kb
 	private long cnt_time = 0l; // 响应ms
-	private double avg_time = 0l;	
+	private double avg_time = 0l;
+	private int code=200;
 	private long cnt_error = 0l;
 	// requesttime 优秀 良好 达标 超时 异常
 	private long a = 0l;
@@ -42,11 +41,11 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	 * @param content_length
 	 * @param request_time
 	 */
-	public AccessLogAnalysis(String ukey,String day,int response_code, long content_length, long request_time){
+	public AccessLogAnalysis(String ukey,int response_code, long content_length, long request_time){
 		// cnt_error 优秀 良好 达标 超时 异常		
-		this.key=ukey;
-		this.day=day;
+		this.key=ukey;		 
 		this.cnt_pv = 1l;
+		this.code=response_code;
 		this.cnt_bytes = content_length;
 		this.cnt_time = request_time;
 		this.setAvg_time(request_time);
@@ -86,9 +85,14 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		BigDecimal bd = new BigDecimal(cnt_time);
 		this.avg_time = this.cnt_pv == 0 ? 0 : bd.divide(BigDecimal.valueOf(this.cnt_pv), 2, BigDecimal.ROUND_FLOOR).doubleValue();		 
 	}
-	
 	 
 	
+	public int getCode() {
+		return code;
+	}
+	public void setCode(int code) {
+		this.code = code;
+	}
 	public long getCnt_error() {
 		return cnt_error;
 	}
@@ -135,15 +139,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	
 	public void setE(long e) {
 		this.e = e;
-	}
-	
-	public String getDay() {
-		return day;
-	}
-	
-	public void setDay(String day) {
-		this.day = day;
-	}
+	} 
 	
 	@Override
 	public void assess_request_time(int response_code, long request_time) {
@@ -165,23 +161,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		this.key=ukey;		
 	}
  
-	@Override
-	public Map<String,Object> valuesToMap() {
-		Map<String,Object> mp=new HashMap<String,Object>();	 
-		mp.put("key",key);
-		mp.put("day",day);
-		mp.put("cnt_pv",cnt_pv);
-		mp.put("cnt_bytes",cnt_bytes);
-		mp.put("cnt_time",cnt_time);
-		mp.put("avg_time",avg_time);
-		mp.put("cnt_error",cnt_error);
-		mp.put("a",a);
-		mp.put("b",b);
-		mp.put("c",c);
-		mp.put("d",d);
-		mp.put("e",e);		
-		return mp;
-	}
+ 
 	
 	@Override
 	public AccessLogAnalysis calculate(AccessLogAnalysis obj) {
@@ -189,7 +169,8 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 			this.cnt_pv += obj.cnt_pv;
 			this.cnt_bytes +=obj.cnt_bytes;
 			this.cnt_time +=obj.cnt_time;
-			this.avg_time=
+			this.code=obj.code;
+			this.setAvg_time(this.cnt_time);
 			this.cnt_error +=obj.cnt_error;
 			this.a+=obj.a;
 			this.b+=obj.b;
@@ -204,11 +185,29 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	
 	@Override
 	public String toString() {
-		return "AccessLogAnalysis [key=" + key + ", day=" + day + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes
-				+ ", cnt_time=" + cnt_time + ", avg_time=" + avg_time + ", cnt_error=" + cnt_error + ", a=" + a
+		return "AccessLogAnalysis [key=" + key + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes + ", cnt_time="
+				+ cnt_time + ", avg_time=" + avg_time + ", code=" + code + ", cnt_error=" + cnt_error + ", a=" + a
 				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "]";
+	}   
+	
+	public void addObject(Map<String, AccessLogAnalysis> bag, String key, AccessLogAnalysis objValue) {
+		AccessLogAnalysis slot = bag.get(key);
+		if (slot == null) {
+			bag.put(key, slot);
+		} else {
+			slot = slot.calculate(objValue);
+		}
+		bag.put(key, slot);
 	}
 	
-   
+	public void addCnt(Map<String, Integer> bag, String key) {
+		Integer ct = bag.get(key);
+		if (ct == null) {
+			bag.put(key, 1);
+		} else {
+			ct += 1;
+			bag.put(key, 1);
+		}
+	}
 	
 }

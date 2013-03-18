@@ -61,10 +61,10 @@ public class SenderTcpClient {
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");
 						}
-						if (i > 20) {
-							line = null;
-							break;
-						}
+//						if (i > 20) {
+//							line = null;
+//							break;
+//						}
 						System.out.print(i + " " + packet.toString());
 						i++;
 						PrintWriter out = new PrintWriter(socket.getOutputStream(), true); // 创建数据传输流
@@ -74,7 +74,7 @@ public class SenderTcpClient {
 						} else {
 							out.println(packet);
 						}
-						Utils.sleep(100);
+						//Utils.sleep(100);
 						out.flush();
 						out.close();
 						socket.close();

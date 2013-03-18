@@ -15,8 +15,7 @@ public interface IAnalysisAlgorithm<T>{
 	public void setKey(String ukey);	
 	public String objectToJson();	 
 	public <T> T fromJson(String json, Class<T> c);	 
-	public Map<String,Object> valuesToMap();	 
-	public void assess_request_time(int response_code, long request_time);	
+	public void assess_request_time(int response_code, long request_time);
 	 
 	/**
 	 * 

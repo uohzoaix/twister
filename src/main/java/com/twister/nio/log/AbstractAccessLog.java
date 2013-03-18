@@ -480,7 +480,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 	
 	@Override
 	public String toString() {
-		return this.valToString("#");
+		return String.format("Accesslog [%s]", this.valToString("#"));
 	}
 	
 	/**
@@ -504,15 +504,16 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		return val.toString();
 	}
 	
-	public String jiekouKey() {
+	public String outKey() {
 		// 请勿随意改动
 		// jiekou,转成long分，抛弃秒值set00
 		// ukey=time#rely#server#uriname
-		// 20120613#10:01:00#0#01#/home
+		// 20120613#10:01:00#0#/home
 		StringBuffer sb = new StringBuffer();
-		String SEPARATOR = "|";
-		sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
-				.append(getServer()).append(SEPARATOR).append(getUri_name());
+		if (this.logVersion=='0'){			 
+			String SEPARATOR = "#";			
+			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getUri_name());
+		}
 		return sb.toString();
 	}
  

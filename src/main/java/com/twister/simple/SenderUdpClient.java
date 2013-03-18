@@ -56,10 +56,10 @@ public class SenderUdpClient {
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");
 						}
-						if (i > 20) {
-							line = null;
-							break;
-						}
+//						if (i > 20) {
+//							line = null;
+//							break;
+//						}
 						System.out.print(i + " " + packet.toString());
 						// 创建发送类型的数据报：
 						DatagramPacket datagramPacket = new DatagramPacket(packet.toString().getBytes(charSet),

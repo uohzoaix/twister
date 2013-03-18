@@ -36,23 +36,29 @@ public class AccessLogShuffle extends BaseRichBolt {
 	
 	@Override
 	public void execute(Tuple input) {
-		for (int i = 0; i < input.size(); i++) {
-			AccessLog alog = (AccessLog) input.getValue(i);
-			System.out.println(input.size());
-			LOGR.debug(alog.toString());
-			//转化成少的pojo由code算出cnt_error等,不累加直接发过去
-			AccessLogAnalysis logalys=new AccessLogAnalysis(alog.jiekouKey(),alog.getDateStr(),alog.getResponse_code(),alog.getContent_length(),alog.getRequest_time());
-			LOGR.debug(logalys.toString());
-			collector.emit(new Values(logalys));
+		try {
+			for (int i = 0; i < input.size(); i++) {
+				AccessLog alog = (AccessLog) input.getValue(i);
+				System.out.println(input.size());
+				LOGR.debug(alog.toString());
+				//转化成少的pojo由code算出cnt_error等,不累加直接发过去
+				AccessLogAnalysis logalys=new AccessLogAnalysis(alog.outKey(),alog.getResponse_code(),alog.getContent_length(),alog.getRequest_time());
+				LOGR.debug(logalys.toString());
+				collector.emit(new Values(alog.outKey(),logalys));
+			}
+			// 通过ack操作确认这个tuple被成功处理
+			collector.ack(input);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGR.error(e.getStackTrace().toString());
 		}
-		// 通过ack操作确认这个tuple被成功处理
-		collector.ack(input);
+		
 	}
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// out object=AccessLogAnalysis,fieldname=AccessLog
-		declarer.declare(new Fields("AccessLog"));
+		declarer.declare(new Fields("ukey","AccessLogAnalysis"));
 	}
 	
 }

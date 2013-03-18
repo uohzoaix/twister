@@ -1,9 +1,17 @@
 package com.twister.nio.log;
 
+import java.io.Serializable;
+
 import com.twister.utils.JacksonUtils;
 
-public abstract class AbstractAnalysis<T> implements IAnalysisAlgorithm<T> {
-    public String key;    
+public abstract class AbstractAnalysis<T> implements Serializable,IAnalysisAlgorithm<T> {
+	
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 666708219120833466L;
+	
+	public String key;    
 	@Override
 	public String getKey() {
 		 
