@@ -43,7 +43,7 @@ import com.twister.nio.log.AccessLog;
  * 
  */
 public class SyslogNioTcpSpout extends BaseRichSpout {
-	
+
 	/**
 	 * 
 	 */
@@ -60,7 +60,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	private Selector selector = null;
 	private ByteBuffer readBuffer;
 	private long cc = 0l;
-	
+
 	public SyslogNioTcpSpout() {
 		this.port = DEFAULT_SYSLOG_TCP_PORT;
 		try {
@@ -69,17 +69,17 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public SyslogNioTcpSpout(int port) {
 		this.port = port;
 		try {
 			this.ip = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
-			
+
 			e.printStackTrace();
 		}
 	}
-	
+
 	public SyslogNioTcpSpout(int port, InetAddress ip) {
 		this.port = port;
 		try {
@@ -88,16 +88,19 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
-	public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector collector) {
-		Preconditions.checkState(server == null, "SyslogTcpSpout already open on port " + port);
+	public void open(Map map, TopologyContext topologyContext,
+			SpoutOutputCollector collector) {
+		Preconditions.checkState(server == null,
+				"SyslogTcpSpout already open on port " + port);
 		this.collector = collector;
 		this.readBuffer = ByteBuffer.allocate(readChunckSize);
 		cc = 0l;
 		try {
 			// TCPServer accept, 监听端口，准备连接客户端
-			logger.info(" SyslogNioTcpSpout server start,will bind on port " + port);
+			logger.info(" SyslogNioTcpSpout server start,will bind on port "
+					+ port);
 			// 生成一个侦听端
 			serverSocketChannel = ServerSocketChannel.open();
 			// 生成一个信号监视器
@@ -109,15 +112,17 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 			serverSocketChannel.configureBlocking(false);
 			// 设置侦听端所选的异步信号OP_ACCEPT
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-			System.out.println("nio tcp server start! " + " ip:" + ip.getHostAddress() + " port " + port);
-			logger.info("register SyslogNioTcpSpout on port " + port + " ip:" + ip.getHostAddress());
+			System.out.println("nio tcp server start! " + " ip:"
+					+ ip.getHostAddress() + " port " + port);
+			logger.info("register SyslogNioTcpSpout on port " + port + " ip:"
+					+ ip.getHostAddress());
 		} catch (IOException e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());
-			
+
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		cc = 0l;
@@ -127,15 +132,15 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 				selector.close();
 				serverSocketChannel.close();
 			}
-			
+
 		} catch (IOException e) {
 			e.printStackTrace(); // To change body of catch statement use File |
 									// Settings | File Templates.
 		}
 		logger.info("Closing SyslogTcpSpout on port " + port);
-		
+
 	}
-	
+
 	@Override
 	public void nextTuple() {
 		cc += 1;
@@ -145,14 +150,15 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 			if (lks == 0)
 				return;
 			Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
-			
+
 			while (iter.hasNext()) {
 				SelectionKey selectionKey = iter.next();
 				iter.remove();
 				if (selectionKey.isAcceptable()) {
 					// 获取SocketChannel来通信
 					SelectableChannel channel = selectionKey.channel();
-					SocketChannel clientChannel = ((ServerSocketChannel) channel).accept();
+					SocketChannel clientChannel = ((ServerSocketChannel) channel)
+							.accept();
 					clientChannel.configureBlocking(false);
 					if (!clientChannel.isRegistered()) {
 						clientChannel.register(selector, SelectionKey.OP_READ);
@@ -160,8 +166,9 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 				}
 				if (selectionKey.isReadable()) {
 					// 处理读请求
-					SocketChannel clientChannel = (SocketChannel) selectionKey.channel();
-					String remoteip = clientChannel.getRemoteAddress().toString();
+					SocketChannel clientChannel = (SocketChannel) selectionKey
+							.channel();
+
 					// 读取服务器发送来的数据到缓冲区中
 					readBuffer.clear();
 					StringBuffer vec = new StringBuffer();
@@ -169,15 +176,16 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 					// logger.info("服务器端接受客户端数据  isReadable "+remoteip);
 					while ((len = clientChannel.read(readBuffer)) > 0) {
 						readBuffer.flip();
-						String packet = new String(readBuffer.array(), 0, len, charSet);
+						String packet = new String(readBuffer.array(), 0, len,
+								charSet);
 						// System.out.println("receiveText " + receiveText);
 						vec.append(packet);
 						// 复位，清空
 						readBuffer.clear();
 					}
-					
+
 					if (vec.length() > 0) {
-						logger.info("服务器端接受客户端数据 [" + remoteip + "] " + vec.length());
+						logger.info("服务器端接受客户端数据 " + vec.length());
 						String text = vec.toString();
 						String[] lines = text.split("\n");
 						for (int i = 0; i < lines.length; i++) {
@@ -189,48 +197,50 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 							AccessLog alog = new AccessLog(line);
 							logger.info(alog.repr());
 							// send tuple to bolt, rt that was sent task ids
-							List<Integer> taskids = collector.emit(new Values(alog));
-							
+							List<Integer> taskids = collector.emit(new Values(
+									alog));
+
 						}
 					} else {
-						logger.info("SyslogNioTcpSpout " + port + " 我的心在等待，永远在等待!" +cc);
+						logger.info("SyslogNioTcpSpout " + port
+								+ " 我的心在等待，永远在等待!" + cc);
 						Utils.sleep(1 * 1000);
 					}
 					if (!clientChannel.isRegistered()) {
 						clientChannel.register(selector, SelectionKey.OP_READ);
 					}
-					
+
 				}
 			}
-			
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} finally {
 			try {
-				
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	public boolean isDistributed() {
 		return false;
 	}
-	
+
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("AccessLog"));
 	}
-	
+
 	@Override
 	public void ack(Object msgid) {
 		logger.debug("ack msgid " + msgid.toString());
 	}
-	
+
 	@Override
 	public void fail(Object msgid) {
 		logger.debug("fail msgid " + msgid.toString());
 	}
-	
+
 }
