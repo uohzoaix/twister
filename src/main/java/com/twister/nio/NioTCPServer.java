@@ -25,7 +25,8 @@ import com.twister.nio.NIOEvent.EventHandlerAdapter;
  */
 
 public class NioTCPServer extends EventHandlerAdapter {
-	private static final Logger logger = LoggerFactory.getLogger(NioTCPServer.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(NioTCPServer.class);
 	private static Charset charSet = Charset.forName("UTF-8");
 	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
@@ -38,7 +39,7 @@ public class NioTCPServer extends EventHandlerAdapter {
 	boolean writing;
 	boolean closing;
 	boolean closed;
-	
+
 	public NioTCPServer() {
 		this.maxBufferSize = 104857600;
 		this.readChunckSize = 8192;
@@ -46,9 +47,9 @@ public class NioTCPServer extends EventHandlerAdapter {
 		this.stream = CharBuffer.allocate(readChunckSize);
 		this.streamRead = stream.duplicate();
 		this.writeBuffer = ByteBuffer.allocateDirect(readChunckSize);
-		
+
 	}
-	
+
 	/**
 	 * Binds the socket provided by the channel to a port. The backlog for the
 	 * bind is 128 connections just like in Tornado. Starts the IOLoop.
@@ -64,7 +65,8 @@ public class NioTCPServer extends EventHandlerAdapter {
 		selector = Selector.open();
 		// 侦听端绑定到一个端口
 		final ServerSocket serverSocket = serverSocketChannel.socket();
-		logger.info("TCP Server Socket host:" + localhost.getHostAddress() + "port:" + port);
+		logger.info("TCP Server Socket host:" + localhost.getHostAddress()
+				+ "port:" + port);
 		serverSocket.bind(new InetSocketAddress(port), 1024);
 		// 将侦听端设为异步方式
 		serverSocketChannel.configureBlocking(false);
@@ -89,28 +91,29 @@ public class NioTCPServer extends EventHandlerAdapter {
 				iter.remove();
 			}
 		}
-		
+
 	}
-	
+
 	@Override
 	protected void onAccept(SelectionKey selectionKey) throws Exception {
 		// 获取SocketChannel来通信
 		SelectableChannel channel = selectionKey.channel();
 		SocketChannel clientChannel = ((ServerSocketChannel) channel).accept();
 		clientChannel.configureBlocking(false);
-		clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(readChunckSize));
+		clientChannel.register(selector, SelectionKey.OP_READ,
+				ByteBuffer.allocate(readChunckSize));
 		channel.configureBlocking(false);
-		
+
 	}
-	
+
 	@Override
 	protected void onWrite(SelectionKey selectionKey) throws Exception {
 		SocketChannel clientChannel = (SocketChannel) selectionKey.channel();
-		String remoteip = clientChannel.getRemoteAddress().toString();
+
 		// 将缓冲区清空以备下次写入
 		this.writeBuffer.clear();
 		// 返回为之创建此键的通道。
-		String sendText = "receive " + remoteip + " OK!";
+		String sendText = "receive " + " OK!";
 		// 向缓冲区中输入数据
 		writeBuffer.put(sendText.getBytes());
 		// 将缓冲区各标志复位,因为向里面put了数据标志被改变要想从中读取数据发向服务器,就要复位
@@ -120,22 +123,22 @@ public class NioTCPServer extends EventHandlerAdapter {
 		logger.info("服务器端向客户端发送数据 " + sendText);
 		clientChannel.register(selector, SelectionKey.OP_READ);
 	}
-	
+
 	@Override
 	protected void onRead(SelectionKey selectionKey) throws Exception {
 		SocketChannel clientChannel = (SocketChannel) selectionKey.channel();
-		String remoteip = clientChannel.getRemoteAddress().toString();
+
 		// 将缓冲区清空以备下次读取
 		readBuffer.clear();
 		// 读取服务器发送来的数据到缓冲区中
 		int count = clientChannel.read(readBuffer);
 		if (count > 0) {
 			String receiveText = new String(readBuffer.array(), 0, count);
-			logger.info("服务器端接受客户端数据 [" + remoteip + "] " + receiveText);
+			logger.info("服务器端接受客户端数据 " + receiveText);
 			clientChannel.register(selector, SelectionKey.OP_READ);
 		}
 	}
-	
+
 	public void close() {
 		this.closing = true;
 		if (!this.writing) {
@@ -150,7 +153,7 @@ public class NioTCPServer extends EventHandlerAdapter {
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		int port = 10236;
 		NioTCPServer tcpServer = new NioTCPServer();
@@ -160,5 +163,5 @@ public class NioTCPServer extends EventHandlerAdapter {
 			e.printStackTrace();
 		}
 	}
-	
+
 }
