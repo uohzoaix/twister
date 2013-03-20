@@ -82,8 +82,8 @@ public class RedisStorageTransBolt extends BaseTransactionalBolt implements ICom
 			String ukey = input.getStringByField("ukey");
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
 			if (logalys != null) {
-				logalys.addObject(allApiKeys, ukey, logalys);
-				logalys.addCnt(allCounter, ukey);
+				//logalys.addObject(allApiKeys, ukey, logalys);
+				//logalys.addCnt(allCounter, ukey);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

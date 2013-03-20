@@ -80,8 +80,8 @@ public class AccessLogTransStatis extends BaseBatchBolt {
 			String ukey = input.getStringByField("ukey");
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
 			if (logalys != null) {
-				logalys.addObject(hashApiKeys, ukey, logalys);
-				logalys.addCnt(hashCounter, ukey);
+				//logalys.addObject(hashApiKeys, ukey, logalys);
+				//logalys.addCnt(hashCounter, ukey);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
