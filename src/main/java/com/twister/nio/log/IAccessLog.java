@@ -23,10 +23,25 @@ public interface IAccessLog<T> {
 	public static final String SPACE = " "; // 空格键
 	public static final ArrayList<Map<String, Serializable>> uriRegex = Common.getUriRegexConf(Common.UriRegexFile);
 	
+	/**
+	 * 1.先初始化conf
+	 */
 	public void initSettings();
 	
+	/**
+	 * check input line
+	 * 
+	 * @param line
+	 * @return
+	 */
 	public boolean checkAccessLog(String line);
 	
+	/**
+	 * 先用正则表达式匹配line 有错误时候用 split方式
+	 * 
+	 * @param line
+	 * @return
+	 */
 	public ArrayList<String> parseLog(String line);
 	
 	public String repr();
@@ -39,8 +54,19 @@ public interface IAccessLog<T> {
 	
 	public String sublogString(String str, int start, int end);
 	
+	/**
+	 * format matcher or split array value
+	 * 
+	 * @param alog
+	 * @return
+	 */
 	public ArrayList<String> formatAccessLog(ArrayList<String> alog);
 	
+	/**
+	 * expands to object ,is build new object
+	 * 
+	 * @param itr
+	 */
 	public void logExpandsToObject(ArrayList<String> itr);
 	
 	public Logger getLogger();

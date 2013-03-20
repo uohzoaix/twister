@@ -41,6 +41,8 @@ public final class Common {
 	public static final Pattern DateStrPat = Pattern
 			.compile("(\\d{4})\\-(\\d{2})\\-(\\d{2})\\s{1}(\\d{2}):(\\d{2}):(\\d{2})");
 	
+	// 只要特殊的uri包括变量的才去执行正则表达式匹配
+	public static final String specialRegex = "videos|search|shows|user|channels";
 	public static String UriRegexFile = "conf/uriRegex.conf"; // target uri
 	public static String UriRegexHDFSFile = "/workspace/mobile/Statis/mapi/conf/uriRegex.conf"; // on
 																								// hdfs

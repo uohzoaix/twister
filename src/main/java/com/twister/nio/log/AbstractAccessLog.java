@@ -21,8 +21,9 @@ import org.slf4j.LoggerFactory;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 import com.twister.utils.JacksonUtils;
- 
-@JsonIgnoreProperties(value = { "logger" , "LOGR", "serialVersionUID","proxyIp","timeCalendar","timeDate" })
+
+@JsonIgnoreProperties(value = { "logger", "LOGR", "serialVersionUID", "proxyIp", "ipInt", "request_args",
+		"timeCalendar", "timeDate" })
 public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T> {
 	
 	@JsonIgnore
@@ -74,26 +75,34 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 	
 	@Override
 	public boolean checkAccessLog(String line) {
-		return true;
+		if (line.contains("GET") || line.contains("POST")) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	@Override
 	public ArrayList<String> parseLog(String line) {
+		ArrayList<String> vec = new ArrayList<String>();
+		String srcline = line;
 		if (this.checkAccessLog(line)) {
-			ArrayList<String> itr = this.logMatcher(line);
-			return itr;
+			vec = logMatcher(line);
+			if (vec.size() == 0) {
+				vec = logSplit(srcline, SPACE);
+			}
+			return vec;
 		} else {
-			return new ArrayList<String>();
+			return vec;
 		}
 	}
 	
 	@Override
 	public ArrayList<String> logMatcher(String line) {
 		ArrayList<String> vec = new ArrayList<String>();
-		String srcline = line;
 		try {
 			// default RealLogPattern
-			String server = "00";		 
+			String server = "00";
 			String isTudou = "0";
 			Matcher pm2 = syslogExtPer.matcher(line);
 			Matcher ipv4 = Ipv4.matcher(line);
@@ -112,7 +121,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				}
 				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
-				}			
+				}
 				
 			}
 			
@@ -143,8 +152,13 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				vec.add(ua);
 				if (realMatcher.groupCount() > 10 && realMatcher.group(11).length() > 0) {
 					// server ip
-					String[] lastcols = realMatcher.group(11).toString().trim().split("\\s");
-					server = lastcols[0];
+					Matcher seripv4 = Ipv4.matcher(realMatcher.group(11).toString());
+					if (seripv4.find()) {
+						server = seripv4.group(1);
+					} else {
+						String[] lastcols = realMatcher.group(11).toString().trim().split("\\s");
+						server = lastcols[0];
+					}
 				}
 				vec.add(server.toString());
 				vec.add(isTudou);
@@ -155,7 +169,6 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 			return formatAccessLog(vec);
 		} catch (Exception e) {
 			e.printStackTrace();
-			vec = logSplit(srcline, SPACE);
 			System.out.println("logsplit " + vec.size() + " " + vec.toString());
 			return vec;
 		}
@@ -168,7 +181,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		try {
 			// str = new String(str.getBytes("8859_1"), charSet); // 编码转换
 			// default RealLogPattern
-			String server = "00";		 
+			String server = "00";
 			String isTudou = "0";
 			Matcher pm2 = syslogExtPer.matcher(str);
 			Matcher ipv4 = Ipv4.matcher(str);
@@ -187,7 +200,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				}
 				if (syslogper.contains("Tudou") || syslogper.contains("tudou")) {
 					isTudou = "1";
-				}			 
+				}
 				
 			}
 			
@@ -198,7 +211,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				str = str.replaceAll(syslogExtPer.toString(), "");
 			}
 			
-			// split			 
+			// split
 			int start = 0;
 			int end = 0;
 			end = str.indexOf(space);
@@ -385,12 +398,16 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				// 去掉开始的/,再用/分割，再取数组的第一个字段做为kls
 				String[] uriarr = uri.toString().trim().replaceFirst("\\/", "").split("\\/");
 				String kls = uriarr.length > 0 ? uriarr[0] : uri;
+				if (kls.length() < 2) {
+					// change null or /
+					kls = "other";
+				}
 				
 				if (this.getUser_agent().matches("Tudo")) {
 					this.setRely("1");
 				}
 				String mats = AppsConfig.getInstance().getValue("access.log.matches").toString();
-				if (Pattern.compile("videos|search|shows|user|channels").matcher(uri).find()) {
+				if (Pattern.compile(Common.specialRegex).matcher(uri).find()) {
 					// is default matcher
 					regmap = (HashMap) Common.MatcherUri(uriRegex, uri, method.toUpperCase());
 					
@@ -512,8 +529,8 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		return val.toString();
 	}
 	
-	public String toJsonString(){		 
-	     return JacksonUtils.objectToJson(this);
+	public String toJsonString() {
+		return JacksonUtils.objectToJson(this);
 	}
 	
 	public String outKey() {
@@ -522,13 +539,13 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		// ukey=time#rely#server#uriname
 		// 20120613#10:01:00#0#/home
 		StringBuffer sb = new StringBuffer();
-		if (this.logVersion=='0'){			 
-			String SEPARATOR = "#";			
-			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getUri_name());
+		if (this.logVersion == '0') {
+			String SEPARATOR = "#";
+			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
+					.append(getUri_name());
 		}
 		return sb.toString();
 	}
- 
 	
 	public char getLogVersion() {
 		return logVersion;
