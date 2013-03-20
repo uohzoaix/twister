@@ -47,7 +47,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
     private SpoutOutputCollector collector;
     private DatagramSocket socket;
     private InetAddress ip;
-
+    private Fields _fields=new Fields("AccessLog");
 
     public SyslogUdpSpout() {
         this.port = DEFAULT_SYSLOG_UDP_PORT;
@@ -124,7 +124,7 @@ public class SyslogUdpSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("packet"));
+        declarer.declare(_fields);
     }
 
     @Override

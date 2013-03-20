@@ -38,14 +38,15 @@ public class TextFileSpout extends BaseRichSpout {
     private String filename;
     private File file;
     private boolean open = false;
-
+    private Fields _fields=new Fields("AccessLog");
 
     public TextFileSpout(String filename) {
         this(new File(filename));
     }
 
     public TextFileSpout(File file) {
-        Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file + "' is not.");
+    	System.out.println(file.isFile());
+        Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file + "' is not exists.");
         this.filename = file.getAbsolutePath();
         this.file = file;
     }
@@ -83,7 +84,7 @@ public class TextFileSpout extends BaseRichSpout {
      * Emits tuples containing only one field, named "line".
      */
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("line"));
+        declarer.declare(_fields);
     }
 
     public boolean isDistributed() {

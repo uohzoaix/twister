@@ -38,15 +38,16 @@ public class SyslogTcpSpoutTest {
     public void syslogTcp() throws Exception {
         // Given
         int count = 10;
-        int port = 5678; // Creates an unbound server socket.
-        spout = new SyslogTcpSpout(port);
+        int port = 10678; // Creates an unbound server socket.
+        spout = new SyslogNioTcpSpout(port);
+        //spout = new SyslogTcpSpout(port);
 
         CountDownLatch done = new CountDownLatch(1);
         TupleEmitter emitter = new TupleEmitter(spout, collector, done, count); // Call next tuple
         emitter.start(); // Start the thread who calls nextTuple
 
         // When
-        Socket socket = new Socket(InetAddress.getLocalHost(), port);
+        Socket socket = new Socket("vm01.pc.zgq",port);
         List<String> packets = SocketUtils.writeRandomPackets(socket, count);
         
         // Then

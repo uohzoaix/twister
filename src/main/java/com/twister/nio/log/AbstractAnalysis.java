@@ -34,5 +34,6 @@ public abstract class AbstractAnalysis<T> implements Serializable,IAnalysisAlgor
 	}
 
  
+ 
 	
 }

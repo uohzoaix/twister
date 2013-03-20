@@ -34,7 +34,8 @@ public class SyslogUdpSpoutTest {
     public void syslogUdp() throws Exception {
         // Given
         int count = 10;
-        int port = 5146;
+        int port = 15146;
+        //spout = new SyslogNioUdpSpout(port);
         spout = new SyslogUdpSpout(port);
 
         CountDownLatch done = new CountDownLatch(1);

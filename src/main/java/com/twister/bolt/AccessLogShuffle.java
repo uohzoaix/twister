@@ -27,25 +27,52 @@ public class AccessLogShuffle extends BaseRichBolt {
 	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
-	 
+	public static int GLOB=0;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 	}
 	
+	/**
+	 * tuple 接收一行日志，或者一个accesslog对象
+	 */
 	@Override
 	public void execute(Tuple input) {
+		AccessLog alog = null;
+		String line = "";
 		try {
 			for (int i = 0; i < input.size(); i++) {
-				AccessLog alog = (AccessLog) input.getValue(i);
-				System.out.println(input.size());
-				LOGR.debug(alog.toString());
-				//转化成少的pojo由code算出cnt_error等,不累加直接发过去
-				AccessLogAnalysis logalys=new AccessLogAnalysis(alog.outKey(),alog.getResponse_code(),alog.getContent_length(),alog.getRequest_time());
-				LOGR.debug(logalys.toString());
-				collector.emit(new Values(alog.outKey(),logalys));
+				Object obj = input.getValue(i);
+				if (obj instanceof AccessLog) {
+					alog = (AccessLog) obj;
+				} else if (obj instanceof String) {
+					line = (String) obj;
+					if (line.endsWith("\n")) {
+						line = line.substring(0, line.indexOf("\n"));
+					}
+					alog = new AccessLog(line);
+				} else {
+					continue;
+				}
+				// ukey=time#rely#server#uriname
+				// 20120613#10:01:00#0#/home
+				if (alog != null && alog.outKey().length() > 20) {
+					// LOGR.info(alog.toString());
+					// 转化成少的pojo由code算出cnt_error等,不累加直接发过去
+					AccessLogAnalysis logalys = new AccessLogAnalysis(alog.outKey(), alog.getResponse_code(),
+							alog.getContent_length(), alog.getRequest_time());
+					// LOGR.info(logalys.toString());
+					
+					collector.emit(new Values(alog.outKey(), logalys));
+					if (alog.outKey().contains("initial")) {
+						GLOB++;
+					}
+				} else {
+					 LOGR.info("format error"+line);
+				}
 			}
+			 LOGR.info("shuff=====initial====="+GLOB);
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
 		} catch (Exception e) {
@@ -58,7 +85,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// out object=AccessLogAnalysis,fieldname=AccessLog
-		declarer.declare(new Fields("ukey","AccessLogAnalysis"));
+		declarer.declare(new Fields("ukey", "AccessLogAnalysis"));
 	}
 	
 }

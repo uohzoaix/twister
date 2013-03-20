@@ -2,6 +2,7 @@ package com.twister.simple;
 
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -13,6 +14,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 /**
  * 普通的udp,没有用nio,模拟syslog-ng
  * 
@@ -21,16 +24,20 @@ import org.slf4j.LoggerFactory;
  */
 public class SenderUdpClient {
 	public static Logger logger = LoggerFactory.getLogger(SenderUdpClient.class);
-	public static String logfile = "src/main/resources/accessLog.txt";
+	public static String logfile = "src/main/resources/accessLog.txt";	
 	private static Charset charSet = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
+		if (args.length > 0) {
+			logfile = args[0];
+		}
 		try {
-			
+			File tmpfile = new File(logfile);
+			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
+					+ "' is not exists.");			
 			int port = 10237; // 客户端发送数据端口
 			InetAddress ip = InetAddress.getLocalHost();
-			DatagramSocket socket = new DatagramSocket();
-			
+			DatagramSocket socket = new DatagramSocket();			
 			logger.info("nio udp cli " + ip.toString() + "" + port);
 			int numberOfPackets = 100;
 			int packetLength = 45;
@@ -51,7 +58,7 @@ public class SenderUdpClient {
 					int i = 0;
 					while ((line = file.readLine()) != null) {
 						// 8859_1
-						
+						i++;
 						StringBuffer packet = new StringBuffer(new String(line.getBytes("8859_1"), charSet)); // 编码转换
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");
@@ -66,7 +73,7 @@ public class SenderUdpClient {
 								packet.length(), ip, port);
 						// 通过套接字发送数据：
 						socket.send(datagramPacket);
-						i++;
+						
 					}
 					filePointer = file.getFilePointer();
 					if (line == null) {

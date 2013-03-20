@@ -20,9 +20,8 @@ import com.twister.spout.SyslogNioUdpSpout;
 /**
  * <p>
  * Description : TwisterTopology <br>
- * usage: Topology
- * 不支持事务，没有批量提交
- * storm jar target/twister-0.0.1-jar-with-dependencies.jar
+ * usage: Topology 不支持事务，没有批量提交 storm jar
+ * target/twister-0.0.1-jar-with-dependencies.jar
  * com.twister.topology.TwisterTopology *
  * </p>
  * 
@@ -42,10 +41,7 @@ public class TwisterTopology {
 	public static int Uport = 10237;
 	
 	public static void main(String[] args) throws Exception {
-		 
-		 
 		TopologyBuilder builder = new TopologyBuilder();
-		
 		// setup your spout
 		// TextFileSpout spout = new
 		// TextFileSpout("src/main/resources/words.txt");
@@ -56,23 +52,25 @@ public class TwisterTopology {
 		// SyslogUdpSpout spout = new
 		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
 		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-	     SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport);		
-		 SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport);	 
+		SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport); //12306
+		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport); //12307
+		SyslogNioUdpSpout udpspout2 = new SyslogNioUdpSpout(10238);
 		
-		
-		//收集日志分发
+		// 收集日志分发
 		builder.setSpout("tcpTwisterSpout", tcpspout);
 		builder.setSpout("udpTwisterSpout", udpspout);
+		builder.setSpout("udpTwisterSpout2", udpspout2);
 		
 		// Initial filter
-		//随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("tcpTwisterSpout").shuffleGrouping("udpTwisterSpout");
-		 
-		//统计结点 bolt
-		builder.setBolt("statisBolt", new AccessLogStatis(), 5).fieldsGrouping("shuffleBolt",new Fields("ukey","AccessLogAnalysis"));
+		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
+		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("udpTwisterSpout2")
+				.shuffleGrouping("udpTwisterSpout").shuffleGrouping("tcpTwisterSpout");
 		
-		//汇总结点及入redis内存 bolt		
-		builder.setBolt("storageBolt", new RedisStorageBolt(), 20).globalGrouping("statisBolt");
+		// 统计结点 bolt
+		//builder.setBolt("statisBolt", new AccessLogStatis(), 5).fieldsGrouping("shuffleBolt",new Fields("ukey", "AccessLogAnalysis"));
+		
+		// 汇总结点及入redis内存 bolt
+		//builder.setBolt("storageBolt", new RedisStorageBolt(), 5).globalGrouping("statisBolt");
 		
 		// config
 		Config conf = new Config();
@@ -82,13 +80,13 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(3);
 			StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
-			logger.debug("集群模式运行 " +"udp port:" +Uport +" tcp port:"+Tport);
+			logger.debug("集群模式运行 " + "udp port:" + Uport + " tcp port:" + Tport);
 		} else {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(3);
 			LocalCluster cluster = new LocalCluster();
-			logger.debug("本地模式运行 " +"udp port:" +Uport +" tcp port:"+Tport);
-			cluster.submitTopology("twister", conf, builder.createTopology());			
+			logger.debug("本地模式运行 " + "udp port:" + Uport + " tcp port:" + Tport);
+			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
 			// cluster.shutdown();
 			

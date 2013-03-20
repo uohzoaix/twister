@@ -304,7 +304,7 @@ public final class Common {
 					int x = k + 1;
 					int y = k;
 					String rexpv = realMatcher.group(x);
-					if (gp.length > y) {
+					if (gp.length > y && rexpv!=null) {
 						String reval = gp[y];
 						uri = uri.replace(rexpv, reval);
 					}

@@ -19,7 +19,7 @@ public abstract class AbstractCache<T> implements Icache<T>{
 	public final AtomicInteger atomicInteger = new AtomicInteger(0);
 	public final String ehcachecfg="conf/ehcache.xml"; 
 	private JedisConnection jedisConn=null;
-	
+	 
 	public AbstractCache(){
 		jedisConn=new JedisConnection();
 	}

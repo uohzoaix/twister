@@ -22,5 +22,5 @@ public interface IAnalysisAlgorithm<T>{
 	 * @param obj 本次计算的对象 old obj	 
 	 * @return obj 两个对象的计算完后的 this obj
 	 */
-	public T calculate(T obj);
+	public T calculate(T newobj,T oldobj);
 }

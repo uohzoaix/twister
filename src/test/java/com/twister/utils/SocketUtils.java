@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +100,7 @@ public class SocketUtils {
                 String packet = randomAlphanumeric(packetLength);
                 packets.add(packet);
                 output.println(packet);
+                output.flush();
                 TimeUtils.sleep(wait, timeUnit);
             }
         } finally {
@@ -106,6 +108,8 @@ public class SocketUtils {
         }
         return packets;
     }
+
+ 
 
 
 }

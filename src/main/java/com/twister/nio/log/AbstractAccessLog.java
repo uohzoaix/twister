@@ -149,6 +149,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		} catch (Exception e) {
 			e.printStackTrace();
 			vec = logSplit(srcline, SPACE);
+			System.out.println("logsplit " + vec.size() + " " + vec.toString());
 			return vec;
 		}
 		

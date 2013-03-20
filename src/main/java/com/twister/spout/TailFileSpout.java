@@ -46,6 +46,7 @@ public class TailFileSpout extends BaseRichSpout {
     private SpoutOutputCollector collector;
     private SynchronousQueue<String> queue = new SynchronousQueue<String>();
     private Tailer tailer;
+    private Fields _fields=new Fields("AccessLog");
 
     /**
      * Creates a TailFileSpout for the given file, starting from the beginning, with the default interval of 1.0s.
@@ -129,7 +130,7 @@ public class TailFileSpout extends BaseRichSpout {
      */
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("line"));
+        declarer.declare(_fields);
     }
 
     @Override

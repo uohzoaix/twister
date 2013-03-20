@@ -14,11 +14,11 @@
      
     <entry key="access.log.matches">videos|search|shows|user|channels</entry>  
     
-    <entry key="redis.master.host">127.0.0.1</entry>  
+    <entry key="redis.master.host">10.103.13.18</entry>  
     <entry key="redis.master.port">6379</entry>
     <entry key="redis.master.password">no</entry>
     
-    <entry key="redis.slave.host">127.0.0.1</entry>  
+    <entry key="redis.slave.host">10.103.13.18</entry>  
     <entry key="redis.slave.port">6379</entry>
     <entry key="redis.slave.password">no</entry>
     

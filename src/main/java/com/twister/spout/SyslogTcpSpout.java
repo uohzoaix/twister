@@ -46,7 +46,8 @@ public class SyslogTcpSpout extends BaseRichSpout {
     private BufferedReader reader;
     private int port;
     private InetAddress ip;
-
+    private Fields _fields=new Fields("AccessLog");
+    
     public SyslogTcpSpout() {
         this.port = DEFAULT_SYSLOG_TCP_PORT;
         try {
@@ -73,8 +74,6 @@ public class SyslogTcpSpout extends BaseRichSpout {
 			e.printStackTrace();
 		}
     }
-
-
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector collector) {
@@ -143,7 +142,7 @@ public class SyslogTcpSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("packet"));
+        declarer.declare(_fields);
     }
 
     @Override

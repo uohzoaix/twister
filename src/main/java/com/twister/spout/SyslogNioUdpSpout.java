@@ -63,6 +63,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	private InetAddress ip;
 	private ByteBuffer byteBuffer;
 	private long cc = 0l;
+	private Fields _fields=new Fields("AccessLog");
 	
 	public SyslogNioUdpSpout() {
 		this.port = DEFAULT_SYSLOG_UDP_PORT;
@@ -170,16 +171,15 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 							if (line == null || line.length() < 1) {
 								continue;
 							}
-							logger.info(line);
-							AccessLog alog = new AccessLog(line);
-							logger.info("" + alog.repr());
+							logger.info(line);							 
+							AccessLog alog = new AccessLog(line);							 
 							// send tuple to bolt, rt that was sent task ids
 							List<Integer> taskids = collector.emit(new Values(alog));
 							logger.info("was sent to task ids " + taskids.toString());
 						}
 						
 					} else {
-						logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
+						//logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
 						Utils.sleep(1*1000);
 					}
 					if (!clientChannel.isRegistered()) {
@@ -204,7 +204,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("AccessLog"));
+		declarer.declare(_fields);
 	}
 	
 	@Override

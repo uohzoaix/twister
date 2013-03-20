@@ -30,5 +30,6 @@
         timeToLiveSeconds="600"      
         diskExpiryThreadIntervalSeconds="600"
         memoryStoreEvictionPolicy="LFU" >       
-     </cache>
+    </cache>
+    
 </ehcache>

@@ -1,5 +1,6 @@
 package com.twister.simple;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -13,6 +14,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+
 import backtype.storm.utils.Utils;
 
 public class SenderTcpClient {
@@ -23,6 +26,9 @@ public class SenderTcpClient {
 	private static Charset charSet = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
+		if (args.length > 0) {
+			logfile = args[0];
+		}
 		try {
 			host = InetAddress.getLocalHost();
 			logger.info("tcp client start host " + host.getHostAddress() + ":" + PORT);
@@ -38,6 +44,9 @@ public class SenderTcpClient {
 		Socket socket = null;
 		RandomAccessFile file = null;
 		try {
+			File tmpfile = new File(logfile);
+			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
+					+ "' is not exists.");
 			int numberOfPackets = 100;
 			int packetLength = 20;
 			List<String> packets = new ArrayList<String>(numberOfPackets);

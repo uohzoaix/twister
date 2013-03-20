@@ -48,7 +48,8 @@ public class TestLog {
 		// String
 		// jstr="{\"key\":\"20130303#00:00:00#1#/home\",\"day\":\"20130303\",\"cnt_pv\":1,\"cnt_bytes\":3326,\"cnt_time\":12,\"avg_time\":12.0,\"code\":200,\"cnt_error\":0,\"a\":1,\"b\":0,\"c\":0,\"d\":0,\"e\":0}";
 		 System.out.println(JacksonUtils.jsonToObject(alys.objectToJson(),AccessLogAnalysis.class));
-		issend = false;
+		issend = true;
+		 
 		while (issend) {
 			long fileLength = logfile.length();
 			if (fileLength < filePointer) {
@@ -63,12 +64,12 @@ public class TestLog {
 				while ((line = file.readLine()) != null) {
 					String packet = new String(line.getBytes("8859_1"), CharsetUtil.UTF_8); // 编码转换
 					i++;
-					if (i == 100)
-						return;
+					//if (i == 100)
+					//	return;
 					AccessLog alog = new AccessLog(packet);
-					System.out.println(alog.repr());
+					System.out.println(i+ " "+alog.toString());
 					
-				}
+				}				 
 				filePointer = file.getFilePointer();
 				if (line == null) {
 					issend = false;

@@ -60,6 +60,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	private Selector selector = null;
 	private ByteBuffer readBuffer;
 	private long cc = 0l;
+	private Fields _fields=new Fields("AccessLog");
 	
 	public SyslogNioTcpSpout() {
 		this.port = DEFAULT_SYSLOG_TCP_PORT;
@@ -184,10 +185,8 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 							String line = lines[i];
 							if (line == null || line.length() < 1) {
 								continue;
-							}
-							logger.info(line);
-							AccessLog alog = new AccessLog(line);
-							logger.info(alog.repr());
+							}							 						 
+							AccessLog alog = new AccessLog(line);							 
 							// send tuple to bolt, rt that was sent task ids
 							List<Integer> taskids = collector.emit(new Values(alog));
 							
@@ -220,7 +219,7 @@ public class SyslogNioTcpSpout extends BaseRichSpout {
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("AccessLog"));
+		declarer.declare(_fields);
 	}
 	
 	@Override
