@@ -8,7 +8,9 @@
 	<description>mobile api storm starter access log</description>
 	<url>https://github.com/zhouguoqing917/twister</url>
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>		 
+        <driverClass>com.twister.topology.TwisterTopology</driverClass>
+    
 	</properties>
 	<repositories>
 		<repository>
@@ -149,7 +151,7 @@
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<defaultGoal>package</defaultGoal>
 		<sourceDirectory>src/main/java</sourceDirectory>
-		<testSourceDirectory>src/main/java</testSourceDirectory>
+		<testSourceDirectory>src/test/java</testSourceDirectory>
 		<resources>
 			<resource>
 				<directory>${basedir}/multilang</directory>
@@ -196,35 +198,7 @@
 				<configuration>
 					<encoding>UTF-8</encoding>
 				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>com.theoryinpractise</groupId>
-				<artifactId>clojure-maven-plugin</artifactId>
-				<version>1.3.10</version>
-				<configuration>
-					<sourceDirectories>
-						<sourceDirectory>src/main/clj</sourceDirectory>
-					</sourceDirectories>
-				</configuration>
-				<extensions>true</extensions>
-				<executions>
-					<execution>
-						<id>compile</id>
-						<phase>default</phase>
-						<goals>
-							<goal>compile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>test</id>
-						<phase>test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+			</plugin> 
 			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>

@@ -24,15 +24,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
- 
 
 /**
  * @author guoqing
  * 
  */
 
-public final class Common {	 
-	public static final Pattern DateStrPat = Pattern.compile("(\\d{4})\\-(\\d{2})\\-(\\d{2})\\s{1}(\\d{2}):(\\d{2}):(\\d{2})");	
+public final class Common {
+	public static final String RealLogEntryPattern = "^([\\d.]+) \"(\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2})\" (\\S+) \"(\\S+)\" \"(.+)\" \"(\\S*)\" ([\\d]+) ([\\d]+) ([\\d]+\\.[\\d]+) \"(.*)\"\\s{0,1}(.*)";
+	public static Pattern RealLogPattern = Pattern.compile(RealLogEntryPattern);
+	// syslog-ng add per
+	public static final Pattern syslogExtPer = Pattern
+			.compile("^(\\w+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+\\w([a-zA-Z_0-9\\-]+) ");
+	public static final Pattern Ipv4 = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
+	public static final Pattern Ipv6 = Pattern.compile("\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:\\S*:");
+	public static final Pattern DateStrPat = Pattern
+			.compile("(\\d{4})\\-(\\d{2})\\-(\\d{2})\\s{1}(\\d{2}):(\\d{2}):(\\d{2})");
+	
 	public static String UriRegexFile = "conf/uriRegex.conf"; // target uri
 	public static String UriRegexHDFSFile = "/workspace/mobile/Statis/mapi/conf/uriRegex.conf"; // on
 																								// hdfs
@@ -113,7 +121,6 @@ public final class Common {
 		return cf;
 	}
 	
-	 
 	public static ArrayList<Map<String, Serializable>> getUriRegexConf(String filename) {
 		System.out.println("Common.getUriRegexConf: " + filename);
 		ArrayList<Map<String, Serializable>> reglist = new ArrayList<Map<String, Serializable>>();
@@ -304,7 +311,7 @@ public final class Common {
 					int x = k + 1;
 					int y = k;
 					String rexpv = realMatcher.group(x);
-					if (gp.length > y && rexpv!=null) {
+					if (gp.length > y && rexpv != null) {
 						String reval = gp[y];
 						uri = uri.replace(rexpv, reval);
 					}
@@ -387,8 +394,6 @@ public final class Common {
 		
 	}
 	
- 
-	
 	/**
 	 * @param string
 	 *            yyyy-MM-dd HH:mm:ss
@@ -399,7 +404,7 @@ public final class Common {
 		try {
 			
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			t = dateFormat.parse(timestr).getTime();			 
+			t = dateFormat.parse(timestr).getTime();
 			
 		} catch (ParseException e) {
 		}
@@ -416,7 +421,7 @@ public final class Common {
 		try {
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			dt = dateFormat.format(new Date(time));
-			 
+			
 		} catch (Exception e) {
 		}
 		return dt;
@@ -424,7 +429,8 @@ public final class Common {
 	
 	/**
 	 * 将long毫秒转成long分，抛弃秒值
-	 * @param  long time 毫秒	 * 
+	 * 
+	 * @param long time 毫秒 *
 	 * @return string yyyy-MM-dd HH:mm:ss
 	 */
 	public static Long longMinute(String timestr) {
@@ -432,61 +438,67 @@ public final class Common {
 		try {
 			
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-			t = dateFormat.parse(timestr).getTime();			
+			t = dateFormat.parse(timestr).getTime();
 		} catch (ParseException e) {
 		}
 		return t;
 	}
 	
 	/**
-	 *  抛弃分秒值
-	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * 抛弃分秒值
+	 * 
+	 * @param ldatetimestr
+	 *            2013-03-03 10:03:14
 	 * @return string 20130318#10:03:00
 	 */
 	public static String formatDataTimeStr2(String datetimestr) {
-		String dt="";
+		String dt = "";
 		try {
 			Matcher pm = DateStrPat.matcher(datetimestr);
 			if (pm.matches()) {
-				dt=String.format("%s%s%s#%s:00:00",pm.group(1),pm.group(2),pm.group(3),pm.group(4));			 
-			}  
-			 			
+				dt = String.format("%s%s%s#%s:00:00", pm.group(1), pm.group(2), pm.group(3), pm.group(4));
+			}
+			
 		} catch (Exception e) {
 		}
 		return dt;
 	}
 	
 	/**
-	 *  抛弃秒值
-	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * 抛弃秒值
+	 * 
+	 * @param ldatetimestr
+	 *            2013-03-03 10:03:14
 	 * @return string 20130318#10:03:00
 	 */
 	public static String formatDataTimeStr1(String datetimestr) {
-		String dt="";
+		String dt = "";
 		try {
 			Matcher pm = DateStrPat.matcher(datetimestr);
 			if (pm.matches()) {
-				dt=String.format("%s%s%s#%s:%s:00",pm.group(1),pm.group(2),pm.group(3),pm.group(4),pm.group(5));			 
-			}  
-			 			
+				dt = String.format("%s%s%s#%s:%s:00", pm.group(1), pm.group(2), pm.group(3), pm.group(4), pm.group(5));
+			}
+			
 		} catch (Exception e) {
 		}
 		return dt;
 	}
 	
 	/**
-	 *   
-	 * @param  ldatetimestr 2013-03-03 10:03:14
+	 * 
+	 * @param ldatetimestr
+	 *            2013-03-03 10:03:14
 	 * @return string 20130318#10:03:03
 	 */
 	public static String formatDataTimeStr(String datetimestr) {
-		String dt="";
+		String dt = "";
 		try {
 			Matcher pm = DateStrPat.matcher(datetimestr);
 			if (pm.matches()) {
-				dt=String.format("%s%s%s#%s:%s:%s",pm.group(1),pm.group(2),pm.group(3),pm.group(4),pm.group(5),pm.group(6));			 
-			}  
-			 			
+				dt = String.format("%s%s%s#%s:%s:%s", pm.group(1), pm.group(2), pm.group(3), pm.group(4), pm.group(5),
+						pm.group(6));
+			}
+			
 		} catch (Exception e) {
 		}
 		return dt;

@@ -1,10 +1,13 @@
 package com.twister.nio.log;
  
 import java.util.ArrayList;
+
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
+@JsonIgnoreProperties(value = { "logger" , "LOGR", "serialVersionUID","proxyIp","timeCalendar","timeDate" }) 
 public class AccessLog extends AbstractAccessLog<AccessLog> {
 	
 	private static final long serialVersionUID = 4224713360551345643L;

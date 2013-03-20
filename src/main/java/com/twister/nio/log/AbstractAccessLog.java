@@ -13,16 +13,22 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
-
+import com.twister.utils.JacksonUtils;
+ 
+@JsonIgnoreProperties(value = { "logger" , "LOGR", "serialVersionUID","proxyIp","timeCalendar","timeDate" })
 public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T> {
 	
+	@JsonIgnore
 	private static final long serialVersionUID = 7308710264744648037L;
 	
+	@JsonIgnore
 	private static Logger LOGR = LoggerFactory.getLogger(AbstractAccessLog.class);
 	
 	// fields
@@ -48,6 +54,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 	private String city = "0000000000";
 	private String guid = "";
 	private String rely = "0";
+	@JsonIgnore
 	private ArrayList<Map<String, Serializable>> uriRegex = new ArrayList<Map<String, Serializable>>();
 	
 	public AbstractAccessLog() {
@@ -503,6 +510,10 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		val.append(getServer()).append(delm);
 		val.append(getRely());
 		return val.toString();
+	}
+	
+	public String toJsonString(){		 
+	     return JacksonUtils.objectToJson(this);
 	}
 	
 	public String outKey() {
