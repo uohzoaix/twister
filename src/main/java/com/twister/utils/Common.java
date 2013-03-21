@@ -137,6 +137,9 @@ public final class Common {
 			String line = null;
 			while ((line = br.readLine()) != null) {
 				line = new String(line.getBytes(), Charset.forName("UTF-8")); // 编码转换
+				if (line.startsWith("#")) {
+					continue;
+				}
 				String val[] = line.split("\t");
 				String meth = val[0];
 				String lable = val[1];

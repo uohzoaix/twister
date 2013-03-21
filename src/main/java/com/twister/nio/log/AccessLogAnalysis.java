@@ -51,8 +51,32 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		this.code = response_code;
 		this.cnt_bytes = content_length;
 		this.cnt_time = request_time;
-		this.setAvg_time(request_time);
+		this.Avgtime(request_time);
 		this.assess_request_time(response_code, request_time);
+	}
+	
+	/**
+	 * 
+	 * @param newobj
+	 * @param oldobj
+	 * @return arg1 newobj
+	 */
+	@Override
+	public AccessLogAnalysis calculate(AccessLogAnalysis newobj, AccessLogAnalysis obj) {
+		if (newobj != null && obj != null) {
+			newobj.cnt_pv += obj.cnt_pv;
+			newobj.cnt_bytes += obj.cnt_bytes;
+			newobj.cnt_time += obj.cnt_time;
+			newobj.code = obj.code;
+			newobj.Avgtime(newobj.cnt_time);
+			newobj.cnt_error += obj.cnt_error;
+			newobj.a += obj.a;
+			newobj.b += obj.b;
+			newobj.c += obj.c;
+			newobj.d += obj.d;
+			newobj.e += obj.e;
+		}
+		return newobj;
 	}
 	
 	public long getCnt_pv() {
@@ -83,7 +107,11 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		return avg_time;
 	}
 	
-	public void setAvg_time(double cnt_time) {
+	public void setAvg_time(double avgtime) {
+		this.avg_time = avgtime;
+	}
+	
+	public void Avgtime(long cnt_time) {
 		BigDecimal bd = new BigDecimal(cnt_time);
 		this.avg_time = this.cnt_pv == 0 ? 0 : bd.divide(BigDecimal.valueOf(this.cnt_pv), 2, BigDecimal.ROUND_FLOOR)
 				.doubleValue();
@@ -164,30 +192,6 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	@Override
 	public void setKey(String ukey) {
 		this.key = ukey;
-	}
-	
-	/**
-	 * 
-	 * @param newobj
-	 * @param oldobj
-	 * @return arg1 newobj
-	 */
-	@Override
-	public AccessLogAnalysis calculate(AccessLogAnalysis newobj, AccessLogAnalysis obj) {
-		if (newobj != null && obj != null) {
-			newobj.cnt_pv += obj.cnt_pv;
-			newobj.cnt_bytes += obj.cnt_bytes;
-			newobj.cnt_time += obj.cnt_time;
-			newobj.code = obj.code;
-			newobj.setAvg_time(newobj.cnt_time);
-			newobj.cnt_error += obj.cnt_error;
-			newobj.a += obj.a;
-			newobj.b += obj.b;
-			newobj.c += obj.c;
-			newobj.d += obj.d;
-			newobj.e += obj.e;
-		}
-		return newobj;		
 	}
 	
 	@Override
