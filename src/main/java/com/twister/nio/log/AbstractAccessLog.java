@@ -393,24 +393,19 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				}
 				this.setPid(pid);
 				this.setGuid(guid);
+				if (this.getUser_agent().matches("Tudo")) {
+					this.setRely("1");
+				}
+				
 				HashMap regmap = null;
 				String uri_name = uri;
 				// 去掉开始的/,再用/分割，再取数组的第一个字段做为kls
 				String[] uriarr = uri.toString().trim().replaceFirst("\\/", "").split("\\/");
-				String kls = uriarr.length > 0 ? uriarr[0] : uri;
-				if (kls.length() < 2) {
-					// change null or /
-					kls = "other";
-				}
-				
-				if (this.getUser_agent().matches("Tudo")) {
-					this.setRely("1");
-				}
+				String kls = uriarr.length > 0 ? uriarr[0] : "other";
 				String mats = AppsConfig.getInstance().getValue("access.log.matches").toString();
-				if (Pattern.compile(Common.specialRegex).matcher(uri).find()) {
+				if (Common.SpecialRegex.matcher(uri).find() || uriarr.length > 4) {
 					// is default matcher
 					regmap = (HashMap) Common.MatcherUri(uriRegex, uri, method.toUpperCase());
-					
 				}
 				if (!mats.isEmpty()) {
 					mats = mats.replaceAll(",", "|");
@@ -422,8 +417,35 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				if (regmap != null && regmap.size() > 1) {
 					uri_name = (String) regmap.get("uri_name");
 					kls = (String) regmap.get("kls");
+					String[] tmparr = uri_name.toString().trim().replaceFirst("\\/", "").split("\\/");
+					if (tmparr.length > 4) {
+						// 太长了截掉
+						uri_name = String.format("/%s/%s/%s/%s", tmparr[0], tmparr[1], tmparr[2], tmparr[3]);
+					}
+				} else {
+					// 按顺来处理特殊uri非法输入
+					if (Common.Digit.matcher(kls).find()) {
+						// 非法输入 1
+						if (uri.length() > 20) {
+							uri_name = uri.substring(0, 20);
+						} else {
+							uri_name = uriarr[0];
+						}
+						kls = "other";
+					}
+					if (kls.length() < 2) {
+						// // 非法输入 2
+						uri_name = uriarr.length > 0 ? uriarr[0] : uri;
+						kls = "other";
+					}
+					String[] tmparr = uri_name.toString().trim().replaceFirst("\\/", "").split("\\/");
+					if (tmparr.length > 3) {
+						// 非法未知情况
+						uri_name = String.format("/%s/%s/%s", tmparr[0], tmparr[1], tmparr[2]);
+						kls = "other";
+					}
 				}
-				kls = kls.toLowerCase();
+				
 				this.setUri_name(uri_name);
 				this.setKls(kls);
 				String prov = "0000000000";

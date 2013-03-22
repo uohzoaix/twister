@@ -13,7 +13,7 @@ import com.twister.utils.Common;
  * 
  */
 @SuppressWarnings("serial")
-public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> implements Serializable {
+public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> implements Serializable, Cloneable {
 	
 	// jiekou,转成long分，抛弃秒值
 	// ukey=time#rely#server#uriname
@@ -59,24 +59,21 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	 * 
 	 * @param newobj
 	 * @param oldobj
-	 * @return arg1 newobj
+	 * @return this
 	 */
 	@Override
-	public AccessLogAnalysis calculate(AccessLogAnalysis newobj, AccessLogAnalysis obj) {
-		if (newobj != null && obj != null) {
-			newobj.cnt_pv += obj.cnt_pv;
-			newobj.cnt_bytes += obj.cnt_bytes;
-			newobj.cnt_time += obj.cnt_time;
-			newobj.code = obj.code;
-			newobj.Avgtime(newobj.cnt_time);
-			newobj.cnt_error += obj.cnt_error;
-			newobj.a += obj.a;
-			newobj.b += obj.b;
-			newobj.c += obj.c;
-			newobj.d += obj.d;
-			newobj.e += obj.e;
-		}
-		return newobj;
+	public void calculate(AccessLogAnalysis obj) {
+		this.cnt_pv += obj.cnt_pv;
+		this.cnt_bytes += obj.cnt_bytes;
+		this.cnt_time += obj.cnt_time;
+		this.code = obj.code;
+		this.Avgtime(this.cnt_time);
+		this.cnt_error += obj.cnt_error;
+		this.a += obj.a;
+		this.b += obj.b;
+		this.c += obj.c;
+		this.d += obj.d;
+		this.e += obj.e;
 	}
 	
 	public long getCnt_pv() {
@@ -201,4 +198,15 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "]";
 	}
 	
+	@Override
+	public Object clone() {
+		Object o = null;
+		try {
+			o = (AccessLogAnalysis) super.clone(); // Object
+													// 中的clone()识别出你要复制的是哪一个对象。
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return o;
+	}
 }

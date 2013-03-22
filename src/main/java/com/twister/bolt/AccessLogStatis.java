@@ -1,11 +1,9 @@
 package com.twister.bolt;
 
- 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
- 
 
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Cache;
@@ -23,10 +21,12 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.twister.nio.log.AccessLogAnalysis;
+
 /**
  * 直接发给redisbolt汇总
+ * 
  * @author guoqing
- *
+ * 
  */
 public class AccessLogStatis extends BaseRichBolt {
 	
@@ -45,30 +45,32 @@ public class AccessLogStatis extends BaseRichBolt {
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		hashApiKeys = new ConcurrentHashMap<String, AccessLogAnalysis>();
-		hashCounter=new ConcurrentHashMap<String, Integer>();
+		hashCounter = new ConcurrentHashMap<String, Integer>();
 		LOGR.info(String.format(" AccessLogStatis componentId name :%s,task id :%s ", this.name, this.taskid));
 	}
 	
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
-		int count = input.size();		
+		int count = input.size();
 		LOGR.info(String.format("tuple size %s", count));
 		count = 0; // reset
+		AccessLogAnalysis logalys = new AccessLogAnalysis();
 		try {
 			// pojo,key为试想拼合的字款 ,time也可以分成2
 			// ukey=time#rely#server#uriname
 			// 20120613#10:01:00#0#/home
 			String ukey = input.getString(0);
-			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValue(1);	
-			if (logalys!=null){
+			AccessLogAnalysis lys1 = (AccessLogAnalysis) input.getValue(1);
+			logalys = (AccessLogAnalysis) lys1.clone();
+			if (logalys != null) {
 				AccessLogAnalysis clog = hashApiKeys.get(ukey);
 				if (clog == null) {
 					hashApiKeys.put(ukey, logalys);
 				} else {
-					logalys = logalys.calculate(logalys,clog);
+					logalys.calculate(clog);
 					hashApiKeys.put(ukey, logalys);
-				}		
+				}
 				Integer ct = hashCounter.get(ukey);
 				if (ct == null) {
 					hashCounter.put(ukey, 1);
@@ -76,7 +78,7 @@ public class AccessLogStatis extends BaseRichBolt {
 					ct += 1;
 					hashCounter.put(ukey, ct);
 				}
-				 
+				
 			}
 			
 			Iterator<Entry<String, AccessLogAnalysis>> iter = hashApiKeys.entrySet().iterator();
@@ -87,7 +89,7 @@ public class AccessLogStatis extends BaseRichBolt {
 				collector.emit(new Values(key1, alys));
 				int ct = hashCounter.containsKey(ukey) ? hashCounter.get(ukey) : 1;
 				LOGR.info("AccessLogStatis calculate counter :" + ukey + " " + ct + " " + alys.toString());
-				//clean send ok
+				// clean send ok
 				hashCounter.remove(ukey);
 				iter.remove();
 			}
@@ -98,7 +100,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			e.printStackTrace();
 			LOGR.error(e.getStackTrace().toString());
 		}
-		 
+		
 	}
 	
 	@Override
@@ -112,6 +114,5 @@ public class AccessLogStatis extends BaseRichBolt {
 		hashApiKeys.clear();
 		hashCounter.clear();
 	}
- 
-	 
+	
 }

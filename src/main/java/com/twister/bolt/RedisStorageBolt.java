@@ -69,38 +69,41 @@ public class RedisStorageBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
-		
+		AccessLogAnalysis logalys = new AccessLogAnalysis();
 		try {
 			String ukey = input.getString(0);
-			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValue(1);
+			AccessLogAnalysis alys1 = (AccessLogAnalysis) input.getValue(1);
+			logalys = (AccessLogAnalysis) alys1.clone();
 			LOGR.debug(ukey);
 			Jedis jedis = alc.getJedisConn().getMasterJedis();
 			jedis.select(JedisExpireHelps.DBIndex);
-			//String jsonString = jedis.get(ukey);
-			//AccessLogAnalysis oldalys = JacksonUtils.jsonToObject(jsonString, AccessLogAnalysis.class);
-			//first from cache
-			Element element = ehcache.get(ukey);			
+			// String jsonString = jedis.get(ukey);
+			// AccessLogAnalysis oldalys = JacksonUtils.jsonToObject(jsonString,
+			// AccessLogAnalysis.class);
+			// first from cache
+			Element element = ehcache.get(ukey);
 			if (element != null) {
 				AccessLogAnalysis clog = (AccessLogAnalysis) element.getObjectValue();
 				if (clog != null && clog.getKey().equals(ukey)) {
-					logalys = logalys.calculate(clog,logalys); // 在对象里算
+					logalys.calculate(clog); // 在对象里算
 				}
 				Element el2 = new Element(ukey, logalys);
 				ehcache.replace(element, el2);
 			} else {
 				ehcache.put(new Element(ukey, logalys));
 			}
-		 
+			
 			hashCounter.put(ukey, (int) logalys.getCnt_pv());
 			hashApiKeys.put(ukey, logalys);
-			//save to jedis db
+			// save to jedis db
 			if (ukey.length() > 0 && logalys != null) {
 				String jsonStr = JacksonUtils.objectToJson(logalys);
 				jedis.set(ukey, jsonStr);
 				jedis.expire(ukey, JedisExpireHelps.expire_2DAY);
 			}
-			//LOGR.info(String.format("RedisStorageBolt calculate  %s ", logalys.toString()));
-			//monitor
+			// LOGR.info(String.format("RedisStorageBolt calculate  %s ",
+			// logalys.toString()));
+			// monitor
 			if (ukey.contains("initial")) {
 				GLOB++;
 				if (hashApiKeys.containsKey(ukey)) {
