@@ -27,7 +27,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
-	public static int GLOB=0;
+	public static int GLOB = 0;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -44,6 +44,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 		try {
 			for (int i = 0; i < input.size(); i++) {
 				Object obj = input.getValue(i);
+				GLOB++;
 				if (obj instanceof AccessLog) {
 					alog = (AccessLog) obj;
 				} else if (obj instanceof String) {
@@ -66,13 +67,13 @@ public class AccessLogShuffle extends BaseRichBolt {
 					
 					collector.emit(new Values(alog.outKey(), logalys));
 					if (alog.outKey().contains("initial")) {
-						GLOB++;
+						
 					}
 				} else {
-					 LOGR.info("format error"+line);
+					LOGR.info("format error" + line);
 				}
 			}
-			 LOGR.info("shuff=====initial====="+GLOB);
+			LOGR.info("shuff=====initial=====" + GLOB);
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
 		} catch (Exception e) {

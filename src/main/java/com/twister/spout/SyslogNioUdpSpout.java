@@ -10,7 +10,9 @@ import java.nio.CharBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -60,10 +62,11 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	private DatagramChannel channel = null;
 	private DatagramSocket socket = null;
 	private Selector selector = null;
+	private static Charset charSet = Charset.forName("UTF-8");
 	private InetAddress ip;
 	private ByteBuffer byteBuffer;
 	private long cc = 0l;
-	private Fields _fields=new Fields("AccessLog");
+	private Fields _fields = new Fields("AccessLog");
 	
 	public SyslogNioUdpSpout() {
 		this.port = DEFAULT_SYSLOG_UDP_PORT;
@@ -115,7 +118,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 	
 	@Override
 	public void close() {
-		cc=0l;
+		cc = 0l;
 		if (!socket.isClosed()) {
 			try {
 				channel.close();
@@ -141,6 +144,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 			Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
 			while (iter.hasNext()) {
 				SelectionKey sk = iter.next();
+				// 删除正在处理过的SelectionKey
 				iter.remove();
 				if (sk.isReadable()) {
 					// 在这里datagramChannel与channel实际是同一个对象
@@ -152,7 +156,7 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 					while (isreader) {
 						clientChannel.receive(byteBuffer);
 						byteBuffer.flip();
-						CharBuffer charBuffer = Charset.forName("UTF-8").decode(byteBuffer);
+						CharBuffer charBuffer = charSet.decode(byteBuffer);
 						if (charBuffer.length() == 0 || charBuffer.toString() == null) {
 							isreader = false;
 						}
@@ -165,22 +169,26 @@ public class SyslogNioUdpSpout extends BaseRichSpout {
 					if (vec.length() > 0) {
 						logger.info("nio UDP服务器端接受客户端数据 " + vec.length());
 						String text = vec.toString();
+						System.out.println("text " + text);
 						String[] lines = text.split("\n");
+						int l = 0;
 						for (int i = 0; i < lines.length; i++) {
 							String line = lines[i];
 							if (line == null || line.length() < 1) {
 								continue;
 							}
-							logger.info(line);							 
-							AccessLog alog = new AccessLog(line);							 
+							// logger.info(line);
+							AccessLog alog = new AccessLog(line);
 							// send tuple to bolt, rt that was sent task ids
 							List<Integer> taskids = collector.emit(new Values(alog));
 							logger.info("was sent to task ids " + taskids.toString());
+							l += 1;
+							
 						}
-						
+						System.out.println("text l " + l);
 					} else {
-						//logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
-						Utils.sleep(1*1000);
+						// logger.info("SyslogNioUdpSpout "+port+" 我的心在等待，永远在等待!");
+						Utils.sleep(1 * 1000);
 					}
 					if (!clientChannel.isRegistered()) {
 						clientChannel.register(selector, SelectionKey.OP_READ);

@@ -13,6 +13,7 @@
     
 	</properties>
 	<repositories>
+	<!-- http://mvnrepository.com/ -->
 		<repository>
 			<id>github-releases</id>
 			<url>http://oss.sonatype.org/content/repositories/github-releases/</url>
@@ -115,6 +116,11 @@
 			<artifactId>jzmq</artifactId>
 			<version>2.1.0</version>
 		</dependency>
+		<dependency>
+	        <groupId>io.netty</groupId> 
+            <artifactId>netty</artifactId>
+            <version>3.6.3.Final</version> 
+        </dependency>
 		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>

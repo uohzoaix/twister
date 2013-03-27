@@ -52,8 +52,8 @@ public class TwisterTopology {
 		// SyslogUdpSpout spout = new
 		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
 		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-		SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport); //12306
-		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport); //12307
+		SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport); // 10236
+		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport); // 10237
 		SyslogNioUdpSpout udpspout2 = new SyslogNioUdpSpout(10238);
 		
 		// 收集日志分发
@@ -67,10 +67,13 @@ public class TwisterTopology {
 				.shuffleGrouping("udpTwisterSpout").shuffleGrouping("tcpTwisterSpout");
 		
 		// 统计结点 bolt
-		//builder.setBolt("statisBolt", new AccessLogStatis(), 5).fieldsGrouping("shuffleBolt",new Fields("ukey", "AccessLogAnalysis"));
+		// builder.setBolt("statisBolt", new AccessLogStatis(),
+		// 5).fieldsGrouping("shuffleBolt",new Fields("ukey",
+		// "AccessLogAnalysis"));
 		
 		// 汇总结点及入redis内存 bolt
-		//builder.setBolt("storageBolt", new RedisStorageBolt(), 5).globalGrouping("statisBolt");
+		// builder.setBolt("storageBolt", new RedisStorageBolt(),
+		// 5).globalGrouping("statisBolt");
 		
 		// config
 		Config conf = new Config();
