@@ -27,7 +27,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
-	public static int GLOB = 0;
+	public static Long GLOB = 0l;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -39,23 +39,44 @@ public class AccessLogShuffle extends BaseRichBolt {
 	 */
 	@Override
 	public void execute(Tuple input) {
-		AccessLog alog = null;
-		String line = "";
+		// Object alg = input.getValueByField("AccessLog");
 		try {
 			for (int i = 0; i < input.size(); i++) {
 				Object obj = input.getValue(i);
+				this.emitAccessLogAnalysis(collector, obj);
+			}
+			LOGR.info("shuff=====initial=====" + GLOB);
+			// 通过ack操作确认这个tuple被成功处理
+			collector.ack(input);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGR.info(e.getStackTrace().toString());
+		}
+		
+	}
+	
+	public void emitAccessLogAnalysis(OutputCollector collector, Object obj) {
+		AccessLog alog = null;
+		if (obj instanceof AccessLog) {
+			alog = (AccessLog) obj;
+			// ukey=time#rely#server#uriname
+			// 20120613#10:01:00#0#/home
+			if (alog != null && alog.outKey().length() > 20) {
+				// LOGR.info(alog.toString());
+				// 转化成少的pojo由code算出cnt_error等,不累加直接发过去
+				AccessLogAnalysis logalys = new AccessLogAnalysis(alog.outKey(), alog.getResponse_code(),
+						alog.getContent_length(), alog.getRequest_time());
+				// LOGR.info(logalys.toString());
 				GLOB++;
-				if (obj instanceof AccessLog) {
-					alog = (AccessLog) obj;
-				} else if (obj instanceof String) {
-					line = (String) obj;
-					if (line.endsWith("\n")) {
-						line = line.substring(0, line.indexOf("\n"));
-					}
-					alog = new AccessLog(line);
-				} else {
-					continue;
-				}
+				collector.emit(new Values(alog.outKey(), logalys));
+			}
+			
+		} else if (obj instanceof String) {
+			String txt = (String) obj;
+			String[] lines = txt.split("\n");
+			for (int i = 0; i < lines.length; i++) {
+				String line = lines[i];
+				alog = new AccessLog(line);
 				// ukey=time#rely#server#uriname
 				// 20120613#10:01:00#0#/home
 				if (alog != null && alog.outKey().length() > 20) {
@@ -63,22 +84,13 @@ public class AccessLogShuffle extends BaseRichBolt {
 					// 转化成少的pojo由code算出cnt_error等,不累加直接发过去
 					AccessLogAnalysis logalys = new AccessLogAnalysis(alog.outKey(), alog.getResponse_code(),
 							alog.getContent_length(), alog.getRequest_time());
-					// LOGR.info(logalys.toString());
-					
+					GLOB++;
 					collector.emit(new Values(alog.outKey(), logalys));
-					if (alog.outKey().contains("initial")) {
-						
-					}
-				} else {
-					LOGR.info("format error" + line);
 				}
 			}
-			LOGR.info("shuff=====initial=====" + GLOB);
-			// 通过ack操作确认这个tuple被成功处理
-			collector.ack(input);
-		} catch (Exception e) {
-			e.printStackTrace();
-			LOGR.error(e.getStackTrace().toString());
+			
+		} else {
+			// System.out.println("input error");
 		}
 		
 	}

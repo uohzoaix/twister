@@ -36,8 +36,9 @@ public class AccessLogStatis extends BaseRichBolt {
 	private String name;
 	private OutputCollector collector;
 	// <String, AccessLogAnalysis>
-	private Map<String, AccessLogAnalysis> hashApiKeys;
-	private Map<String, Integer> hashCounter;
+	public static Map<String, AccessLogAnalysis> hashApiKeys;
+	public static Map<String, Integer> hashCounter;
+	public static Long GLOB = 0l;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -71,6 +72,7 @@ public class AccessLogStatis extends BaseRichBolt {
 					logalys.calculate(clog);
 					hashApiKeys.put(ukey, logalys);
 				}
+				
 				Integer ct = hashCounter.get(ukey);
 				if (ct == null) {
 					hashCounter.put(ukey, 1);
@@ -87,6 +89,7 @@ public class AccessLogStatis extends BaseRichBolt {
 				String key1 = (String) entry.getKey();
 				AccessLogAnalysis alys = (AccessLogAnalysis) entry.getValue();
 				collector.emit(new Values(key1, alys));
+				GLOB += 1;
 				int ct = hashCounter.containsKey(ukey) ? hashCounter.get(ukey) : 1;
 				LOGR.info("AccessLogStatis calculate counter :" + ukey + " " + ct + " " + alys.toString());
 				// clean send ok
@@ -95,7 +98,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			}
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
-			
+			LOGR.info("statis==cntRow===" + GLOB);
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGR.error(e.getStackTrace().toString());

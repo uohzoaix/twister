@@ -22,7 +22,7 @@ public class SenderTcpClient {
 	public static Logger logger = LoggerFactory.getLogger(SenderTcpClient.class);
 	public static String logfile = "src/main/resources/accessLog.txt";
 	private static InetAddress host;
-	private static final int PORT = 10236;
+	private static final int PORT = 10237;
 	private static Charset charSet = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
@@ -65,15 +65,15 @@ public class SenderTcpClient {
 					int i = 0;
 					while ((line = file.readLine()) != null) {
 						socket = new Socket(host, PORT);
-						//socket.setSoTimeout(30 * 1000);
+						// socket.setSoTimeout(30 * 1000);
 						StringBuffer packet = new StringBuffer(new String(line.getBytes("8859_1"), charSet)); // 编码转换
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");
 						}
-//						if (i > 20) {
-//							line = null;
-//							break;
-//						}
+						// if (i > 20) {
+						// line = null;
+						// break;
+						// }
 						System.out.print(i + " " + packet.toString());
 						i++;
 						PrintWriter out = new PrintWriter(socket.getOutputStream(), true); // 创建数据传输流
@@ -83,7 +83,7 @@ public class SenderTcpClient {
 						} else {
 							out.println(packet);
 						}
-						//Utils.sleep(100);
+						// Utils.sleep(100);
 						out.flush();
 						out.close();
 						socket.close();

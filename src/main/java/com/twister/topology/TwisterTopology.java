@@ -14,8 +14,10 @@ import backtype.storm.tuple.Fields;
 import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
 import com.twister.bolt.RedisStorageBolt;
-import com.twister.spout.SyslogNioTcpSpout;
-import com.twister.spout.SyslogNioUdpSpout;
+import com.twister.spout.NioTcpServerSpout;
+import com.twister.spout.NioUdpServerSpout;
+//import com.twister.spout.TextFileSpout;
+//import com.twister.spout.TailFileSpout;
 
 /**
  * <p>
@@ -43,37 +45,30 @@ public class TwisterTopology {
 	public static void main(String[] args) throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout
-		// TextFileSpout spout = new
+		// TextFileSpout textSpout = new
 		// TextFileSpout("src/main/resources/words.txt");
-		
-		// TailFileSpout spout = new
+		// TailFileSpout Tailspout = new
 		// TailFileSpout("src/main/resources/words.txt");
 		
-		// SyslogUdpSpout spout = new
-		// SyslogUdpSpout(10237,InetAddress.getLocalHost());
-		// SyslogTcpSpout spout = new SyslogTcpSpout(10236);
-		SyslogNioTcpSpout tcpspout = new SyslogNioTcpSpout(Tport); // 10236
-		SyslogNioUdpSpout udpspout = new SyslogNioUdpSpout(Uport); // 10237
-		SyslogNioUdpSpout udpspout2 = new SyslogNioUdpSpout(10238);
+		// use nio tcp good
+		NioTcpServerSpout tcpspout = new NioTcpServerSpout(Tport); // 10236
+		NioUdpServerSpout udpspout = new NioUdpServerSpout(Uport); // 10237
 		
 		// 收集日志分发
 		builder.setSpout("tcpTwisterSpout", tcpspout);
 		builder.setSpout("udpTwisterSpout", udpspout);
-		builder.setSpout("udpTwisterSpout2", udpspout2);
-		
 		// Initial filter
 		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("udpTwisterSpout2")
-				.shuffleGrouping("udpTwisterSpout").shuffleGrouping("tcpTwisterSpout");
+		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("udpTwisterSpout")
+				.shuffleGrouping("tcpTwisterSpout");
 		
 		// 统计结点 bolt
 		// builder.setBolt("statisBolt", new AccessLogStatis(),
-		// 5).fieldsGrouping("shuffleBolt",new Fields("ukey",
+		// 5).fieldsGrouping("shuffleBolt", new Fields("ukey",
 		// "AccessLogAnalysis"));
 		
 		// 汇总结点及入redis内存 bolt
-		// builder.setBolt("storageBolt", new RedisStorageBolt(),
-		// 5).globalGrouping("statisBolt");
+		builder.setBolt("storageBolt", new RedisStorageBolt(), 5).globalGrouping("shuffleBolt");
 		
 		// config
 		Config conf = new Config();

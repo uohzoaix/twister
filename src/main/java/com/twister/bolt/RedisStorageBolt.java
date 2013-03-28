@@ -46,7 +46,7 @@ public class RedisStorageBolt extends BaseRichBolt {
 	private Integer taskid;
 	private String name;
 	private OutputCollector collector;
-	public static int GLOB = 0;
+	public static long GLOB = 0l;
 	private CacheManager cacheManager;
 	private Cache ehcache;
 	private AccessLogCache alc;
@@ -116,7 +116,7 @@ public class RedisStorageBolt extends BaseRichBolt {
 				}
 			}
 			
-			LOGR.info(String.format("name :%s,task id :%s GLOB %s", this.name, this.taskid, GLOB));
+			LOGR.info(String.format("Storage name :%s,task id :%s GLOB %s", this.name, this.taskid, GLOB));
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
 			
