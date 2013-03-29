@@ -9,65 +9,68 @@ import net.sf.ehcache.CacheManager;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
- 
+
+import com.twister.concurrentlinkedhashmap.cache.EhcacheMap;
+import com.twister.nio.log.AccessLogAnalysis;
 import com.twister.utils.JacksonUtils;
 import com.twister.utils.JedisConnection;
- 
 
-public abstract class AbstractCache<T> implements Icache<T>{ 
+public abstract class AbstractCache<T> implements Icache<T> {
 	
 	public final AtomicInteger atomicInteger = new AtomicInteger(0);
-	public final String ehcachecfg="conf/ehcache.xml"; 
-	private JedisConnection jedisConn=null;
-	 
-	public AbstractCache(){
-		jedisConn=new JedisConnection();
+	public final String ehcachecfg = "conf/ehcache.xml";
+	public JedisConnection jedisConn = null;
+	
+	public AbstractCache() {
 	}
 	
 	public JedisConnection getJedisConn() {
-		return jedisConn;
+		if (jedisConn == null) {
+			jedisConn = new JedisConnection();
+			return jedisConn;
+		} else {
+			return jedisConn;
+		}
 	}
-
+	
 	public void setJedisConn(JedisConnection jedisConn) {
 		this.jedisConn = jedisConn;
 	}
-
-	
 	
 	public <T> T restoreObjectFromJson(String key, final Class<T> valueType) {
-		Jedis jedis=jedisConn.getMasterJedis();
-		if (jedis.exists(key)){
-		    String jsonStr = jedis.get(key);
-			return JacksonUtils.jsonToObject(jsonStr,valueType);
-		}else{			 	
-			 
+		Jedis jedis = jedisConn.getMasterJedis();
+		if (jedis.exists(key)) {
+			String jsonStr = jedis.get(key);
+			return JacksonUtils.jsonToObject(jsonStr, valueType);
+		} else {
+			
 			return null;
 		}
 	}
 	
-	public boolean storeObjectToJson(String key, T obj){
-		Jedis jedis=jedisConn.getMasterJedis();
-		String jsonStr=JacksonUtils.objectToJson(obj);
-		if (jsonStr.length()>0){
+	public boolean storeObjectToJson(String key, T obj) {
+		Jedis jedis = jedisConn.getMasterJedis();
+		String jsonStr = JacksonUtils.objectToJson(obj);
+		if (jsonStr.length() > 0) {
 			jedis.set(key, jsonStr);
 			return true;
-		}else{
+		} else {
 			return false;
 		}
-		 
+		
 	}
 	
-	public CacheManager create(String cachecfg){		 
-		return CacheManager.create(cachecfg);		
+	public CacheManager create(String cachecfg) {
+		return CacheManager.create(cachecfg);
 	}
 	
-	public CacheManager create(){
-		URL url =getClass().getClassLoader().getResource(this.ehcachecfg);
+	public CacheManager create() {
+		URL url = getClass().getClassLoader().getResource(this.ehcachecfg);
 		return CacheManager.create(url);
 	}
 	
-	public Cache getCache(String cacheName){  
-	 return  this.create().getCache(cacheName);
+	public Cache getCache(String cacheName) {
+		return this.create().getCache(cacheName);
 	}
 	
 }

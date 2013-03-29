@@ -10,6 +10,8 @@ import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListener;
 import org.apache.commons.io.input.TailerListenerAdapter;
 
+import com.twister.concurrentlinkedhashmap.cache.EhcacheMap;
+
 public class Tail2 {
 	/**
 	 * The log file tailer
@@ -35,6 +37,10 @@ public class Tail2 {
 		Tailer tailer = new Tailer(file, listener, 100, true);
 		Thread tt = new Thread(tailer);
 		tt.start();
+		
+		EhcacheMap<String, Integer> map = new EhcacheMap<String, Integer>("EhcacheMap");
+		map.put("11", 3);
+		System.out.println(map.get("11"));
 		
 	}
 	

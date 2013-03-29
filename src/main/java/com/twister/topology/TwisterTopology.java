@@ -11,9 +11,9 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
+import com.twister.bolt.AccessLogGroup;
 import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
-import com.twister.bolt.RedisStorageBolt;
 import com.twister.spout.NioTcpServerSpout;
 import com.twister.spout.NioUdpServerSpout;
 //import com.twister.spout.TextFileSpout;
@@ -62,13 +62,12 @@ public class TwisterTopology {
 		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("udpTwisterSpout")
 				.shuffleGrouping("tcpTwisterSpout");
 		
-		// 统计结点 bolt
-		// builder.setBolt("statisBolt", new AccessLogStatis(),
-		// 5).fieldsGrouping("shuffleBolt", new Fields("ukey",
-		// "AccessLogAnalysis"));
+		// group bolt
+		builder.setBolt("fieldsGroupBolt", new AccessLogGroup(), 5).fieldsGrouping("shuffleBolt",
+				new Fields("ukey", "AccessLogAnalysis"));
 		
-		// 汇总结点及入redis内存 bolt
-		builder.setBolt("storageBolt", new RedisStorageBolt(), 5).globalGrouping("shuffleBolt");
+		// 汇总,统计结点 bolt,入redis内存
+		builder.setBolt("statisBolt", new AccessLogStatis(), 5).globalGrouping("fieldsGroupBolt");
 		
 		// config
 		Config conf = new Config();

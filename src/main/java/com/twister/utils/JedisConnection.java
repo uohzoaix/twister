@@ -53,9 +53,9 @@ public final class JedisConnection {
 	private ShardedJedis shardedJedis = null;
 	
 	public JedisConnection() {
-		logger.info("jedis master " + host + ":" + port);
-		logger.info("jedis slave " + SlaveHost + ":" + SlavePort);
-		createShardedJedis();
+		if (shardedJedisPool == null) {
+			createShardedJedis();
+		}
 	}
 	
 	public Jedis getMasterJedis() {
@@ -99,6 +99,8 @@ public final class JedisConnection {
 		} finally {
 			shardedJedisPool.returnResource(shardedJedis);
 		}
+		logger.info("jedis master " + host + ":" + port);
+		logger.info("jedis slave " + SlaveHost + ":" + SlavePort);
 		return shardedJedis;
 	}
 	

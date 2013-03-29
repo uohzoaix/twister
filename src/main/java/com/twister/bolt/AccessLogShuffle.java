@@ -45,7 +45,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 				Object obj = input.getValue(i);
 				this.emitAccessLogAnalysis(collector, obj);
 			}
-			LOGR.info("shuff=====initial=====" + GLOB);
+			// LOGR.info("shuff=====initial=====" + GLOB);
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
 		} catch (Exception e) {

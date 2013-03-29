@@ -8,12 +8,12 @@
 	<description>mobile api storm starter access log</description>
 	<url>https://github.com/zhouguoqing917/twister</url>
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>		 
-        <driverClass>com.twister.topology.TwisterTopology</driverClass>
-    
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<driverClass>com.twister.topology.TwisterTopology</driverClass>
+
 	</properties>
 	<repositories>
-	<!-- http://mvnrepository.com/ -->
+		<!-- http://mvnrepository.com/ -->
 		<repository>
 			<id>github-releases</id>
 			<url>http://oss.sonatype.org/content/repositories/github-releases/</url>
@@ -82,15 +82,21 @@
 			<version>[2.2,)</version>
 		</dependency>
 		<dependency>
-		    <groupId>net.sf.ehcache</groupId>
-		    <artifactId>ehcache-core</artifactId>
-		    <version>2.6.5</version>
-		</dependency> 
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+			<version>2.6.5</version>
+		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>13.0.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>2.0.1</version>
+			<scope>provided</scope>
+		</dependency>		
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-asl</artifactId>
@@ -117,10 +123,10 @@
 			<version>2.1.0</version>
 		</dependency>
 		<dependency>
-	        <groupId>io.netty</groupId> 
-            <artifactId>netty</artifactId>
-            <version>3.6.3.Final</version> 
-        </dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty</artifactId>
+			<version>3.6.3.Final</version>
+		</dependency>
 		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
@@ -204,15 +210,15 @@
 				<configuration>
 					<encoding>UTF-8</encoding>
 				</configuration>
-			</plugin> 
+			</plugin>
 			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                   <version>2.6</version>
-                   <configuration>
-                        <skip>true</skip>
-                    </configuration>
-             </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.6</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
 			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-source-plugin</artifactId> 
 				<version>2.1.2</version> <executions> <execution> <id>attach-sources</id> 
 				<phase>package</phase> <goals> <goal>jar-no-fork</goal> </goals> <inherited>false</inherited> 

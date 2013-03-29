@@ -557,7 +557,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		return JacksonUtils.objectToJson(this);
 	}
 	
-	public String outKey() {
+	public String outJiekouKey() {
 		// 请勿随意改动
 		// jiekou,转成long分，抛弃秒值set00
 		// ukey=time#rely#server#uriname
@@ -567,6 +567,20 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 			String SEPARATOR = "#";
 			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
 					.append(getUri_name());
+		}
+		return sb.toString();
+	}
+	
+	public String outKey() {
+		// 请勿随意改动
+		// jiekou,转成long分，抛弃秒值set00
+		// ukey=daytime#rely#server
+		// 20120613#10:01:00#0#/servernum
+		StringBuffer sb = new StringBuffer();
+		if (this.logVersion == '0') {
+			String SEPARATOR = "#";
+			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
+					.append(getServer());
 		}
 		return sb.toString();
 	}

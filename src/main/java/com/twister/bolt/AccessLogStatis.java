@@ -1,16 +1,11 @@
 package com.twister.bolt;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Element;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import redis.clients.jedis.Jedis;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -20,7 +15,12 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+import com.twister.concurrentlinkedhashmap.cache.EhcacheMap;
 import com.twister.nio.log.AccessLogAnalysis;
+import com.twister.storage.AccessLogCacheManager;
+import com.twister.utils.JacksonUtils;
+import com.twister.utils.JedisConnection;
+import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 /**
  * 直接发给redisbolt汇总
@@ -30,80 +30,87 @@ import com.twister.nio.log.AccessLogAnalysis;
  */
 public class AccessLogStatis extends BaseRichBolt {
 	
-	private static final Logger LOGR = LoggerFactory.getLogger(AccessLogStatis.class);
+	private final Logger LOGR = LoggerFactory.getLogger(AccessLogStatis.class.getName());
 	private static final long serialVersionUID = 2246728833921545687L;
 	private Integer taskid;
 	private String name;
 	private OutputCollector collector;
-	// <String, AccessLogAnalysis>
-	public static Map<String, AccessLogAnalysis> hashApiKeys;
-	public static Map<String, Integer> hashCounter;
-	public static Long GLOB = 0l;
 	
+	private AccessLogCacheManager alogManager; // reids
+	private EhcacheMap<String, AccessLogAnalysis> ehcache;
+	private EhcacheMap<String, Integer> hashCounter;
+	
+	public static Long GLOB = 0l;
+	public String tips = "";
+	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		hashApiKeys = new ConcurrentHashMap<String, AccessLogAnalysis>();
-		hashCounter = new ConcurrentHashMap<String, Integer>();
-		LOGR.info(String.format(" AccessLogStatis componentId name :%s,task id :%s ", this.name, this.taskid));
+		// conf/ehcache.xml
+		alogManager = new AccessLogCacheManager();
+		this.ehcache = alogManager.getMapEhcache();
+		this.hashCounter = alogManager.getMapCounter();
+		this.tips = String.format("componentId name :%s,task id :%s ", this.name, this.taskid);
+		LOGR.info(tips);
 	}
 	
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
-		int count = input.size();
-		LOGR.info(String.format("tuple size %s", count));
-		count = 0; // reset
-		AccessLogAnalysis logalys = new AccessLogAnalysis();
+		GLOB += 1;
 		try {
 			// pojo,key为试想拼合的字款 ,time也可以分成2
 			// ukey=time#rely#server#uriname
 			// 20120613#10:01:00#0#/home
-			String ukey = input.getString(0);
-			AccessLogAnalysis lys1 = (AccessLogAnalysis) input.getValue(1);
-			logalys = (AccessLogAnalysis) lys1.clone();
-			if (logalys != null) {
-				AccessLogAnalysis clog = hashApiKeys.get(ukey);
-				if (clog == null) {
-					hashApiKeys.put(ukey, logalys);
-				} else {
-					logalys.calculate(clog);
-					hashApiKeys.put(ukey, logalys);
-				}
-				
-				Integer ct = hashCounter.get(ukey);
-				if (ct == null) {
-					hashCounter.put(ukey, 1);
-				} else {
-					ct += 1;
-					hashCounter.put(ukey, ct);
-				}
-				
+			String ukey = input.getStringByField("ukey");
+			LOGR.info(tips + String.format(GLOB + " %s", ukey));
+			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
+			
+			if (ehcache.containsKey(ukey)) {
+				AccessLogAnalysis clog = (AccessLogAnalysis) ehcache.get(ukey);
+				clog.calculate(logalys); // 在对象里算
+				// 覆盖原来的对象
+				ehcache.put(ukey, clog);
+			} else {
+				ehcache.put(ukey, logalys);
 			}
 			
-			Iterator<Entry<String, AccessLogAnalysis>> iter = hashApiKeys.entrySet().iterator();
-			while (iter.hasNext()) {
-				Map.Entry<String, AccessLogAnalysis> entry = (Map.Entry<String, AccessLogAnalysis>) iter.next();
-				String key1 = (String) entry.getKey();
-				AccessLogAnalysis alys = (AccessLogAnalysis) entry.getValue();
-				collector.emit(new Values(key1, alys));
-				GLOB += 1;
-				int ct = hashCounter.containsKey(ukey) ? hashCounter.get(ukey) : 1;
-				LOGR.info("AccessLogStatis calculate counter :" + ukey + " " + ct + " " + alys.toString());
-				// clean send ok
-				hashCounter.remove(ukey);
-				iter.remove();
+			// 更新次数
+			if (hashCounter.containsKey(ukey)) {
+				int cnt = hashCounter.get(ukey).intValue();
+				cnt += 1;
+				hashCounter.put(ukey, cnt);
+			} else {
+				hashCounter.put(ukey, 1);
 			}
+			
+			// 发射累积的统计结果
+			if (ehcache.containsKey(ukey)) {
+				AccessLogAnalysis rlt = (AccessLogAnalysis) ehcache.get(ukey);
+				collector.emit(new Values(ukey, rlt));
+				// save to jedis db
+				if (ukey.length() > 0 && rlt != null) {
+					Jedis jedis = alogManager.getMasterJedis();
+					jedis.select(JedisExpireHelps.DBIndex);
+					String jsonStr = JacksonUtils.objectToJson(rlt);
+					jedis.set(ukey, jsonStr);
+					jedis.expire(ukey, JedisExpireHelps.expire_2DAY);
+				}
+				LOGR.info(tips
+						+ String.format(GLOB + " count execute result is:%s hashCounter=%s,ehcache=%s ", ukey,
+								hashCounter.get(ukey), rlt.getCnt_pv()));
+			}
+			
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
-			LOGR.info("statis==cntRow===" + GLOB);
+			LOGR.info(tips + " statis==cntRow===" + GLOB);
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGR.error(e.getStackTrace().toString());
 		}
-		
 	}
 	
 	@Override
@@ -114,7 +121,6 @@ public class AccessLogStatis extends BaseRichBolt {
 	
 	@Override
 	public void cleanup() {
-		hashApiKeys.clear();
 		hashCounter.clear();
 	}
 	
