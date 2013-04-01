@@ -35,8 +35,12 @@ import org.jboss.netty.handler.codec.string.StringEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import redis.clients.jedis.Jedis;
+
 import com.twister.nio.log.AccessLog;
+import com.twister.storage.AccessLogCacheManager;
 import com.twister.utils.Common;
+import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 import backtype.storm.spout.SpoutOutputCollector;
 
@@ -71,6 +75,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	private final static int bufferSize = 1024;
 	private volatile boolean running = false;
 	private static long spoutLines = 0;
+	private AccessLogCacheManager alogManager; // reids
 	
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
 	private Queue<String> queue = new LinkedList<String>();
@@ -92,9 +97,10 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		
-		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), 4,
-				Executors.newCachedThreadPool(), 4);
+		alogManager = new AccessLogCacheManager();
+		Jedis jedis = alogManager.getMasterJedis();
+		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
+				Executors.newCachedThreadPool());
 		bootstrap = new ServerBootstrap(channelFactory);
 		try {
 			// Set up the pipeline factory.
@@ -121,6 +127,9 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
+			jedis.select(JedisExpireHelps.DBIndex);
+			String serinfo = "TcpSpout:" + localip + ":" + port;
+			jedis.set(serinfo, serinfo);
 			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());

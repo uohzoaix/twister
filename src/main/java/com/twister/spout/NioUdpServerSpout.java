@@ -40,8 +40,12 @@ import org.jboss.netty.handler.codec.string.StringEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import redis.clients.jedis.Jedis;
+
 import com.twister.nio.log.AccessLog;
+import com.twister.storage.AccessLogCacheManager;
 import com.twister.utils.Common;
+import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 import backtype.storm.spout.SpoutOutputCollector;
 
@@ -77,7 +81,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private final static int bufferSize = 1024;
 	private volatile boolean running = false;
 	private long spoutLines = 0;
-	
+	private AccessLogCacheManager alogManager; // reids
 	// SynchronousQueue or ArrayBlockingQueue
 	private static Queue<String> queue = new LinkedList<String>();
 	private String localip = "127.0.0.1";
@@ -98,7 +102,8 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		
+		alogManager = new AccessLogCacheManager();
+		Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
@@ -126,6 +131,9 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
+			jedis.select(JedisExpireHelps.DBIndex);
+			String serinfo = "UdpSpout:" + localip + ":" + port;
+			jedis.set(serinfo, serinfo);
 			logger.info(progName + "udp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());
