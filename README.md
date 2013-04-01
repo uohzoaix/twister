@@ -80,10 +80,10 @@ cd workspace
 git clone https://github.com/zhouguoqing917/twister.git twister
 mvn -Dmaven.test.skip=true clean package
 1)debug 环境
-storm jar ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.WordCountTopology wordCountTopology
+storm jar ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.WordCountTopology wordCountTopology /tmp/words.txt
 2)启动 topology
-storm jar ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.TwisterTopology
+storm jar ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.TwisterTopology TwisterTopology
 3)启动 niotcp send log
-java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar:. com.twister.nio.SendNioTcpClient  <host> <port> [<accessFile>]
-
+java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar:. com.twister.nio.client.SendNioTcpClient  <host> <port> [<accessFile>]
+java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient 10.103.23.63 10236 /v3/data/syslog/hour/20130401/access_14
  

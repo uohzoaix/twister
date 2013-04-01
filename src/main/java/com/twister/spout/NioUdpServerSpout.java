@@ -148,10 +148,10 @@ public class NioUdpServerSpout extends BaseRichSpout {
 				for (int i = 0; i < lines.length; i++) {
 					String line = lines[i];
 					if (Ipv4.matcher(line).find()) {
-						spoutLines++;
+						// spoutLines++;
 						alog = new AccessLog(line);
 						if (alog != null) {
-							logger.debug(spoutLines + " " + line);
+							// logger.debug(spoutLines + " " + line);
 							collector.emit(new Values(alog));
 							// logger.info(alog.toString());
 						}
@@ -212,8 +212,8 @@ public class NioUdpServerSpout extends BaseRichSpout {
 				String buffer = (String) e.getMessage();
 				transLines += 1;
 				// SynchronousQueue put ,spout poll
-				logger.debug("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString()
-						+ "]");
+				// logger.debug("recvd length " + buffer.length() + "/" +
+				// transLines + " bytes [" + buffer.toString()+ "]");
 				this.queue.offer(buffer);
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());

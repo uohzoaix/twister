@@ -8,6 +8,8 @@ import storm.trident.TridentTopology;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
+import backtype.storm.topology.BoltDeclarer;
+import backtype.storm.topology.SpoutDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
@@ -16,6 +18,8 @@ import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
 import com.twister.spout.NioTcpServerSpout;
 import com.twister.spout.NioUdpServerSpout;
+import com.twister.utils.AppsConfig;
+
 //import com.twister.spout.TextAccessFileSpout;
 //import com.twister.spout.TailFileSpout;
 
@@ -39,8 +43,8 @@ import com.twister.spout.NioUdpServerSpout;
 
 public class TwisterTopology {
 	public static Logger logger = LoggerFactory.getLogger(TwisterTopology.class);
-	public static int Tport = 10236;
-	public static int Uport = 10237;
+	public static String[] Tport = AppsConfig.getInstance().getValue("tcp.spout.port").split(",");
+	public static String[] Uport = AppsConfig.getInstance().getValue("udp.spout.port").split(",");
 	
 	public static void main(String[] args) throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
@@ -49,25 +53,46 @@ public class TwisterTopology {
 		// TextAccessFileSpout("src/main/resources/words.txt");
 		// TailFileSpout Tailspout = new
 		// TailFileSpout("src/main/resources/words.txt");
-		
-		// use nio tcp good
-		NioTcpServerSpout tcpspout = new NioTcpServerSpout(Tport); // 10236
-		NioUdpServerSpout udpspout = new NioUdpServerSpout(Uport); // 10237
-		
-		// 收集日志分发
-		builder.setSpout("tcpTwisterSpout", tcpspout);
-		builder.setSpout("udpTwisterSpout", udpspout);
 		// Initial filter
 		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
-		builder.setBolt("shuffleBolt", new AccessLogShuffle(), 5).shuffleGrouping("udpTwisterSpout")
-				.shuffleGrouping("tcpTwisterSpout");
+		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), 30);
+		String tcp = "";
+		String udp = "";
+		for (int i = 0; i < Tport.length; i++) {
+			// use nio tcp good
+			int port = Integer.valueOf(Tport[i]);
+			// 收集日志分发
+			SpoutDeclarer sd = builder.setSpout("tcpTwisterSpout" + i, new NioTcpServerSpout(port));
+			logger.info("tcpTwisterSpout" + i + " " + port);
+			tcp += " " + port;
+			bde.shuffleGrouping("tcpTwisterSpout" + i);
+		}
+		for (int i = 0; i < Uport.length; i++) {
+			// use nio udp
+			int port = Integer.valueOf(Uport[i]);
+			// 收集日志分发
+			SpoutDeclarer sd = builder.setSpout("udpTwisterSpout" + i, new NioUdpServerSpout(port));
+			logger.info("udpTwisterSpout" + i + " " + port);
+			udp += " " + port;
+			bde.shuffleGrouping("udpTwisterSpout" + i);
+		}
+		
+		// NioTcpServerSpout tcpspout = new NioTcpServerSpout(10236); // 10236
+		// NioUdpServerSpout udpspout = new NioUdpServerSpout(10237); // 10237
+		// 收集日志分发
+		// builder.setSpout("tcpTwisterSpout", tcpspout);
+		// builder.setSpout("udpTwisterSpout", udpspout);
+		// Initial filter
+		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
+		// builder.setBolt("shuffleBolt", new
+		// AccessLogShuffle(),30).shuffleGrouping("udpTwisterSpout").shuffleGrouping("tcpTwisterSpout");
 		
 		// group bolt
-		builder.setBolt("fieldsGroupBolt", new AccessLogGroup(), 5).fieldsGrouping("shuffleBolt",
+		builder.setBolt("fieldsGroupBolt", new AccessLogGroup(), 30).fieldsGrouping("shuffleBolt",
 				new Fields("ukey", "AccessLogAnalysis"));
 		
 		// 汇总,统计结点 bolt,入redis内存
-		builder.setBolt("statisBolt", new AccessLogStatis(), 5).globalGrouping("fieldsGroupBolt");
+		builder.setBolt("statisBolt", new AccessLogStatis(), 60).globalGrouping("fieldsGroupBolt");
 		
 		// config
 		Config conf = new Config();
@@ -75,14 +100,14 @@ public class TwisterTopology {
 		
 		if (null != args && args.length > 0) {
 			// 使用集群模式运行
-			conf.setNumWorkers(3);
-			StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
-			logger.debug("集群模式运行 " + "udp port:" + Uport + " tcp port:" + Tport);
+			conf.setNumWorkers(30);
+			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
+			logger.info("集群模式运行 " + "udp port:" + udp + " tcp port:" + tcp);
 		} else {
 			// 使用本地模式运行
-			conf.setMaxTaskParallelism(3);
+			conf.setMaxTaskParallelism(5);
 			LocalCluster cluster = new LocalCluster();
-			logger.debug("本地模式运行 " + "udp port:" + Uport + " tcp port:" + Tport);
+			logger.info("本地模式运行 " + "udp port:" + udp + " tcp port:" + tcp);
 			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
 			// cluster.shutdown();

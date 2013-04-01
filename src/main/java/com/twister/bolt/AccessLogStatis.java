@@ -52,7 +52,7 @@ public class AccessLogStatis extends BaseRichBolt {
 		// conf/ehcache.xml
 		alogManager = new AccessLogCacheManager();
 		this.ehcache = alogManager.getMapEhcache();
-		this.hashCounter = alogManager.getMapCounter();
+		// this.hashCounter = alogManager.getMapCounter();
 		this.tips = String.format("componentId name :%s,task id :%s ", this.name, this.taskid);
 		LOGR.info(tips);
 	}
@@ -66,7 +66,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			// ukey=ver#time#rely#server
 			// 0#20120613#10:01:00#0
 			String ukey = input.getStringByField("ukey");
-			LOGR.info(tips + String.format(GLOB + " %s", ukey));
+			// LOGR.info(tips + String.format(GLOB + " %s", ukey));
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
 			
 			if (ehcache.containsKey(ukey)) {
@@ -79,13 +79,13 @@ public class AccessLogStatis extends BaseRichBolt {
 			}
 			
 			// 更新次数
-			if (hashCounter.containsKey(ukey)) {
-				int cnt = hashCounter.get(ukey).intValue();
-				cnt += 1;
-				hashCounter.put(ukey, cnt);
-			} else {
-				hashCounter.put(ukey, 1);
-			}
+			// if (hashCounter.containsKey(ukey)) {
+			// int cnt = hashCounter.get(ukey).intValue();
+			// cnt += 1;
+			// hashCounter.put(ukey, cnt);
+			// } else {
+			// hashCounter.put(ukey, 1);
+			// }
 			
 			// 发射累积的统计结果
 			if (ehcache.containsKey(ukey)) {
@@ -99,14 +99,14 @@ public class AccessLogStatis extends BaseRichBolt {
 					jedis.set(ukey, jsonStr);
 					jedis.expire(ukey, JedisExpireHelps.expire_2DAY);
 				}
-				LOGR.info(tips
-						+ String.format(GLOB + " count execute result is:%s hashCounter=%s,ehcache=%s ", ukey,
-								hashCounter.get(ukey), rlt.getCnt_pv()));
+				// LOGR.info(tips+ String.format(GLOB +
+				// " count execute result is:%s hashCounter=%s,ehcache=%s ",
+				// ukey,hashCounter.get(ukey), rlt.getCnt_pv()));
 			}
 			
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
-			LOGR.info(tips + " statis==cntRow===" + GLOB);
+			// LOGR.info(tips + " statis==cntRow===" + GLOB);
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGR.error(e.getStackTrace().toString());
