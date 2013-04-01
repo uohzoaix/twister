@@ -40,6 +40,7 @@ import redis.clients.jedis.Jedis;
 import com.twister.nio.log.AccessLog;
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.utils.Common;
+import com.twister.utils.FileUtils;
 import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 import backtype.storm.spout.SpoutOutputCollector;
@@ -133,6 +134,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			jedis.set(serinfo, dts);
 			jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
 			conf.put(serinfo, dts);
+			FileUtils.writeFile("/tmp/SpoutIp.txt", serinfo);
 			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());
