@@ -132,8 +132,11 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
 			jedis.select(JedisExpireHelps.DBIndex);
+			String dts = Common.createDataTimeStr();
 			String serinfo = "UdpSpout:" + localip + ":" + port;
-			jedis.set(serinfo, serinfo);
+			jedis.set(serinfo, dts);
+			jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			conf.put(serinfo, dts);
 			logger.info(progName + "udp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());

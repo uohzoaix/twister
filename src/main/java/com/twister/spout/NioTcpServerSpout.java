@@ -128,8 +128,11 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
 			jedis.select(JedisExpireHelps.DBIndex);
+			String dts = Common.createDataTimeStr();
 			String serinfo = "TcpSpout:" + localip + ":" + port;
-			jedis.set(serinfo, serinfo);
+			jedis.set(serinfo, dts);
+			jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			conf.put(serinfo, dts);
 			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());

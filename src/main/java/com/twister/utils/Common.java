@@ -511,6 +511,17 @@ public final class Common {
 		return dt;
 	}
 	
+	/**
+	 * 
+	 * @return yyyyMMdd HH:mm:ss
+	 */
+	public static String createDataTimeStr() {
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		String dateString = formatter.format(currentTime);
+		return dateString;
+	}
+	
 	public static int validate_Response_code(String response_code) {
 		int v = Integer.parseInt(response_code);
 		int code_flag = 0;
@@ -629,12 +640,13 @@ public final class Common {
 	}
 	
 	public static void main(String[] args) {
-		
-		String str = "/openapi-wireless/videos/XMzg5MzYxMjYw/playurl.json";
-		ArrayList<Map<String, Serializable>> ur = Common.getUriRegexConf(Common.UriRegexFile);
-		HashMap m = (HashMap) MatcherUri(ur, str, "GET");
-		System.out.println(formatDataTimeStr("2012-06-13 10:01:14"));
-		System.out.println(m);
+		//
+		// String str = "/openapi-wireless/videos/XMzg5MzYxMjYw/playurl.json";
+		// ArrayList<Map<String, Serializable>> ur =
+		// Common.getUriRegexConf(Common.UriRegexFile);
+		// HashMap m = (HashMap) MatcherUri(ur, str, "GET");
+		// System.out.println(formatDataTimeStr("2012-06-13 10:01:14"));
+		// System.out.println(m);
 		
 	}
 	
