@@ -151,7 +151,8 @@ public class SendNioTcpClient implements Runnable {
 					line += "\n";
 				}
 				queue.put(line);
-				logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
+				// logger.debug("add queue length=" + line.length() + "/" + ct +
+				// " line = [" + line + "]");
 			} catch (Exception e) {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
@@ -199,8 +200,8 @@ public class SendNioTcpClient implements Runnable {
 			// Server is supposed to send nothing. Therefore, do nothing.
 			transline.incrementAndGet();
 			String buffer = (String) e.getMessage();
-			logger.info("back recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString()
-					+ "]");
+			// logger.info("back recvd " + buffer.length() + "/" + transLines +
+			// " bytes [" + buffer.toString()+ "]");
 		}
 		
 		@Override
@@ -218,7 +219,7 @@ public class SendNioTcpClient implements Runnable {
 					String line = queue.poll(100, TimeUnit.MILLISECONDS);
 					if (line != null) {
 						channel.write(line);
-						logger.info("queue line length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
+						logger.debug("queue line length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();

@@ -41,10 +41,9 @@ public class AccessLogShuffle extends BaseRichBolt {
 	public void execute(Tuple input) {
 		// Object alg = input.getValueByField("AccessLog");
 		try {
-			for (int i = 0; i < input.size(); i++) {
-				Object obj = input.getValue(i);
-				this.emitAccessLogAnalysis(collector, obj);
-			}
+			
+			Object obj = input.getValueByField("AccessLog");
+			this.emitAccessLogAnalysis(collector, obj);
 			// LOGR.info("shuff=====initial=====" + GLOB);
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
@@ -77,8 +76,8 @@ public class AccessLogShuffle extends BaseRichBolt {
 			for (int i = 0; i < lines.length; i++) {
 				String line = lines[i];
 				alog = new AccessLog(line);
-				// ukey=time#rely#server#uriname
-				// 20120613#10:01:00#0#/home
+				// ukey=ver#time#rely#server
+				// 0#20120613#10:01:00#0
 				if (alog != null && alog.outKey().length() > 20) {
 					// LOGR.info(alog.toString());
 					// 转化成少的pojo由code算出cnt_error等,不累加直接发过去

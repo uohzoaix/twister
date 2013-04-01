@@ -32,8 +32,8 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 	@JsonIgnore
 	private static Logger LOGR = LoggerFactory.getLogger(AbstractAccessLog.class);
 	
-	// fields
-	private char logVersion = '0';
+	// fields: 0=api,1=jiekou,2=bingfa
+	private int logVer = 0;
 	private String ip = "";
 	// 毫秒
 	private long time = 0L;
@@ -338,7 +338,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 				// ua server+ kls uri_name pid
 				// LOGR.info("logToObject line ok, size " + itr.size() +
 				// itr.toString());
-				this.setLogVersion('0');
+				this.setLogVer(0);
 				String ip = itr.get(0).toString();
 				this.setIp(ip);
 				String datestr = itr.get(1).toString();
@@ -557,49 +557,32 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		return JacksonUtils.objectToJson(this);
 	}
 	
-	public String outJiekouKey() {
-		// 请勿随意改动
-		// jiekou,转成long分，抛弃秒值set00
-		// ukey=time#rely#server#uriname
-		// 20120613#10:01:00#0#/home
-		StringBuffer sb = new StringBuffer();
-		if (this.logVersion == '0') {
-			String SEPARATOR = "#";
-			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
-					.append(getUri_name());
-		}
-		return sb.toString();
-	}
-	
 	public String outKey() {
 		// 请勿随意改动
-		// jiekou,转成long分，抛弃秒值set00
+		// 转成long分，抛弃秒值set00
 		// ukey=daytime#rely#server
 		// 20120613#10:01:00#0#/servernum
 		StringBuffer sb = new StringBuffer();
-		if (this.logVersion == '0') {
-			String SEPARATOR = "#";
-			sb.append(Common.formatDataTimeStr1(getDate_time())).append(SEPARATOR).append(getRely()).append(SEPARATOR)
-					.append(getServer());
+		String SEPARATOR = "#";
+		if (getLogVer() == 1) {
+			// ver=1
+			sb.append(getLogVer()).append(SEPARATOR).append(Common.formatDataTimeStr1(getDate_time()))
+					.append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getServer()).append(SEPARATOR)
+					.append(getUri_name());
+		} else {
+			// ver=0
+			sb.append(getLogVer()).append(SEPARATOR).append(Common.formatDataTimeStr1(getDate_time()))
+					.append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getServer());
 		}
 		return sb.toString();
 	}
 	
-	public char getLogVersion() {
-		return logVersion;
+	public int getLogVer() {
+		return logVer;
 	}
 	
-	/**
-	 * 日志文件的版本，这里的版本号是指日志文件里面标识的版本号，这个版本号代表了日志格式的改变 可能会改变某些字段的含义，或者增加减少字段等。
-	 * 
-	 * @param logVersion
-	 */
-	public void setLogVersion(char logVersion) {
-		if (logVersion == 0) {
-			this.logVersion = '0';
-		} else {
-			this.logVersion = logVersion;
-		}
+	public void setLogVer(int logVer) {
+		this.logVer = logVer;
 	}
 	
 	/**

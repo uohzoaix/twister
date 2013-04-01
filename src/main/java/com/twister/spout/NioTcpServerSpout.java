@@ -142,7 +142,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 						alog = new AccessLog(line);
 						if (alog != null) {
 							spoutLines++;
-							logger.info(spoutLines + " " + line);
+							logger.debug(spoutLines + " " + line);
 							collector.emit(new Values(alog));
 							// logger.info(alog.toString());
 						}
@@ -197,7 +197,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 				String buffer = (String) e.getMessage();
 				transLines += 1;
 				// SynchronousQueue put ,spout poll
-				logger.info("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
+				logger.debug("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString()
+						+ "]");
 				this.queue.offer(buffer);
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());

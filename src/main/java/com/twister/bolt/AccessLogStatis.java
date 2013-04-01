@@ -63,8 +63,8 @@ public class AccessLogStatis extends BaseRichBolt {
 		GLOB += 1;
 		try {
 			// pojo,key为试想拼合的字款 ,time也可以分成2
-			// ukey=time#rely#server#uriname
-			// 20120613#10:01:00#0#/home
+			// ukey=ver#time#rely#server
+			// 0#20120613#10:01:00#0
 			String ukey = input.getStringByField("ukey");
 			LOGR.info(tips + String.format(GLOB + " %s", ukey));
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");

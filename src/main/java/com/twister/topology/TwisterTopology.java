@@ -16,7 +16,7 @@ import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
 import com.twister.spout.NioTcpServerSpout;
 import com.twister.spout.NioUdpServerSpout;
-//import com.twister.spout.TextFileSpout;
+//import com.twister.spout.TextAccessFileSpout;
 //import com.twister.spout.TailFileSpout;
 
 /**
@@ -45,8 +45,8 @@ public class TwisterTopology {
 	public static void main(String[] args) throws Exception {
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout
-		// TextFileSpout textSpout = new
-		// TextFileSpout("src/main/resources/words.txt");
+		// TextAccessFileSpout textSpout = new
+		// TextAccessFileSpout("src/main/resources/words.txt");
 		// TailFileSpout Tailspout = new
 		// TailFileSpout("src/main/resources/words.txt");
 		
