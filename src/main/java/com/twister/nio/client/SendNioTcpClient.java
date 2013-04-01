@@ -90,7 +90,7 @@ public class SendNioTcpClient implements Runnable {
 		this.running = true;
 		// Configure the client.
 		channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
-				Executors.newCachedThreadPool());
+				Executors.newCachedThreadPool(), 4, 4);
 		bootstrap = new ClientBootstrap(channelFactory);
 		
 		// Set up the pipeline factory.

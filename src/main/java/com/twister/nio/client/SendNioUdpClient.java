@@ -88,7 +88,7 @@ public class SendNioUdpClient implements Runnable {
 	public void run() {
 		this.running = true;
 		// Configure the client.
-		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 2);
+		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		
 		// Set up the pipeline factory.

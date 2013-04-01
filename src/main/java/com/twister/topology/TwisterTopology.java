@@ -62,19 +62,19 @@ public class TwisterTopology {
 			// use nio tcp good
 			int port = Integer.valueOf(Tport[i]);
 			// 收集日志分发
-			SpoutDeclarer sd = builder.setSpout("tcpTwisterSpout" + i, new NioTcpServerSpout(port));
-			logger.info("tcpTwisterSpout" + i + " " + port);
+			SpoutDeclarer sd = builder.setSpout("tcpTwisterSpout" + port, new NioTcpServerSpout(port));
+			logger.info("tcpTwisterSpout" + port);
 			tcp += " " + port;
-			bde.shuffleGrouping("tcpTwisterSpout" + i);
+			bde.shuffleGrouping("tcpTwisterSpout" + port);
 		}
 		for (int i = 0; i < Uport.length; i++) {
 			// use nio udp
 			int port = Integer.valueOf(Uport[i]);
 			// 收集日志分发
-			SpoutDeclarer sd = builder.setSpout("udpTwisterSpout" + i, new NioUdpServerSpout(port));
-			logger.info("udpTwisterSpout" + i + " " + port);
+			SpoutDeclarer sd = builder.setSpout("udpTwisterSpout" + port, new NioUdpServerSpout(port));
+			logger.info("udpTwisterSpout" + port);
 			udp += " " + port;
-			bde.shuffleGrouping("udpTwisterSpout" + i);
+			bde.shuffleGrouping("udpTwisterSpout" + port);
 		}
 		
 		// NioTcpServerSpout tcpspout = new NioTcpServerSpout(10236); // 10236

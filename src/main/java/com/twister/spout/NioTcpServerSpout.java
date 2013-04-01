@@ -93,8 +93,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		
-		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-				Executors.newCachedThreadPool());
+		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), 4,
+				Executors.newCachedThreadPool(), 4);
 		bootstrap = new ServerBootstrap(channelFactory);
 		try {
 			// Set up the pipeline factory.

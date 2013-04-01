@@ -99,7 +99,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		
-		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool());
+		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
 			// Set up the pipeline factory.
