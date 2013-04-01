@@ -6,8 +6,8 @@
 ######################## 
 if [ -z $1 ]
 then     
-    YDAY=`date -d "1 day ago" +%Y%m%d`
-    else  
+    YDAY=`date -d "0 day ago" +%Y%m%d`
+else  
     YDAY=$1    
 fi
 echo "$YDAY run twister"  
