@@ -219,7 +219,8 @@ public class SendNioUdpClient implements Runnable {
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
-						logger.debug("from queue length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
+						// logger.debug("from queue length=" + line.length() +
+						// "/" + pollcnt + " line= [" + line + "]");
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();

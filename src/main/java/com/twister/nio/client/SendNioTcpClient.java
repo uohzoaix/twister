@@ -226,7 +226,8 @@ public class SendNioTcpClient implements Runnable {
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
-						logger.debug("queue line length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
+						// logger.debug("queue line length=" + line.length() +
+						// "/" + pollcnt + " line= [" + line + "]");
 					}
 				} catch (Exception e1) {
 					
