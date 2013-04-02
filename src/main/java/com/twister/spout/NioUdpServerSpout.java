@@ -105,8 +105,8 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		// alogManager = new AccessLogCacheManager();
-		// Jedis jedis = alogManager.getMasterJedis();
+		alogManager = new AccessLogCacheManager();
+		Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
@@ -135,9 +135,9 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			
 			String dts = Common.createDataTimeStr();
 			String serinfo = "UdpSpout:" + localip + ":" + port;
-			// jedis.select(JedisExpireHelps.DBIndex);
-			// jedis.set(serinfo, dts);
-			// jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			jedis.select(JedisExpireHelps.DBIndex);
+			jedis.set(serinfo, dts);
+			jedis.expire(serinfo, JedisExpireHelps.expire_2DAY);
 			// /tmp/spoutIp.txt
 			// save ip:port to tmpfile
 			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");

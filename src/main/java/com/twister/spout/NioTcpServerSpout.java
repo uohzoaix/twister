@@ -100,8 +100,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		// alogManager = new AccessLogCacheManager();
-		// Jedis jedis = alogManager.getMasterJedis();
+		alogManager = new AccessLogCacheManager();
+		Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
 				Executors.newCachedThreadPool());
 		bootstrap = new ServerBootstrap(channelFactory);
@@ -133,9 +133,9 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			
 			String dts = Common.createDataTimeStr();
 			String serinfo = "TcpSpout:" + localip + ":" + port;
-			// jedis.select(JedisExpireHelps.DBIndex);
-			// jedis.set(serinfo, dts);
-			// jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			jedis.select(JedisExpireHelps.DBIndex);
+			jedis.set(serinfo, dts);
+			jedis.expire(serinfo, JedisExpireHelps.expire_2DAY);
 			// save ip:port to tmpfile
 			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
 			FileUtils.writeFile(tmpfile, serinfo, true);

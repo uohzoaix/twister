@@ -47,8 +47,6 @@ public class TwisterTopology {
 	public static String[] Uport = AppsConfig.getInstance().getValue("udp.spout.port").split(",");
 	
 	public static void main(String[] args) throws Exception {
-		String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
-		FileUtils.writeFile(tmpfile, "", false); // clean tmpfile
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout
 		// TextAccessFileSpout textSpout = new
