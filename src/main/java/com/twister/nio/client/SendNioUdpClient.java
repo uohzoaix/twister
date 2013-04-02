@@ -148,7 +148,8 @@ public class SendNioUdpClient implements Runnable {
 					line += "\n";
 				}
 				queue.offer(line);
-				logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
+				// logger.debug("add queue length=" + line.length() + "/" + ct +
+				// " line = [" + line + "]");
 			} catch (Exception e) {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
