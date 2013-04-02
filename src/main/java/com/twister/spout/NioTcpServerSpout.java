@@ -139,7 +139,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			// save ip:port to tmpfile
 			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
 			FileUtils.writeFile(tmpfile, serinfo, true);
-			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
+			// logger.debug(progName + " tcp spout started,listening on " +
+			// localip + ":" + port);
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());
 		} catch (Exception e) {
