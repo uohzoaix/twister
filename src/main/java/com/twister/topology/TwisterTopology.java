@@ -3,8 +3,6 @@ package com.twister.topology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import storm.trident.TridentTopology;
-
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
@@ -19,6 +17,7 @@ import com.twister.bolt.AccessLogShuffle;
 import com.twister.spout.NioTcpServerSpout;
 import com.twister.spout.NioUdpServerSpout;
 import com.twister.utils.AppsConfig;
+import com.twister.utils.FileUtils;
 
 //import com.twister.spout.TextAccessFileSpout;
 //import com.twister.spout.TailFileSpout;
@@ -43,10 +42,13 @@ import com.twister.utils.AppsConfig;
 
 public class TwisterTopology {
 	public static Logger logger = LoggerFactory.getLogger(TwisterTopology.class);
+	
 	public static String[] Tport = AppsConfig.getInstance().getValue("tcp.spout.port").split(",");
 	public static String[] Uport = AppsConfig.getInstance().getValue("udp.spout.port").split(",");
 	
 	public static void main(String[] args) throws Exception {
+		String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
+		FileUtils.writeFile(tmpfile, "", false); // clean tmpfile
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout
 		// TextAccessFileSpout textSpout = new
@@ -102,12 +104,12 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(30);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
-			logger.info("集群模式运行 " + "udp port:" + udp + " tcp port:" + tcp);
+			logger.info("StormCluster*****" + "udp port:" + udp + " tcp port:" + tcp);
 		} else {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(5);
 			LocalCluster cluster = new LocalCluster();
-			logger.info("本地模式运行 " + "udp port:" + udp + " tcp port:" + tcp);
+			logger.info("LocalCluster***** " + "udp port:" + udp + " tcp port:" + tcp);
 			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
 			// cluster.shutdown();

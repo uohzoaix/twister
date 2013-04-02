@@ -27,7 +27,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 	private static final long serialVersionUID = 1896733498701080791L;
 	public static Logger LOGR = LoggerFactory.getLogger(AccessLogShuffle.class);
 	OutputCollector collector;
-	public static Long GLOB = 0l;
+	private Long GLOB = 0l;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -66,7 +66,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 				AccessLogAnalysis logalys = new AccessLogAnalysis(alog.outKey(), alog.getResponse_code(),
 						alog.getContent_length(), alog.getRequest_time());
 				// LOGR.info(logalys.toString());
-				GLOB++;
+				// GLOB++;
 				collector.emit(new Values(alog.outKey(), logalys));
 			}
 			
@@ -83,7 +83,7 @@ public class AccessLogShuffle extends BaseRichBolt {
 					// 转化成少的pojo由code算出cnt_error等,不累加直接发过去
 					AccessLogAnalysis logalys = new AccessLogAnalysis(alog.outKey(), alog.getResponse_code(),
 							alog.getContent_length(), alog.getRequest_time());
-					GLOB++;
+					// GLOB++;
 					collector.emit(new Values(alog.outKey(), logalys));
 				}
 			}

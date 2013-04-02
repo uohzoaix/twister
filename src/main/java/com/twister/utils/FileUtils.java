@@ -2,6 +2,8 @@ package com.twister.utils;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,22 +19,31 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
  * Utility class to manipulate file.
  */
 public class FileUtils {
+	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 	
 	private FileUtils() {
 	}
 	
-	public static File createTempFile() throws IOException {
-		File file = File.createTempFile("twister", ".tmp");
-		System.out.print(file.getName() + " : " + file.getAbsolutePath());
-		file.deleteOnExit();
+	public static File createTempFile() {
+		File file = null;
+		try {
+			file = File.createTempFile("twister-", ".tmp");
+			logger.debug(file.getName() + " : " + file.getAbsolutePath());
+			file.deleteOnExit();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return file;
 	}
 	
-	public static void writeFile(String filename, String text) {
+	public static void writeFile(String filename, String text, boolean isappend) {
 		RandomAccessFile rf;
 		try {
 			rf = new RandomAccessFile(filename, "rw");
-			rf.seek(rf.length()); // 将指针移动到文件末尾
+			if (isappend) {
+				rf.seek(rf.length()); // 将指针移动到文件末尾
+			}
 			String toCn = new String(text.getBytes("UTF-8"), "8859_1");
 			rf.writeBytes(toCn + "\n");
 			rf.close(); // 关闭文件流
@@ -92,5 +103,14 @@ public class FileUtils {
 			IOUtils.closeQuietly(fw);
 		}
 		return lines;
+	}
+	
+	public static Logger debug(String text) {
+		logger.debug(text);
+		return logger;
+	}
+	
+	public static void main(String[] args) {
+		// debug("ttt");
 	}
 }

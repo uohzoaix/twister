@@ -42,8 +42,10 @@ import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
 
+import com.google.common.collect.Queues;
 import com.twister.nio.log.AccessLog;
 import com.twister.storage.AccessLogCacheManager;
+import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 import com.twister.utils.FileUtils;
 import com.twister.utils.JedisConnection.JedisExpireHelps;
@@ -84,7 +86,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private long spoutLines = 0;
 	private AccessLogCacheManager alogManager; // reids
 	// SynchronousQueue or ArrayBlockingQueue
-	private static Queue<String> queue = new LinkedList<String>();
+	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private String localip = "127.0.0.1";
 	private Fields _fields = new Fields("AccessLog");
 	
@@ -103,8 +105,8 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		alogManager = new AccessLogCacheManager();
-		Jedis jedis = alogManager.getMasterJedis();
+		// alogManager = new AccessLogCacheManager();
+		// Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
@@ -123,24 +125,27 @@ public class NioUdpServerSpout extends BaseRichSpout {
 					return pipeline;
 				}
 			});
-			// bootstrap.setOption("reuseAddress", true);
-			// bootstrap.setOption("tcpNoDelay", true);
-			// bootstrap.setOption("broadcast", false);
-			// bootstrap.setOption("sendBufferSize", bufferSize);
-			// bootstrap.setOption("receiveBufferSize", bufferSize);
-			// Bind and start to accept incoming connections.
+			bootstrap.setOption("reuseAddress", true);
+			bootstrap.setOption("child.tcpNoDelay", true);
+			bootstrap.setOption("child.keepAlive", true);
+			
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
-			jedis.select(JedisExpireHelps.DBIndex);
+			
 			String dts = Common.createDataTimeStr();
 			String serinfo = "UdpSpout:" + localip + ":" + port;
-			jedis.set(serinfo, dts);
-			jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
-			conf.put(serinfo, dts);
-			FileUtils.writeFile("/tmp/SpoutIp.txt", serinfo);
+			// jedis.select(JedisExpireHelps.DBIndex);
+			// jedis.set(serinfo, dts);
+			// jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			// /tmp/spoutIp.txt
+			// save ip:port to tmpfile
+			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
+			FileUtils.writeFile(tmpfile, serinfo, true);
 			logger.info(progName + "udp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
+			logger.error(e.getStackTrace().toString());
+		} catch (Exception e) {
 			logger.error(e.getStackTrace().toString());
 		}
 		
@@ -154,7 +159,10 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		
 		AccessLog alog = null;
 		try {
-			String txt = this.queue.poll();
+			String txt = null;
+			synchronized (this) {
+				txt = queue.poll();
+			}
 			if (txt != null && txt.length() > 10) {
 				// send obj
 				String[] lines = txt.split("\n");

@@ -28,7 +28,7 @@ public class AccessLogGroup extends BaseRichBolt {
 	private Integer taskid;
 	private String name;
 	private OutputCollector collector;
-	public static Long GLOB = 0l;
+	private Long GLOB = 0l;
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -41,7 +41,7 @@ public class AccessLogGroup extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
-		GLOB += 1;
+		// GLOB += 1;
 		try {
 			String ukey = input.getStringByField("ukey");
 			// LOGR.info(String.format(GLOB + " %s", ukey));

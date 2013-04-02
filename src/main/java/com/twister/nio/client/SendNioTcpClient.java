@@ -25,11 +25,14 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Queues;
 
 import java.io.File;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
+import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +52,7 @@ public class SendNioTcpClient implements Runnable {
 	private ChannelFuture future;
 	private Tailer tailer;
 	
-	private static SynchronousQueue<String> queue = new SynchronousQueue<String>();
+	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	
 	private volatile boolean running = false;
 	private String host = "127.0.0.1";
@@ -82,48 +85,52 @@ public class SendNioTcpClient implements Runnable {
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
-		thread.setDaemon(false);
+		thread.setDaemon(true);
 		thread.start();
 	}
 	
 	public void run() {
-		this.running = true;
-		// Configure the client.
-		channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
-				Executors.newCachedThreadPool(), 4, 4);
-		bootstrap = new ClientBootstrap(channelFactory);
-		
-		// Set up the pipeline factory.
-		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-			public ChannelPipeline getPipeline() throws Exception {
-				ChannelPipeline pipeline = Channels.pipeline();
-				pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
-				pipeline.addLast("decoder", new StringDecoder());
-				pipeline.addLast("encoder", new StringEncoder());
-				// and then business logic.
-				pipeline.addLast("handler", new SendNioTcpClientHandler());
-				return pipeline;
-			}
+		try {
+			this.running = true;
+			// Configure the client.
+			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
+					Executors.newCachedThreadPool(), 4, 4);
+			bootstrap = new ClientBootstrap(channelFactory);
 			
-		});
-		
-		// bootstrap.setOption("reuseAddress", true);
-		// bootstrap.setOption("tcpNoDelay", true);
-		// bootstrap.setOption("broadcast", "false");
-		// bootstrap.setOption("keepAlive", false);
-		// bootstrap.setOption("sendBufferSize", bufferSize);
-		// bootstrap.setOption("receiveBufferSize", bufferSize);
-		
-		// Start the connection attempt.
-		future = bootstrap.connect(new InetSocketAddress(host, port));
-		// Wait until the connection is closed or the connection attempt fails.
-		future.getChannel().getCloseFuture().awaitUninterruptibly();
-		// clientChannel = (DatagramChannel) bootstrap.bind(new
-		// InetSocketAddress(0));
-		
+			// Set up the pipeline factory.
+			bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+				public ChannelPipeline getPipeline() throws Exception {
+					ChannelPipeline pipeline = Channels.pipeline();
+					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("decoder", new StringDecoder());
+					pipeline.addLast("encoder", new StringEncoder());
+					// and then business logic.
+					pipeline.addLast("handler", new SendNioTcpClientHandler());
+					return pipeline;
+				}
+				
+			});
+			// 参数名不用加上"child."前缀
+			bootstrap.setOption("tcpNoDelay", true);
+			bootstrap.setOption("keepAlive", true);
+			
+			// Start the connection attempt.
+			future = bootstrap.connect(new InetSocketAddress(host, port));
+			// Wait until the connection is closed or the connection attempt
+			// fails.
+			
+			future.getChannel().getCloseFuture().awaitUninterruptibly();
+			// clientChannel = (DatagramChannel) bootstrap.bind(new
+			// InetSocketAddress(0));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			stop();
+		}
 	}
 	
 	public void stop() {
+		
 		this.running = false;
 		System.out.println("stopping UDP server");
 		clientChannel.close();
@@ -150,7 +157,7 @@ public class SendNioTcpClient implements Runnable {
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
-				queue.put(line);
+				queue.offer(line);
 				// logger.debug("add queue length=" + line.length() + "/" + ct +
 				// " line = [" + line + "]");
 			} catch (Exception e) {
@@ -208,7 +215,7 @@ public class SendNioTcpClient implements Runnable {
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
-			e.getChannel().close();
+			
 		}
 		
 		public void SendHandle(ChannelHandlerContext ctx, ChannelStateEvent e) {
@@ -216,13 +223,15 @@ public class SendNioTcpClient implements Runnable {
 			while (channel.isWritable()) {
 				try {
 					pollcnt++;
-					String line = queue.poll(100, TimeUnit.MILLISECONDS);
+					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
 						logger.debug("queue line length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
 					}
 				} catch (Exception e1) {
+					
 					e1.printStackTrace();
+					logger.error(e1.getStackTrace().toString());
 				}
 				
 			}
@@ -240,11 +249,19 @@ public class SendNioTcpClient implements Runnable {
 			args = args1;
 			// System.exit(0);
 		}
+		SendNioTcpClient cli = null;
+		try {
+			// Parse options.
+			final String host = args[0];
+			final int port = Integer.parseInt(args[1]);
+			String logfile = args[2];
+			System.out.println("sending " + host + " " + port + " " + logfile);
+			cli = new SendNioTcpClient(host, port, logfile, false);
+			cli.run();
+		} catch (Exception e) {
+			cli.stop();
+			System.exit(0);
+		}
 		
-		// Parse options.
-		final String host = args[0];
-		final int port = Integer.parseInt(args[1]);
-		String logfile = args[2];
-		new SendNioTcpClient(host, port, logfile, false).run();
 	}
 }

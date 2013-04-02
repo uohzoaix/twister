@@ -40,8 +40,8 @@ public class AccessLogStatis extends BaseRichBolt {
 	private EhcacheMap<String, AccessLogAnalysis> ehcache;
 	private EhcacheMap<String, Integer> hashCounter;
 	
-	public static Long GLOB = 0l;
-	public String tips = "";
+	private Long GLOB = 0l;
+	private String tips = "";
 	
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -60,7 +60,7 @@ public class AccessLogStatis extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
-		GLOB += 1;
+		// GLOB += 1;
 		try {
 			// pojo,key为试想拼合的字款 ,time也可以分成2
 			// ukey=ver#time#rely#server
@@ -99,9 +99,8 @@ public class AccessLogStatis extends BaseRichBolt {
 					jedis.set(ukey, jsonStr);
 					jedis.expire(ukey, JedisExpireHelps.expire_2DAY);
 				}
-				// LOGR.info(tips+ String.format(GLOB +
-				// " count execute result is:%s hashCounter=%s,ehcache=%s ",
-				// ukey,hashCounter.get(ukey), rlt.getCnt_pv()));
+				// LOGR.debug(tips + String.format(GLOB +
+				// " result:%s,ehcache=%s ", ukey, rlt.getCnt_pv()));
 			}
 			
 			// 通过ack操作确认这个tuple被成功处理

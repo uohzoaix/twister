@@ -26,11 +26,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Queues;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
+import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +51,8 @@ public class SendNioUdpClient implements Runnable {
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
-	private static SynchronousQueue<String> queue = new SynchronousQueue<String>();
+	// SynchronousQueue or
+	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private volatile boolean running = false;
 	private String host = "127.0.0.1";
 	private final int port;
@@ -81,7 +84,7 @@ public class SendNioUdpClient implements Runnable {
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
-		thread.setDaemon(false);
+		thread.setDaemon(true);
 		thread.start();
 	}
 	
@@ -105,12 +108,8 @@ public class SendNioUdpClient implements Runnable {
 			
 		});
 		
-		// bootstrap.setOption("reuseAddress", true);
-		// bootstrap.setOption("tcpNoDelay", true);
-		// bootstrap.setOption("broadcast", "false");
-		// bootstrap.setOption("keepAlive", false);
-		// bootstrap.setOption("sendBufferSize", bufferSize);
-		// bootstrap.setOption("receiveBufferSize", bufferSize);
+		bootstrap.setOption("tcpNoDelay", true);
+		bootstrap.setOption("keepAlive", true);
 		
 		// Start the connection attempt.
 		future = bootstrap.connect(new InetSocketAddress(host, port));
@@ -148,7 +147,7 @@ public class SendNioUdpClient implements Runnable {
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
-				queue.put(line);
+				queue.offer(line);
 				logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
 			} catch (Exception e) {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
@@ -209,7 +208,7 @@ public class SendNioUdpClient implements Runnable {
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
-			e.getChannel().close();
+			// e.getChannel().close();
 		}
 		
 		public void SendHandle(ChannelHandlerContext ctx, ChannelStateEvent e) {
@@ -217,7 +216,7 @@ public class SendNioUdpClient implements Runnable {
 			while (channel.isWritable()) {
 				try {
 					pollcnt++;
-					String line = queue.poll(100, TimeUnit.MILLISECONDS);
+					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
 						logger.debug("from queue length=" + line.length() + "/" + pollcnt + " line= [" + line + "]");
@@ -241,11 +240,20 @@ public class SendNioUdpClient implements Runnable {
 			args = args1;
 			// System.exit(0);
 		}
-		
-		// Parse options.
-		final String host = args[0];
-		final int port = Integer.parseInt(args[1]);
-		String logfile = args[2];
-		new SendNioUdpClient(host, port, logfile, false).run();
+		SendNioUdpClient cli = null;
+		try {
+			
+			// Parse options.
+			final String host = args[0];
+			final int port = Integer.parseInt(args[1]);
+			String logfile = args[2];
+			System.out.println("sending " + host + " " + port + " " + logfile);
+			cli = new SendNioUdpClient(host, port, logfile, false);
+			cli.run();
+		} catch (Exception e) {
+			// TODO: handle exception
+			cli.stop();
+			System.exit(0);
+		}
 	}
 }

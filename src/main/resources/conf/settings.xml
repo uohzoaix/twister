@@ -5,6 +5,7 @@
     
     <entry key="tcp.spout.port">10235,10236</entry>  
     <entry key="udp.spout.port">10237,10238</entry>
+    <entry key="save.spoutIpPort.file">/tmp/spoutIp.txt</entry>
     
     <entry key="apimsdb.driver">com.mysql.jdbc.Driver</entry>
     <entry key="apimsdb.url">jdbc:mysql://10.103.13.18:3306/mobile_production?useUnicode=true&amp;characterEncoding=UTF-8&amp;autoReconnect=true</entry>

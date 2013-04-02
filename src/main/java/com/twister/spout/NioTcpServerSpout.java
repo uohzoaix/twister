@@ -37,8 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
 
+import com.google.common.collect.Queues;
 import com.twister.nio.log.AccessLog;
 import com.twister.storage.AccessLogCacheManager;
+import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 import com.twister.utils.FileUtils;
 import com.twister.utils.JedisConnection.JedisExpireHelps;
@@ -79,7 +81,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	private AccessLogCacheManager alogManager; // reids
 	
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
-	private Queue<String> queue = new LinkedList<String>();
+	private Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private String localip = "127.0.0.1";
 	private Fields _fields = new Fields("AccessLog");
 	
@@ -98,8 +100,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		alogManager = new AccessLogCacheManager();
-		Jedis jedis = alogManager.getMasterJedis();
+		// alogManager = new AccessLogCacheManager();
+		// Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
 				Executors.newCachedThreadPool());
 		bootstrap = new ServerBootstrap(channelFactory);
@@ -119,24 +121,28 @@ public class NioTcpServerSpout extends BaseRichSpout {
 					return pipeline;
 				}
 			});
-			// bootstrap.setOption("reuseAddress", true);
-			// bootstrap.setOption("tcpNoDelay", true);
-			// bootstrap.setOption("broadcast", false);
-			// bootstrap.setOption("sendBufferSize", bufferSize);
-			// bootstrap.setOption("receiveBufferSize", bufferSize);
+			// 这里设置tcpNoDelay和keepAlive参数，前面的child前缀必须要加上，用来指明这个参数将被应用到接收到的Channels
+			bootstrap.setOption("reuseAddress", true);
+			bootstrap.setOption("child.tcpNoDelay", true);
+			bootstrap.setOption("child.keepAlive", true);
+			
 			// Bind and start to accept incoming connections.
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			localip = InetAddress.getLocalHost().getHostAddress();
 			running = true;
-			jedis.select(JedisExpireHelps.DBIndex);
+			
 			String dts = Common.createDataTimeStr();
 			String serinfo = "TcpSpout:" + localip + ":" + port;
-			jedis.set(serinfo, dts);
-			jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
-			conf.put(serinfo, dts);
-			FileUtils.writeFile("/tmp/SpoutIp.txt", serinfo);
+			// jedis.select(JedisExpireHelps.DBIndex);
+			// jedis.set(serinfo, dts);
+			// jedis.expire(serinfo, JedisExpireHelps.expire_WEEKY);
+			// save ip:port to tmpfile
+			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
+			FileUtils.writeFile(tmpfile, serinfo, true);
 			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
+			logger.error(e.getStackTrace().toString());
+		} catch (Exception e) {
 			logger.error(e.getStackTrace().toString());
 		}
 		
@@ -146,7 +152,11 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	public void nextTuple() {
 		AccessLog alog = null;
 		try {
-			String txt = queue.poll();
+			String txt = null;
+			synchronized (this) {
+				txt = queue.poll();
+			}
+			
 			if (txt != null && txt.length() > 10) {
 				// send obj
 				String[] lines = txt.split("\n");
