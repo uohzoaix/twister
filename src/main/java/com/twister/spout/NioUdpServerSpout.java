@@ -231,7 +231,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			try {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				transLines += 1;
+				// transLines += 1;
 				// SynchronousQueue put ,spout poll
 				// logger.debug("recvd length " + buffer.length() + "/" +
 				// transLines + " bytes [" + buffer.toString()+ "]");

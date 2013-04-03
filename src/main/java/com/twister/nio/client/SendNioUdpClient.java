@@ -199,10 +199,10 @@ public class SendNioUdpClient implements Runnable {
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
 			// back the received msg to the server
 			// Server is supposed to send nothing. Therefore, do nothing.
-			transline.incrementAndGet();
+			// transline.incrementAndGet();
 			String buffer = (String) e.getMessage();
-			logger.info("back recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString()
-					+ "]");
+			// logger.info("back recvd length " + buffer.length() + "/" +
+			// transLines + " bytes [" + buffer.toString()+ "]");
 		}
 		
 		@Override
@@ -216,7 +216,7 @@ public class SendNioUdpClient implements Runnable {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
 				try {
-					pollcnt++;
+					// pollcnt++;
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
@@ -225,6 +225,7 @@ public class SendNioUdpClient implements Runnable {
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
+					logger.error(e1.getStackTrace().toString());
 				}
 				
 			}
