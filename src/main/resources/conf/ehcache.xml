@@ -21,4 +21,10 @@
 		overflowToDisk="true" timeToIdleSeconds="300" timeToLiveSeconds="600"
 		diskExpiryThreadIntervalSeconds="600" memoryStoreEvictionPolicy="LFU">
 	</cache>
+	
+	    <cache name="defaultMap" maxElementsInMemory="10000000" eternal="false"
+        overflowToDisk="true" timeToIdleSeconds="300" timeToLiveSeconds="600"
+        diskExpiryThreadIntervalSeconds="600" memoryStoreEvictionPolicy="LFU">
+    </cache>
+    
 </ehcache>
