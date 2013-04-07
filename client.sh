@@ -16,5 +16,7 @@ else
     YDAY=$1
 fi
 echo "$YDAY run twister"  
-java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient 10.103.23.64 10236 /v3/data/syslog/day/20130401/access_$YDAY >$YDAY.out
+java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient 10.103.23.64 10236 /v3/data/syslog/day/$YDAY/access_$YDAY >$YDAY.out
+java -cp classes -classpath ./target/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient 10.103.23.65 10236 /opt/logs/nginx/access/log >${YDAY}2.out
+
 echo "ok"
