@@ -8,7 +8,7 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.google.common.base.Preconditions;
-import com.twister.nio.log.AccessLog;
+import com.twister.entity.AccessLog;
 import com.twister.utils.Common;
 
 import org.slf4j.Logger;

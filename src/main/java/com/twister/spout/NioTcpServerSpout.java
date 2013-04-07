@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import com.google.common.collect.Queues;
-import com.twister.nio.log.AccessLog;
+import com.twister.entity.AccessLog;
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
@@ -86,6 +86,11 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	private Fields _fields = new Fields("AccessLog");
 	
 	public NioTcpServerSpout(int port) {
+		try {
+			localip = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 		this.port = port;
 	}
 	
@@ -100,7 +105,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		alogManager = new AccessLogCacheManager();
+		this.alogManager = new AccessLogCacheManager();
 		Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
 				Executors.newCachedThreadPool());
@@ -139,11 +144,12 @@ public class NioTcpServerSpout extends BaseRichSpout {
 			// save ip:port to tmpfile
 			String tmpfile = AppsConfig.getInstance().getValue("save.spoutIpPort.file");
 			FileUtils.writeFile(tmpfile, serinfo, true);
-			// logger.debug(progName + " tcp spout started,listening on " +
-			// localip + ":" + port);
+			logger.info(progName + " tcp spout started,listening on " + localip + ":" + port);
 		} catch (UnknownHostException e) {
+			e.printStackTrace();
 			logger.error(e.getStackTrace().toString());
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getStackTrace().toString());
 		}
 		
@@ -167,7 +173,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 						alog = new AccessLog(line);
 						if (alog != null) {
 							spoutLines++;
-							logger.debug(spoutLines + " " + line);
+							// logger.debug(spoutLines + " " + line);
 							collector.emit(new Values(alog));
 							// logger.info(alog.toString());
 						}
@@ -222,8 +228,8 @@ public class NioTcpServerSpout extends BaseRichSpout {
 				String buffer = (String) e.getMessage();
 				transLines += 1;
 				// SynchronousQueue put ,spout poll
-				logger.debug("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString()
-						+ "]");
+				// logger.debug("recvd length " + buffer.length() + "/" +
+				// transLines + " bytes [" + buffer.toString()+ "]");
 				this.queue.offer(buffer);
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());

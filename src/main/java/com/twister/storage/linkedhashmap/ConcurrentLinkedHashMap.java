@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twister.concurrentlinkedhashmap;
+package com.twister.storage.linkedhashmap;
 
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
@@ -43,9 +43,9 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 
-import static com.twister.concurrentlinkedhashmap.ConcurrentLinkedHashMap.DrainStatus.IDLE;
-import static com.twister.concurrentlinkedhashmap.ConcurrentLinkedHashMap.DrainStatus.PROCESSING;
-import static com.twister.concurrentlinkedhashmap.ConcurrentLinkedHashMap.DrainStatus.REQUIRED;
+import static com.twister.storage.linkedhashmap.ConcurrentLinkedHashMap.DrainStatus.IDLE;
+import static com.twister.storage.linkedhashmap.ConcurrentLinkedHashMap.DrainStatus.PROCESSING;
+import static com.twister.storage.linkedhashmap.ConcurrentLinkedHashMap.DrainStatus.REQUIRED;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;

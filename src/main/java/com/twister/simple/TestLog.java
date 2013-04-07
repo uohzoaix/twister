@@ -1,8 +1,9 @@
 package com.twister.simple;
 
 import java.io.RandomAccessFile;
-import com.twister.nio.log.AccessLog;
-import com.twister.nio.log.AccessLogAnalysis;
+
+import com.twister.entity.AccessLog;
+import com.twister.entity.AccessLogAnalysis;
 import com.twister.utils.CharsetUtil;
 import com.twister.utils.JacksonUtils;
 

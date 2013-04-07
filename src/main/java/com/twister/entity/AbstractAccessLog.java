@@ -1,4 +1,4 @@
-package com.twister.nio.log;
+package com.twister.entity;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;

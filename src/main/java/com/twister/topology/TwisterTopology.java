@@ -42,7 +42,7 @@ import com.twister.utils.FileUtils;
 
 public class TwisterTopology {
 	public static Logger logger = LoggerFactory.getLogger(TwisterTopology.class);
-	
+	public static String[] hosts = AppsConfig.getInstance().getValue("supervisor.spout.ip").split(",");
 	public static String[] Tport = AppsConfig.getInstance().getValue("tcp.spout.port").split(",");
 	public static String[] Uport = AppsConfig.getInstance().getValue("udp.spout.port").split(",");
 	
@@ -56,27 +56,32 @@ public class TwisterTopology {
 		// Initial filter
 		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
 		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), 30);
-		String tcp = "";
-		String udp = "";
-		for (int i = 0; i < Tport.length; i++) {
-			// use nio tcp good
-			int port = Integer.valueOf(Tport[i]);
-			// 收集日志分发
-			SpoutDeclarer sd = builder.setSpout("tcpTwisterSpout" + port, new NioTcpServerSpout(port));
-			logger.info("tcpTwisterSpout" + port);
-			tcp += " " + port;
-			bde.shuffleGrouping("tcpTwisterSpout" + port);
-		}
-		for (int i = 0; i < Uport.length; i++) {
-			// use nio udp
-			int port = Integer.valueOf(Uport[i]);
-			// 收集日志分发
-			SpoutDeclarer sd = builder.setSpout("udpTwisterSpout" + port, new NioUdpServerSpout(port));
-			logger.info("udpTwisterSpout" + port);
-			udp += " " + port;
-			bde.shuffleGrouping("udpTwisterSpout" + port);
-		}
+		logger.info(hosts.toString());
 		
+		for (int h = 0; h < hosts.length; h++) {
+			String ip = hosts[h];
+			for (int i = 0; i < Tport.length; i++) {
+				// use nio tcp good
+				int port = Integer.valueOf(Tport[i]);
+				// 收集日志分发
+				String title = "tcpTwisterSpout_" + ip + "_" + port;
+				SpoutDeclarer sd = builder.setSpout(title, new NioTcpServerSpout(port));
+				bde.shuffleGrouping(title);
+				logger.info(title);
+			}
+		}
+		for (int h = 0; h < hosts.length; h++) {
+			String ip = hosts[h];
+			for (int i = 0; i < Uport.length; i++) {
+				// use nio udp
+				int port = Integer.valueOf(Uport[i]);
+				// 收集日志分发
+				String title = "udpTwisterSpout_" + ip + "_" + port;
+				SpoutDeclarer sd = builder.setSpout(title, new NioUdpServerSpout(port));
+				bde.shuffleGrouping(title);
+				logger.info(title);
+			}
+		}
 		// NioTcpServerSpout tcpspout = new NioTcpServerSpout(10236); // 10236
 		// NioUdpServerSpout udpspout = new NioUdpServerSpout(10237); // 10237
 		// 收集日志分发
@@ -92,7 +97,8 @@ public class TwisterTopology {
 				new Fields("ukey", "AccessLogAnalysis"));
 		
 		// 汇总,统计结点 bolt,入redis内存
-		builder.setBolt("statisBolt", new AccessLogStatis(), 60).globalGrouping("fieldsGroupBolt");
+		builder.setBolt("statisBolt", new AccessLogStatis(), 60).fieldsGrouping("fieldsGroupBolt",
+				new Fields("ukey", "AccessLogAnalysis"));
 		
 		// config
 		Config conf = new Config();
@@ -102,12 +108,12 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(30);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
-			logger.info("StormCluster*****" + "udp port:" + udp + " tcp port:" + tcp);
+			logger.info("StormCluster");
 		} else {
 			// 使用本地模式运行
 			conf.setMaxTaskParallelism(5);
 			LocalCluster cluster = new LocalCluster();
-			logger.info("LocalCluster***** " + "udp port:" + udp + " tcp port:" + tcp);
+			logger.info("LocalCluster");
 			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
 			// cluster.shutdown();

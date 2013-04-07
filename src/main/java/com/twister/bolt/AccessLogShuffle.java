@@ -13,8 +13,8 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
-import com.twister.nio.log.AccessLog;
-import com.twister.nio.log.AccessLogAnalysis;
+import com.twister.entity.AccessLog;
+import com.twister.entity.AccessLogAnalysis;
 
 /**
  * 将分析结果随机分发到Bolt的任务，保证每个任务获得相等数量的tuple

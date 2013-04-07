@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import com.google.common.collect.Queues;
-import com.twister.nio.log.AccessLog;
+import com.twister.entity.AccessLog;
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
@@ -84,7 +84,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private final static int bufferSize = 1024;
 	private volatile boolean running = false;
 	private long spoutLines = 0;
-	private AccessLogCacheManager alogManager; // reids
+	private AccessLogCacheManager alogManager;
 	// SynchronousQueue or ArrayBlockingQueue
 	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private String localip = "127.0.0.1";
@@ -105,7 +105,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.context = context;
 		this.componentId = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
-		alogManager = new AccessLogCacheManager();
+		this.alogManager = new AccessLogCacheManager();
 		Jedis jedis = alogManager.getMasterJedis();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);

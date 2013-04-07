@@ -208,7 +208,7 @@ public class SendNioTcpClient implements Runnable {
 			transline.incrementAndGet();
 			String buffer = (String) e.getMessage();
 			// logger.info("back recvd " + buffer.length() + "/" + transLines +
-			// " bytes [" + buffer.toString()+ "]");
+			// " bytes [" + buffer.toString() + "]");
 		}
 		
 		@Override
@@ -226,7 +226,7 @@ public class SendNioTcpClient implements Runnable {
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
-						// logger.debug("queue line length=" + line.length() +
+						// logger.info("queue line length=" + line.length() +
 						// "/" + pollcnt + " line= [" + line + "]");
 					}
 				} catch (Exception e1) {

@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.twister.nio.log.AccessLog;
-import com.twister.nio.log.AccessLogAnalysis;
+import com.twister.entity.AccessLog;
+import com.twister.entity.AccessLogAnalysis;
 
 import backtype.storm.Config;
 import backtype.storm.coordination.BatchOutputCollector;

@@ -22,7 +22,7 @@
  * for determining how many units of capacity an entry consumes. Depending on
  * which concrete Weigher class is used, an entry may consume a different amount
  * of space within the cache. The
- * {@link com.twister.concurrentlinkedhashmap.googlecode.concurrentlinkedhashmap.Weighers} class provides
+ * {@link com.twister.storage.linkedhashmap.googlecode.concurrentlinkedhashmap.Weighers} class provides
  * utility methods for obtaining the most common kinds of implementations.
  * <p>
  * {@link com.googlecode.concurrentlinkedhashmap.EvictionListener} provides the
@@ -41,4 +41,4 @@
  * @see <a href="http://code.google.com/p/concurrentlinkedhashmap/">
  *      http://code.google.com/p/concurrentlinkedhashmap/</a>
  */
-package com.twister.concurrentlinkedhashmap;
+package com.twister.storage.linkedhashmap;

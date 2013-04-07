@@ -13,7 +13,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
-import com.twister.nio.log.AccessLogAnalysis;
+import com.twister.entity.AccessLogAnalysis;
 
 /**
  * Group直接发给

@@ -1,4 +1,4 @@
-package com.twister.nio.log;
+package com.twister.entity;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -31,6 +31,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	private long c = 0l;
 	private long d = 0l;
 	private long e = 0l;
+	private String txid = "0";
 	
 	public AccessLogAnalysis() {
 	}
@@ -170,6 +171,15 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		this.e = e;
 	}
 	
+	// taskid or TransactionAttemptid
+	public String getTxid() {
+		return txid;
+	}
+	
+	public void setTxid(String txid) {
+		this.txid = txid;
+	}
+	
 	@Override
 	public void assess_request_time(int response_code, long request_time) {
 		int[] art = Common.assess_request_time(response_code, request_time);
@@ -195,7 +205,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	public String toString() {
 		return "AccessLogAnalysis [key=" + key + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes + ", cnt_time="
 				+ cnt_time + ", avg_time=" + avg_time + ", code=" + code + ", cnt_error=" + cnt_error + ", a=" + a
-				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "]";
+				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "txid=" + txid + "]";
 	}
 	
 	@Override

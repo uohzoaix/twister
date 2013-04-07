@@ -10,8 +10,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
-import com.twister.concurrentlinkedhashmap.cache.EhcacheMap;
-import com.twister.nio.log.AccessLogAnalysis;
+import com.twister.entity.AccessLogAnalysis;
+import com.twister.storage.cache.EhcacheMap;
 import com.twister.utils.JacksonUtils;
 import com.twister.utils.JedisConnection;
 

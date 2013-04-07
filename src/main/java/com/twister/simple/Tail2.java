@@ -10,7 +10,7 @@ import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListener;
 import org.apache.commons.io.input.TailerListenerAdapter;
 
-import com.twister.concurrentlinkedhashmap.cache.EhcacheMap;
+import com.twister.storage.cache.EhcacheMap;
 
 public class Tail2 {
 	/**
