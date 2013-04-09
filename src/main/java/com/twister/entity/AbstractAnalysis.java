@@ -11,19 +11,17 @@ public abstract class AbstractAnalysis<T> implements Serializable, Cloneable, IA
 	 */
 	private static final long serialVersionUID = 666708219120833466L;
 	
-	public String key;
+	public String ukey;
+
 	
-	@Override
-	public String getKey() {
-		
-		return key;
+	public String getUkey() {
+		return ukey;
 	}
-	
-	@Override
-	public void setKey(String ukey) {
-		this.key = ukey;
+
+	public void setUkey(String ukey) {
+		this.ukey = ukey;
 	}
-	
+
 	@Override
 	public String objectToJson() {
 		return JacksonUtils.objectToJson(this);
@@ -34,12 +32,13 @@ public abstract class AbstractAnalysis<T> implements Serializable, Cloneable, IA
 		return JacksonUtils.jsonToObject(json, c);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object clone() {
 		Object o = null;
 		try {
 			o = (T) super.clone();
-		} catch (CloneNotSupportedException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return o;

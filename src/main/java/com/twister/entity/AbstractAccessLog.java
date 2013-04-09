@@ -576,6 +576,7 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 		}
 		return sb.toString();
 	}
+
 	
 	public int getLogVer() {
 		return logVer;

@@ -2,6 +2,8 @@ package com.twister.entity;
 
 import java.util.Map;
 
+import org.bson.BSONObject;
+
 /**
  * 计算
  * 
@@ -10,12 +12,10 @@ import java.util.Map;
  */
 
 public interface IAnalysisAlgorithm<T> {
-	public String getKey();
-	
-	public void setKey(String ukey);
-	
+
+
 	public String objectToJson();
-	
+
 	public <T> T fromJson(String json, Class<T> c);
 	
 	public void assess_request_time(int response_code, long request_time);

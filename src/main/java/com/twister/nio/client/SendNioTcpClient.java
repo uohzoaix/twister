@@ -26,16 +26,17 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
+import com.twister.entity.AccessLogAnalysis;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
 import java.util.Queue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -51,10 +52,11 @@ public class SendNioTcpClient implements Runnable {
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
-	
-	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
+	// Queues.newConcurrentLinkedQueue
+	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	
 	private volatile boolean running = false;
+	private final boolean isdebug = true;
 	private String host = "127.0.0.1";
 	private final int port;
 	private static int bufferSize = 1024;
@@ -81,7 +83,7 @@ public class SendNioTcpClient implements Runnable {
 		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString()
 				+ "' is not exists.");
 		// This listener send each file line in the queue
-		TailerListener listener = new QueueSender();
+		TailerListener listener = new TcpQueueSender();
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
@@ -118,11 +120,11 @@ public class SendNioTcpClient implements Runnable {
 			future = bootstrap.connect(new InetSocketAddress(host, port));
 			// Wait until the connection is closed or the connection attempt
 			// fails.
-			
-			future.getChannel().getCloseFuture().awaitUninterruptibly();
-			// clientChannel = (DatagramChannel) bootstrap.bind(new
-			// InetSocketAddress(0));
-			
+
+			logger.info("连接服务器 " + host + ":" + port);
+			ChannelFuture cf = future.getChannel().getCloseFuture().awaitUninterruptibly();
+			// clientChannel = (DatagramChannel) bootstrap.bind(new InetSocketAddress(0));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			stop();
@@ -147,19 +149,18 @@ public class SendNioTcpClient implements Runnable {
 	/**
 	 * A listener for the tailer sending current file line in a blocking queue.
 	 */
-	private class QueueSender extends TailerListenerAdapter {
+	private class TcpQueueSender extends TailerListenerAdapter {
+		public TcpQueueSender() {
+		}
 		@Override
 		public void handle(String line) {
 			try {
-				
-				ct += 1;
 				line = new String(line.getBytes("8859_1"), Charset.forName("UTF-8"));
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
 				queue.offer(line);
-				// logger.debug("add queue length=" + line.length() + "/" + ct +
-				// " line = [" + line + "]");
+				// logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
 			} catch (Exception e) {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
@@ -172,11 +173,7 @@ public class SendNioTcpClient implements Runnable {
 	}
 	
 	private class SendNioTcpClientHandler extends SimpleChannelUpstreamHandler {
-		
-		private long transLines = 0;
 		private final AtomicLong transline = new AtomicLong();
-		private long pollcnt = 0;
-		
 		public SendNioTcpClientHandler() {
 		}
 		
@@ -205,10 +202,10 @@ public class SendNioTcpClient implements Runnable {
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
 			// back the received msg to the server
 			// Server is supposed to send nothing. Therefore, do nothing.
-			transline.incrementAndGet();
+
 			String buffer = (String) e.getMessage();
-			// logger.info("back recvd " + buffer.length() + "/" + transLines +
-			// " bytes [" + buffer.toString() + "]");
+			dumperValue(buffer);
+			// logger.info("back recvd " + buffer.length() + "/" + " bytes [" + buffer.toString() + "]");
 		}
 		
 		@Override
@@ -222,15 +219,17 @@ public class SendNioTcpClient implements Runnable {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
 				try {
-					pollcnt++;
+
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
-						// logger.info("queue line length=" + line.length() +
-						// "/" + pollcnt + " line= [" + line + "]");
+						if (isdebug) {
+							transline.incrementAndGet();
+							logger.info(transline + " line=[" + line + "],size=" + line.length());
+						}
+
 					}
 				} catch (Exception e1) {
-					
 					e1.printStackTrace();
 					logger.error(e1.getStackTrace().toString());
 				}
@@ -240,7 +239,23 @@ public class SendNioTcpClient implements Runnable {
 		}
 		
 	}
-	
+
+	private synchronized void dumperValue(final String line) {
+		String tmp = line;
+		if (tmp.endsWith("\n")) {
+			tmp += "\n";
+		}
+		FileWriter fw;
+		try {
+			fw = new FileWriter("SendNioTcpClientReceived.txt", true);
+			fw.write(tmp);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public static void main(String[] args) throws Exception {
 		// Print usage if no argument is specified.
 		String[] args1 = new String[] { "localhost", "10236", "src/main/resources/accessLog.txt" };

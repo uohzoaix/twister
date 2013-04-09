@@ -29,6 +29,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
@@ -46,14 +48,19 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SendNioUdpClient implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(SendNioUdpClient.class);
+	public static String logfile = "src/main/resources/accessLog.txt";
+	private static Charset charSet = Charset.forName("UTF-8");
+
 	private static DatagramChannelFactory channelFactory;
 	private static ConnectionlessBootstrap bootstrap;
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
-	// SynchronousQueue or
-	private static Queue<String> queue = Queues.newConcurrentLinkedQueue();
+	private final AtomicLong transLines = new AtomicLong();
+	// must use Queues.newConcurrentLinkedQueue
+	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private volatile boolean running = false;
+	private final boolean isdebug = true;
 	private String host = "127.0.0.1";
 	private final int port;
 	private static int bufferSize = 1024;
@@ -63,7 +70,6 @@ public class SendNioUdpClient implements Runnable {
 	 */
 	
 	private long interval = 100;
-	
 	private File file;
 	private boolean end = true;
 	
@@ -80,7 +86,7 @@ public class SendNioUdpClient implements Runnable {
 		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString()
 				+ "' is not exists.");
 		// This listener send each file line in the queue
-		TailerListener listener = new QueueSender();
+		TailerListener listener = new UdpQueueSender();
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
@@ -108,12 +114,13 @@ public class SendNioUdpClient implements Runnable {
 			
 		});
 		
-		bootstrap.setOption("tcpNoDelay", true);
+		// bootstrap.setOption("udpNoDelay", true);
 		bootstrap.setOption("keepAlive", true);
 		
 		// Start the connection attempt.
 		future = bootstrap.connect(new InetSocketAddress(host, port));
 		// Wait until the connection is closed or the connection attempt fails.
+		logger.info("连接服务器 " + host + ":" + port);
 		future.getChannel().getCloseFuture().awaitUninterruptibly();
 		// clientChannel = (DatagramChannel) bootstrap.bind(new
 		// InetSocketAddress(0));
@@ -122,11 +129,11 @@ public class SendNioUdpClient implements Runnable {
 	
 	public void stop() {
 		this.running = false;
-		System.out.println("stopping UDP server");
+		logger.info("stopping UDP server");
 		clientChannel.close();
 		channelFactory.releaseExternalResources();
 		bootstrap.releaseExternalResources();
-		System.out.println("server stopped");
+		logger.info("server stopped");
 		
 	}
 	
@@ -137,19 +144,20 @@ public class SendNioUdpClient implements Runnable {
 	/**
 	 * A listener for the tailer sending current file line in a blocking queue.
 	 */
-	private class QueueSender extends TailerListenerAdapter {
+	private class UdpQueueSender extends TailerListenerAdapter {
+		public UdpQueueSender() {
+
+		}
 		@Override
 		public void handle(String line) {
 			try {
-				
-				ct += 1;
+				// ct += 1;
 				line = new String(line.getBytes("8859_1"), Charset.forName("UTF-8"));
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
 				queue.offer(line);
-				// logger.debug("add queue length=" + line.length() + "/" + ct +
-				// " line = [" + line + "]");
+				// logger.info("offer queue " + ct + " line = [" + line + "],size" + line.length());
 			} catch (Exception e) {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
@@ -162,26 +170,13 @@ public class SendNioUdpClient implements Runnable {
 	}
 	
 	private class SendNioUdpClientHandler extends SimpleChannelUpstreamHandler {
-		
-		private long transLines = 0;
-		private final AtomicLong transline = new AtomicLong();
-		private long pollcnt = 0;
-		
 		public SendNioUdpClientHandler() {
 		}
-		
-		@Override
-		public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
-			if (e instanceof ChannelStateEvent) {
-				// ChannelStateEvent evt = (ChannelStateEvent) e;
-				// System.out.println(evt.getState());
-			}
-			super.handleUpstream(ctx, e);
-		}
-		
+
 		@Override
 		public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			// connected
+			// System.out.println("channelConnected");
 			SendHandle(ctx, e);
 			
 		}
@@ -189,6 +184,7 @@ public class SendNioUdpClient implements Runnable {
 		@Override
 		public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			// 长连接
+			// System.out.println("channelInterestChanged");
 			SendHandle(ctx, e);
 		}
 		
@@ -201,8 +197,8 @@ public class SendNioUdpClient implements Runnable {
 			// Server is supposed to send nothing. Therefore, do nothing.
 			// transline.incrementAndGet();
 			String buffer = (String) e.getMessage();
-			// logger.info("back recvd length " + buffer.length() + "/" +
-			// transLines + " bytes [" + buffer.toString()+ "]");
+			dumperValue(buffer);
+			// logger.info("back recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
 		}
 		
 		@Override
@@ -216,24 +212,41 @@ public class SendNioUdpClient implements Runnable {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
 				try {
-					// pollcnt++;
+
 					String line = queue.poll();
 					if (line != null) {
 						channel.write(line);
-						// logger.debug("from queue length=" + line.length() +
-						// "/" + pollcnt + " line= [" + line + "]");
+						if (isdebug) {
+							transLines.incrementAndGet();
+							logger.info("poll queue " + transLines + " line= [" + line + "],size=" + line.length());
+						}
+
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();
 					logger.error(e1.getStackTrace().toString());
 				}
-				
 			}
 			
 		}
 		
 	}
-	
+
+	private synchronized void dumperValue(final String line) {
+		String tmp = line;
+		if (tmp.endsWith("\n")) {
+			tmp += "\n";
+		}
+		FileWriter fw;
+		try {
+			fw = new FileWriter("SendNioTdpClientReceived.txt", true);
+			fw.write(tmp);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
 	public static void main(String[] args) throws Exception {
 		// Print usage if no argument is specified.
 		String[] args1 = new String[] { "localhost", "10237", "src/main/resources/accessLog.txt" };

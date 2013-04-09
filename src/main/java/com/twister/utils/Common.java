@@ -522,6 +522,13 @@ public final class Common {
 		return dateString;
 	}
 	
+	public static String createDataStr() {
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+		String dateString = formatter.format(currentTime);
+		return dateString;
+	}
+
 	public static int validate_Response_code(String response_code) {
 		int v = Integer.parseInt(response_code);
 		int code_flag = 0;

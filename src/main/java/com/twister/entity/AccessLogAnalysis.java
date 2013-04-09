@@ -4,6 +4,12 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+
+import org.bson.BSONObject;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.twister.utils.Common;
 
 /**
@@ -18,7 +24,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	// jiekou,转成long分，抛弃秒值
 	// ukey=time#rely#server#uriname
 	// 20120613#10:01:00#0#/home
-	private String key;
+	private String ukey;
 	private long cnt_pv = 1l;
 	private long cnt_bytes = 0l; // 流量kb
 	private long cnt_time = 0l; // 响应ms
@@ -33,6 +39,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	private long e = 0l;
 	private String txid = "0";
 	
+
 	public AccessLogAnalysis() {
 	}
 	
@@ -47,7 +54,7 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	 */
 	public AccessLogAnalysis(String ukey, int response_code, long content_length, long request_time) {
 		// cnt_error 优秀 良好 达标 超时 异常
-		this.key = ukey;
+		this.ukey = ukey;
 		this.cnt_pv = 1l;
 		this.code = response_code;
 		this.cnt_bytes = content_length;
@@ -76,7 +83,14 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		this.d += obj.d;
 		this.e += obj.e;
 	}
-	
+
+	public String getUkey() {
+		return ukey;
+	}
+
+	public void setUkey(String ukey) {
+		this.ukey = ukey;
+	}
 	public long getCnt_pv() {
 		return cnt_pv;
 	}
@@ -192,18 +206,13 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 	}
 	
 	@Override
-	public String getKey() {
-		return key;
-	}
-	
-	@Override
-	public void setKey(String ukey) {
-		this.key = ukey;
-	}
-	
-	@Override
 	public String toString() {
-		return "AccessLogAnalysis [key=" + key + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes + ", cnt_time="
+		return "AccessLogAnalysis [ukey=" + ukey + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes + ", cnt_time=" + cnt_time + ", avg_time=" + avg_time
+				+ ", txid=" + txid + "]";
+	}
+
+	public String repr() {
+		return "AccessLogAnalysis [ukey=" + ukey + ", cnt_pv=" + cnt_pv + ", cnt_bytes=" + cnt_bytes + ", cnt_time="
 				+ cnt_time + ", avg_time=" + avg_time + ", code=" + code + ", cnt_error=" + cnt_error + ", a=" + a
 				+ ", b=" + b + ", c=" + c + ", d=" + d + ", e=" + e + "txid=" + txid + "]";
 	}
@@ -219,4 +228,62 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 		}
 		return o;
 	}
+
+	public Map<String, String> splitUkey(int logver, String ukeys) {
+		Map<String, String> mp = new HashMap<String, String>();
+		String SEPARATOR = "#";
+		String[] ks = ukeys.split(SEPARATOR);
+		if (logver == 1) {
+			// ver=1
+			// 0#20130401#11:23:00#1#01#/home
+			mp.put("logver", ks[0]);
+			mp.put("day", ks[1]);
+			mp.put("createat", ks[2]);
+			mp.put("rely", ks[3]);
+			mp.put("server", ks[4]);
+			mp.put("uriname", ks[5]);
+
+		} else {
+			// 0#20130401#11:23:00#1#01
+			mp.put("logver", ks[0]);
+			mp.put("day", ks[1]);
+			mp.put("createat", ks[2]);
+			mp.put("rely", ks[3]);
+			mp.put("server", ks[4]);
+
+		}
+		return mp;
+	}
+
+	public Map<String, String> toAllMap() {
+		Map<String, String> mp1 = splitUkey(0, ukey);
+		Map<String, String> mp2 = splitUkey(0, ukey);
+		mp1.putAll(mp2);
+		return mp1;
+	}
+
+	public Map<String, String> toMap() {
+		Map<String, String> mp = new HashMap<String, String>();
+		mp.put("ukey", ukey);
+		mp.put("cnt_pv", String.valueOf(cnt_pv));
+		mp.put("cnt_bytes",String.valueOf( cnt_bytes));
+		mp.put("cnt_time",String.valueOf( cnt_time));
+		mp.put("avg_time",String.valueOf(avg_time));
+		mp.put("code", String.valueOf(code));
+		mp.put("cnt_error",String.valueOf( cnt_error));
+		mp.put("a",String.valueOf( a));
+		mp.put("b",String.valueOf(b));
+		mp.put("c", String.valueOf(c));
+		mp.put("d",String.valueOf( d));
+		mp.put("e", String.valueOf(e));
+		mp.put("txid", String.valueOf(txid));
+		return mp;
+	}
+
+	public BasicDBObject toBasicDBObject() {
+		Map<String, String> mp = this.toAllMap();
+		BasicDBObject dbobj = new BasicDBObject(mp);
+		return dbobj;
+	}
+
 }

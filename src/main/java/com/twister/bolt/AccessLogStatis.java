@@ -18,14 +18,16 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
+import com.mongodb.BasicDBObject;
 import com.twister.entity.AccessLogAnalysis;
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.storage.cache.EhcacheMap;
+import com.twister.storage.mongo.MongoManager;
+import com.twister.storage.redis.JedisManager;
+import com.twister.storage.redis.JedisManager.JedisExpireHelps;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Constants;
 import com.twister.utils.JacksonUtils;
-import com.twister.utils.JedisConnection;
-import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 /**
  * 直接发给redisbolt汇总
@@ -41,10 +43,12 @@ public class AccessLogStatis extends BaseRichBolt {
 	private String name;
 	private OutputCollector collector;
 	private AccessLogCacheManager alogManager;
+	private MongoManager mgo;
 	private EhcacheMap<String, AccessLogAnalysis> ehcache; // 缓存的内空有限，只能存6分钟
 	// private EhcacheMap<String, Integer> hashCounter;
 	private Long GLOB = 0l;
 	private String tips = "";
+	// 更新频率值
 	private long frequency = Constants.FREQUENCY;
 	
 	@SuppressWarnings("rawtypes")
@@ -54,12 +58,14 @@ public class AccessLogStatis extends BaseRichBolt {
 		this.name = context.getThisComponentId();
 		this.taskid = context.getThisTaskId();
 		// conf/ehcache.xml
-		alogManager = new AccessLogCacheManager(); // reids
-		this.ehcache = alogManager.getMapEhcache();
+		alogManager = new AccessLogCacheManager();
+		ehcache = alogManager.getMapEhcache();
+		mgo = MongoManager.getInstance();
+		// Jedis jedis = JedisManager.getInstance().getMasterJedis();
 		// this.hashCounter = alogManager.getMapCounter();
 		frequency = AppsConfig.getInstance().getValue("cntpv.frequency") != "" ? Long.valueOf(AppsConfig.getInstance()
 				.getValue("cntpv.frequency")) : frequency;
-		this.tips = String.format("componentId name :%s,task id :%s ", this.name, this.taskid);
+		tips = String.format("componentId name :%s,task id :%s ", this.name, this.taskid);
 		LOGR.info(tips);
 		
 	}
@@ -77,7 +83,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			// LOGR.info(tips + String.format(GLOB + " %s", ukey));
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
 			logalys.setTxid(String.valueOf(taskid));
-			synchronized (ehcache) {
+			synchronized (this) {
 				if (ehcache.size() < 2 || !ehcache.containsKey(ukey)) {
 					// 初始可能并发修改
 					Utils.sleep((int) Math.random() * 1000);
@@ -109,12 +115,12 @@ public class AccessLogStatis extends BaseRichBolt {
 			// dumper统计结果 to redis
 			if (ehcache.containsKey(ukey)) {
 				AccessLogAnalysis rlt = (AccessLogAnalysis) ehcache.get(ukey);
+				// 更新频率值
 				if (rlt.getCnt_pv() >= frequency) {
-					// save to jedis db
-					saveRedis(ukey, rlt);
+					// save to
+					saveMongo(ukey, rlt);
 				}
-				// LOGR.debug(tips + String.format(GLOB +
-				// " result:%s,ehcache=%s ", ukey, rlt.getCnt_pv()));
+				LOGR.info(tips + String.format(GLOB + " result:%s,ehcache=%s ", ukey, rlt.getCnt_pv()));
 			}
 			
 			// 通过ack操作确认这个tuple被成功处理
@@ -139,9 +145,16 @@ public class AccessLogStatis extends BaseRichBolt {
 		
 	}
 	
+	private synchronized void saveMongo(final String ukey, final AccessLogAnalysis rlt) {
+		if (ukey.length() > 0 && rlt != null) {
+			BasicDBObject queryobj = new BasicDBObject().append("ukey", ukey);
+			mgo.insertOrUpdate(Constants.ApiStatisTable, queryobj, rlt.toBasicDBObject());
+		}
+	}
+
 	private synchronized void saveRedis(final String ukey, final AccessLogAnalysis rlt) {
 		if (ukey.length() > 0 && rlt != null) {
-			Jedis jedis = alogManager.getMasterJedis();
+			Jedis jedis = JedisManager.getInstance().getMasterJedis();
 			jedis.select(JedisExpireHelps.DBIndex);
 			String jsonStr = JacksonUtils.objectToJson(rlt);
 			jedis.set(ukey, jsonStr);

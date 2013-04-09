@@ -57,10 +57,11 @@ import com.twister.entity.AccessLog;
 
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.storage.cache.EhcacheMap;
+import com.twister.storage.redis.JedisManager;
+import com.twister.storage.redis.JedisManager.JedisExpireHelps;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Common;
 import com.twister.utils.FileUtils;
-import com.twister.utils.JedisConnection.JedisExpireHelps;
 
 /**
  * This is a basic example of a transactional topology. It keeps a count of the
@@ -200,7 +201,7 @@ public class TransGlobalCount {
 				this.componentId = context.getThisComponentId();
 				this.taskid = context.getThisTaskId();
 				alogManager = new AccessLogCacheManager();
-				Jedis jedis = alogManager.getMasterJedis();
+				Jedis jedis = JedisManager.getInstance().getMasterJedis();
 				channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
 						Executors.newCachedThreadPool());
 				bootstrap = new ServerBootstrap(channelFactory);
