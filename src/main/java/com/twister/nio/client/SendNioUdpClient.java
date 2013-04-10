@@ -74,7 +74,8 @@ public class SendNioUdpClient implements Runnable {
 
 	private long interval = 100;
 	private File file = new File(Constants.nginxAccess);
-	private boolean end = true;
+	// is start begin
+	private boolean end = false;
 
 	public SendNioUdpClient() {
 		MongoManager mgo = MongoManager.getInstance();
