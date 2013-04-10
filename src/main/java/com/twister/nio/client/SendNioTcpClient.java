@@ -53,38 +53,63 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SendNioTcpClient implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(SendNioTcpClient.class);
-	private static ChannelFactory channelFactory;
-	private static ClientBootstrap bootstrap;
+	private ChannelFactory channelFactory;
+	private ClientBootstrap bootstrap;
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
 	// Queues.newConcurrentLinkedQueue
 	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
-	
+
 	private volatile boolean running = false;
 	private final boolean isdebug = false;
 	private String host = "127.0.0.1";
-	private final int port;
+	private int port = 10236;
 	private static int bufferSize = 1024;
 	private long ct = 0;
 	/**
 	 * The listener to notify of events when tailing.
 	 */
-	
+
 	private long interval = 100;
-	
-	private File file;
+
+	private File file = new File(Constants.nginxAccess);
 	private boolean end = true;
-	
+
 	public SendNioTcpClient() {
 		MongoManager mgo = MongoManager.getInstance();
 		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "tcp"));
 		int i = Common.getRandomInt(0, list.size() - 1);
 		Map<String, String> mp = list.get(i);
+		this.host = String.valueOf(mp.get("ip"));
+		this.port = Integer.parseInt(String.valueOf(mp.get("port")));
+		dispclient();
+		TailFile();
+	}
+	public SendNioTcpClient(File filename) {
+		MongoManager mgo = MongoManager.getInstance();
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "tcp"));
+		int i = Common.getRandomInt(0, list.size() - 1);
+		Map<String, String> mp = list.get(i);
 		System.out.println(mp);
-		this.host = String.valueOf(mp.get("ip")) == null ? "127.0.0.1" : String.valueOf(mp.get("ip"));
-		this.port = Integer.valueOf((String) mp.get("port")) == null ? 10236 : Integer.valueOf((String) mp.get("port"));
-		this.file = new File("/opt/logs/nginx/access/log");
+		this.host = String.valueOf(mp.get("ip"));
+		this.port = Integer.parseInt(String.valueOf(mp.get("port")));
+		this.file = filename;
+		dispclient();
+		TailFile();
+	}
+
+	public SendNioTcpClient(String host, int port) {
+		this.host = host;
+		this.port = port;
+		dispclient();
+		TailFile();
+	}
+
+	public SendNioTcpClient(String host, int port, File filename) {
+		this.host = host;
+		this.port = port;
+		this.file = filename;
 		dispclient();
 		TailFile();
 	}
@@ -97,27 +122,9 @@ public class SendNioTcpClient implements Runnable {
 		}
 	}
 
-	public SendNioTcpClient(String host, int port) {
-		this.host = host;
-		this.port = port;
-		this.file = new File("/opt/logs/nginx/access/log");
-		dispclient();
-		TailFile();
-	}
-	
-	public SendNioTcpClient(String host, int port, File filename, boolean end) {
-		this.host = host;
-		this.port = port;
-		this.end = end;
-		this.file = filename;
-		dispclient();
-		TailFile();
-	}
-
 	public void TailFile() {
 
-		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString()
-				+ "' is not exists.");
+		Preconditions.checkArgument(this.file.isFile(), "TextFileSpout expects a file but '" + this.file.toString() + "' is not exists.");
 		// This listener send each file line in the queue
 		TailerListener listener = new TcpQueueSender();
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
@@ -125,16 +132,16 @@ public class SendNioTcpClient implements Runnable {
 		Thread thread = new Thread(tailer);
 		thread.setDaemon(true);
 		thread.start();
+		System.out.println("" + host + " " + port + " " + file.toString() + " " + this.end);
 	}
-	
+
 	public void run() {
 		try {
 			this.running = true;
 			// Configure the client.
-			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
-					Executors.newCachedThreadPool(), 4, 4);
+			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 4, 4);
 			bootstrap = new ClientBootstrap(channelFactory);
-			
+
 			// Set up the pipeline factory.
 			bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 				public ChannelPipeline getPipeline() throws Exception {
@@ -146,12 +153,12 @@ public class SendNioTcpClient implements Runnable {
 					pipeline.addLast("handler", new SendNioTcpClientHandler());
 					return pipeline;
 				}
-				
+
 			});
 			// 参数名不用加上"child."前缀
 			bootstrap.setOption("tcpNoDelay", true);
 			bootstrap.setOption("keepAlive", true);
-			
+
 			// Start the connection attempt.
 			future = bootstrap.connect(new InetSocketAddress(host, port));
 			// Wait until the connection is closed or the connection attempt
@@ -166,28 +173,29 @@ public class SendNioTcpClient implements Runnable {
 			stop();
 		}
 	}
-	
+
 	public void stop() {
-		
+
 		this.running = false;
 		System.out.println("stopping UDP server");
 		clientChannel.close();
 		channelFactory.releaseExternalResources();
 		bootstrap.releaseExternalResources();
 		System.out.println("server stopped");
-		
+
 	}
-	
+
 	public boolean isRunning() {
 		return running;
 	}
-	
+
 	/**
 	 * A listener for the tailer sending current file line in a blocking queue.
 	 */
 	private class TcpQueueSender extends TailerListenerAdapter {
 		public TcpQueueSender() {
 		}
+
 		@Override
 		public void handle(String line) {
 			try {
@@ -201,18 +209,19 @@ public class SendNioTcpClient implements Runnable {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
 		}
-		
+
 		@Override
 		public void fileRotated() {
 			logger.info("File was rotated or rename");
 		}
 	}
-	
+
 	private class SendNioTcpClientHandler extends SimpleChannelUpstreamHandler {
 		private final AtomicLong transline = new AtomicLong();
+
 		public SendNioTcpClientHandler() {
 		}
-		
+
 		@Override
 		public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
 			if (e instanceof ChannelStateEvent) {
@@ -221,19 +230,19 @@ public class SendNioTcpClient implements Runnable {
 			}
 			super.handleUpstream(ctx, e);
 		}
-		
+
 		@Override
 		public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			// connected
 			SendHandle(ctx, e);
 		}
-		
+
 		@Override
 		public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			// 长连接
 			SendHandle(ctx, e);
 		}
-		
+
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
 			// back the received msg to the server
@@ -243,14 +252,14 @@ public class SendNioTcpClient implements Runnable {
 			dumperValue(buffer);
 			// logger.info("back recvd " + buffer.length() + "/" + " bytes [" + buffer.toString() + "]");
 		}
-		
+
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
-			
+
 		}
-		
+
 		public void SendHandle(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
@@ -269,11 +278,11 @@ public class SendNioTcpClient implements Runnable {
 					e1.printStackTrace();
 					logger.error(e1.getStackTrace().toString());
 				}
-				
+
 			}
-			
+
 		}
-		
+
 	}
 
 	private synchronized void dumperValue(final String line) {
@@ -292,29 +301,36 @@ public class SendNioTcpClient implements Runnable {
 
 	}
 
-	public static void main(String[] args) throws Exception {
-		// Print usage if no argument is specified.
-		String[] args1 = new String[] { "127.0.0.1", "10236", "src/main/resources/accessLog.txt" };
-		
-		if (args.length < 2 || args.length > 3) {
-			System.err.println("Usage: " + SendNioTcpClient.class.getName() + " <host> <port> [<accessFile>]");
-			args = args1;
-			// System.exit(0);
-		}
+	public static void main(String[] args) {
 		SendNioTcpClient cli = null;
 		try {
 			// Parse options.
-			final String host = args[0];
-			final int port = Integer.parseInt(args[1]);
-			File logfile = new File(args[2]);
-			System.out.println("sending " + host + " " + port + " " + logfile);
-			// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
-			cli = new SendNioTcpClient(host, port, logfile, true);
+			String host = "127.0.0.1";
+			int port = 10236;
+			File logfile = new File(Constants.nginxAccess);
+			logger.info("Usage 1: " + SendNioTcpClient.class.getName() + " <accessFile>");
+			logger.info("Usage 2: " + SendNioTcpClient.class.getName() + " <host> <port> <accessFile>");
+			if (args.length == 3) {
+				host = args[0];
+				port = Integer.valueOf(args[1]);
+				logfile = new File(args[2]);
+				cli = new SendNioTcpClient(host, port, logfile);
+			} else if (args.length == 2) {
+				host = args[0];
+				port = Integer.valueOf(args[1]);
+				cli = new SendNioTcpClient(host, port);
+			} else if (args.length == 1) {
+				logfile = new File(args[0]);
+				cli = new SendNioTcpClient(logfile);
+			} else {
+				cli = new SendNioTcpClient();
+			}
 			cli.run();
 		} catch (Exception e) {
+			e.printStackTrace();
 			cli.stop();
 			System.exit(0);
 		}
-		
+
 	}
 }

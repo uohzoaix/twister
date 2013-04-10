@@ -54,11 +54,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SendNioUdpClient implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(SendNioUdpClient.class);
-	public static String logfile = "src/main/resources/accessLog.txt";
-	private static Charset charSet = Charset.forName("UTF-8");
-
-	private static DatagramChannelFactory channelFactory;
-	private static ConnectionlessBootstrap bootstrap;
+	private DatagramChannelFactory channelFactory;
+	private ConnectionlessBootstrap bootstrap;
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
@@ -68,37 +65,46 @@ public class SendNioUdpClient implements Runnable {
 	private volatile boolean running = false;
 	private final boolean isdebug = false;
 	private String host = "127.0.0.1";
-	private final int port;
+	private int port = 10237;
 	private static int bufferSize = 1024;
 	private long ct = 0;
 	/**
 	 * The listener to notify of events when tailing.
 	 */
-	
+
 	private long interval = 100;
-	private File file;
+	private File file = new File(Constants.nginxAccess);
 	private boolean end = true;
-	
+
 	public SendNioUdpClient() {
 		MongoManager mgo = MongoManager.getInstance();
-		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "tcp"));
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "udp"));
 		int i = Common.getRandomInt(0, list.size() - 1);
 		Map<String, String> mp = list.get(i);
-		this.host = String.valueOf(mp.get("ip")) == null ? "127.0.0.1" : String.valueOf(mp.get("ip"));
-		this.port = Integer.valueOf((String) mp.get("port")) == null ? 10236 : Integer.valueOf((String) mp.get("port"));
-		this.file = new File("/opt/logs/nginx/access/log");
+		this.host = String.valueOf(mp.get("ip"));
+		this.port = Integer.parseInt(String.valueOf(mp.get("port")));
 		dispclient();
 		TailFile();
 	}
 
-	public SendNioUdpClient(String host, int port) {
-		this.host = host;
-		this.port = port;
-		this.file = new File("/opt/logs/nginx/access/log");
+	public SendNioUdpClient(File filename) {
+		MongoManager mgo = MongoManager.getInstance();
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "udp"));
+		int i = Common.getRandomInt(0, list.size() - 1);
+		Map<String, String> mp = list.get(i);
+		this.host = String.valueOf(mp.get("ip"));
+		this.port = Integer.parseInt(String.valueOf(mp.get("port")));
+		this.file = filename;
 		dispclient();
 		TailFile();
 	}
-	
+	public SendNioUdpClient(String host, int port) {
+		this.host = host;
+		this.port = port;
+		dispclient();
+		TailFile();
+	}
+
 	public void dispclient() {
 		MongoManager mgo = MongoManager.getInstance();
 		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "udp"));
@@ -107,18 +113,16 @@ public class SendNioUdpClient implements Runnable {
 		}
 	}
 
-	public SendNioUdpClient(String host, int port, File filename, boolean end) {
+	public SendNioUdpClient(String host, int port, File filename) {
 		this.host = host;
 		this.port = port;
-		this.end = end;
 		this.file = filename;
 		dispclient();
 		TailFile();
 	}
 
 	public void TailFile() {
-		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString()
-				+ "' is not exists.");
+		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString() + "' is not exists.");
 		// This listener send each file line in the queue
 		TailerListener listener = new UdpQueueSender();
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
@@ -127,13 +131,13 @@ public class SendNioUdpClient implements Runnable {
 		thread.setDaemon(true);
 		thread.start();
 	}
-	
+
 	public void run() {
 		this.running = true;
 		// Configure the client.
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
-		
+
 		// Set up the pipeline factory.
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 			public ChannelPipeline getPipeline() throws Exception {
@@ -145,12 +149,12 @@ public class SendNioUdpClient implements Runnable {
 				pipeline.addLast("handler", new SendNioUdpClientHandler());
 				return pipeline;
 			}
-			
+
 		});
-		
+
 		// bootstrap.setOption("udpNoDelay", true);
 		bootstrap.setOption("keepAlive", true);
-		
+
 		// Start the connection attempt.
 		future = bootstrap.connect(new InetSocketAddress(host, port));
 		// Wait until the connection is closed or the connection attempt fails.
@@ -158,9 +162,9 @@ public class SendNioUdpClient implements Runnable {
 		future.getChannel().getCloseFuture().awaitUninterruptibly();
 		// clientChannel = (DatagramChannel) bootstrap.bind(new
 		// InetSocketAddress(0));
-		
+
 	}
-	
+
 	public void stop() {
 		this.running = false;
 		logger.info("stopping UDP server");
@@ -168,13 +172,13 @@ public class SendNioUdpClient implements Runnable {
 		channelFactory.releaseExternalResources();
 		bootstrap.releaseExternalResources();
 		logger.info("server stopped");
-		
+
 	}
-	
+
 	public boolean isRunning() {
 		return running;
 	}
-	
+
 	/**
 	 * A listener for the tailer sending current file line in a blocking queue.
 	 */
@@ -182,6 +186,7 @@ public class SendNioUdpClient implements Runnable {
 		public UdpQueueSender() {
 
 		}
+
 		@Override
 		public void handle(String line) {
 			try {
@@ -196,13 +201,13 @@ public class SendNioUdpClient implements Runnable {
 				logger.error("Tailing on file " + file.getAbsolutePath() + " was interrupted.");
 			}
 		}
-		
+
 		@Override
 		public void fileRotated() {
 			logger.info("File was rotated or rename");
 		}
 	}
-	
+
 	private class SendNioUdpClientHandler extends SimpleChannelUpstreamHandler {
 		public SendNioUdpClientHandler() {
 		}
@@ -212,16 +217,16 @@ public class SendNioUdpClient implements Runnable {
 			// connected
 			// System.out.println("channelConnected");
 			SendHandle(ctx, e);
-			
+
 		}
-		
+
 		@Override
 		public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			// 长连接
 			// System.out.println("channelInterestChanged");
 			SendHandle(ctx, e);
 		}
-		
+
 		/**
 		 * 不接回返回
 		 */
@@ -234,14 +239,14 @@ public class SendNioUdpClient implements Runnable {
 			dumperValue(buffer);
 			// logger.info("back recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
 		}
-		
+
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
 			// e.getChannel().close();
 		}
-		
+
 		public void SendHandle(ChannelHandlerContext ctx, ChannelStateEvent e) {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
@@ -261,9 +266,9 @@ public class SendNioUdpClient implements Runnable {
 					logger.error(e1.getStackTrace().toString());
 				}
 			}
-			
+
 		}
-		
+
 	}
 
 	private synchronized void dumperValue(final String line) {
@@ -281,30 +286,38 @@ public class SendNioUdpClient implements Runnable {
 		}
 
 	}
-	public static void main(String[] args) throws Exception {
-		// Print usage if no argument is specified.
-		String[] args1 = new String[] { "localhost", "10237", "src/main/resources/accessLog.txt" };
-		
-		if (args.length < 2 || args.length > 3) {
-			System.err.println("Usage: " + SendNioUdpClient.class.getName() + " <host> <port> [<accessFile>]");
-			args = args1;
-			// System.exit(0);
-		}
+
+	public static void main(String[] args) {
+
 		SendNioUdpClient cli = null;
 		try {
-			
 			// Parse options.
-			final String host = args[0];
-			final int port = Integer.parseInt(args[1]);
-			File logfile = new File(args[2]);
-			// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
-			System.out.println("sending " + host + " " + port + " " + logfile);
-			cli = new SendNioUdpClient(host, port, logfile, true);
+			String host = "127.0.0.1";
+			int port = 10237;
+			File logfile = new File(Constants.nginxAccess);
+			logger.info("Usage 1: " + SendNioUdpClient.class.getName() + " <accessFile>");
+			logger.info("Usage 2: " + SendNioUdpClient.class.getName() + " <host> <port> <accessFile>");
+			if (args.length == 3) {
+				host = args[0];
+				port = Integer.valueOf(args[1]);
+				logfile = new File(args[2]);
+				cli = new SendNioUdpClient(host, port, logfile);
+			} else if (args.length == 2) {
+				host = args[0];
+				port = Integer.valueOf(args[1]);
+				cli = new SendNioUdpClient(host, port);
+			} else if (args.length == 1) {
+				logfile = new File(args[0]);
+				cli = new SendNioUdpClient(logfile);
+			} else {
+				cli = new SendNioUdpClient();
+			}
 			cli.run();
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 			cli.stop();
 			System.exit(0);
 		}
+
 	}
 }
