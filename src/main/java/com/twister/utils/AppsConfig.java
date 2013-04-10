@@ -39,16 +39,9 @@ public class AppsConfig {
 		return props.getProperty(name);
 	}
 
-	public static Properties loadProperties(String confFile) {
-		Properties prop = new Properties();
-		try {
-			// load a properties file
-			InputStream is = AppsConfig.class.getClassLoader().getResourceAsStream(confFile);
-			prop.load(is);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		return prop;
+
+	public static Properties getProps() {
+		return props;
 	}
 
 	public static void main(String[] args) {

@@ -33,11 +33,11 @@ public class JedisManager {
 	public static int timeout = 1 * 60 * 1000; // 1分钟
 	public static String SlaveHost = AppsConfig.getInstance().getValue("redis.slave.host");
 	public static int SlavePort = Integer.valueOf(AppsConfig.getInstance().getValue("redis.slave.port"));
-
+	// Jedis客户端池配置
 	private JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-	private List<JedisShardInfo> shards = new ArrayList<JedisShardInfo>();
-	private ShardedJedisPool shardedJedisPool = null;
-	private ShardedJedis shardedJedis = null;
+
+	private JedisPool jedisPool;
+	private Jedis jedis;
 	private static JedisManager SingleInstance = null;
 
 	public static JedisManager getInstance() {
@@ -48,74 +48,55 @@ public class JedisManager {
 	}
 
 	public JedisManager() {
-		createShardedJedis();
+		build();
 	}
 
-	public List<JedisShardInfo> getShards() {
-		return shards;
+	public void build() {
+		build(host, port);
 	}
 
-	public ShardedJedisPool getShardedJedisPool() {
-		return shardedJedisPool;
-	}
-
-	public ShardedJedis getShardedJedis() {
-		return shardedJedis;
-	}
-
-	public void setShardedJedis(ShardedJedis shardedJedis) {
-		this.shardedJedis = shardedJedis;
+	public void build(String host, int port) {
+		if (host == null) {
+			host = "127.0.0.1";
+			port = 6379;
+		}
+		jedisPool = createJedisPool(host, port);
+		jedis = jedisPool.getResource();
 	}
 
 	public Jedis getJedis() {
-		return JedisManager.getInstance().getMasterJedis();
+		if (jedis == null) {
+			return JedisManager.getInstance().jedis;
+		} else {
+			return jedis;
+		}
 	}
-	public Jedis getMasterJedis() {
-		Jedis jedis = JedisManager.getInstance().getShardedJedis().getShard("master");
-		jedis.select(DBIndex);
-		return jedis;
+
+	public JedisPool getJedisPool() {
+		if (jedisPool == null) {
+
+			return JedisManager.getInstance().jedisPool;
+		} else {
+			return jedisPool;
+		}
 	}
-	
-	public Jedis getSlaveJedis() {
-		Jedis jedis = JedisManager.getInstance().getShardedJedis().getShard("slave");
-		return jedis;
-	}
-	
-	public ShardedJedis createShardedJedis() {
+
+	public JedisPool createJedisPool(String host, int port) {
 		try {
 			// 池基本配置
 			jedisPoolConfig.setMaxActive(5000);
 			jedisPoolConfig.setMaxIdle(5000);
 			jedisPoolConfig.setMaxWait(10000);
 			jedisPoolConfig.setTestOnBorrow(true);
-			if (host == null) {
-				host = "127.0.0.1";
-				port = 6379;
-			}
-			JedisPool jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout); // or
-																						// pool
-			// shard pool
-			shards.add(new JedisShardInfo(host, port, timeout, "master"));
-			// slave链接
-			if (SlaveHost == null) {
-				SlaveHost = "127.0.0.1";
-				SlavePort = 6379;
-			}
-			
-			shards.add(new JedisShardInfo(SlaveHost, SlavePort, timeout, "slave"));
-			// 构造池
-			shardedJedisPool = new ShardedJedisPool(jedisPoolConfig, shards);
-			shardedJedis = shardedJedisPool.getResource();
+			jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout);
+			return jedisPool;
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			shardedJedisPool.returnResource(shardedJedis);
+			return null;
 		}
-		logger.info("jedis master " + host + ":" + port);
-		logger.info("jedis slave " + SlaveHost + ":" + SlavePort);
-		return shardedJedis;
+
 	}
-	
+
 	public static class JedisExpireHelps {
 		public final static int DBIndex = JedisManager.DBIndex;
 		public static int expire_1S = 1;
@@ -131,4 +112,10 @@ public class JedisManager {
 		public static int expire_WEEKY = 60 * 60 * 24 * 7;
 	}
 
+	public static void main(String[] args) {
+		Jedis jr = JedisManager.getInstance().jedis;
+		String key = "mkey";
+		jr.set(key, "test redis");
+		System.out.println(jr.get(key));
+	}
 }

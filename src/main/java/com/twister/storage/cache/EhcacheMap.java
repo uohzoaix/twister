@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A typesafe enumeration of eviction policies. The policy used to evict
@@ -50,43 +52,51 @@ public final class EhcacheMap<K, V> extends AbstractMap<K, V> implements Concurr
 	private final Ehcache map;
 	public static final String DEFAULT_CACHE_NAME = "EhcacheMap";
 	private CacheManager cacheManager;
-	
+	private static ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
+
 	public EhcacheMap(String cacheName) {
 		cacheManager = CacheManager.create(getClass().getClassLoader().getResource("conf/ehcache.xml"));
 		map = cacheManager.getCache(cacheName);
 	}
-	
+
 	public Ehcache cacheMap() {
 		return this.map;
 	}
-	
+
 	@Override
 	public void clear() {
 		map.removeAll();
 	}
-	
+
 	@Override
 	public int size() {
 		return keySet().size();
 	}
-	
+
 	@Override
 	public boolean containsKey(Object key) {
 		return map.isKeyInCache(key);
 	}
-	
+
 	@Override
 	public boolean containsValue(Object value) {
 		return map.isValueInCache(value);
 	}
-	
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public V get(Object key) {
 		Element element = map.get(key);
-		return (element == null) ? null : (V) element.getObjectValue();
+		Lock rLock = rwlock.readLock();
+		rLock.lock();
+		try {
+			return (element == null) ? null : (V) element.getObjectValue();
+		} finally {
+			rLock.unlock();
+		}
+
 	}
-	
+
 	public Map<K, V> getAll(Collection<? extends K> keys) {
 		Map<K, V> results = new HashMap<K, V>(keys.size());
 		for (K key : keys) {
@@ -96,15 +106,23 @@ public final class EhcacheMap<K, V> extends AbstractMap<K, V> implements Concurr
 			}
 		}
 		return results;
+
 	}
-	
+
 	@Override
 	public V put(K key, V value) {
 		V old = get(key);
-		map.put(new Element(key, value));
-		return old;
+		Lock wLock = rwlock.writeLock();
+		wLock.lock();
+		try {
+			map.put(new Element(key, value));
+			return old;
+		} finally {
+			wLock.unlock();
+		}
+
 	}
-	
+
 	@Override
 	public V putIfAbsent(K key, V value) {
 		V old = get(key);
@@ -113,16 +131,22 @@ public final class EhcacheMap<K, V> extends AbstractMap<K, V> implements Concurr
 		}
 		return old;
 	}
-	
+
 	@Override
 	public V remove(Object key) {
 		V old = get(key);
-		if (old != null) {
-			map.remove(key);
+		Lock wLock = rwlock.writeLock();
+		wLock.lock();
+		try {
+			if (old != null) {
+				map.remove(key);
+			}
+			return old;
+		} finally {
+			wLock.unlock();
 		}
-		return old;
 	}
-	
+
 	@Override
 	public boolean remove(Object key, Object value) {
 		if (value.equals(get(key))) {
@@ -131,16 +155,22 @@ public final class EhcacheMap<K, V> extends AbstractMap<K, V> implements Concurr
 		}
 		return false;
 	}
-	
+
 	@Override
 	public V replace(K key, V value) {
 		V old = get(key);
-		if (old != null) {
-			map.put(new Element(key, value));
+		Lock wLock = rwlock.writeLock();
+		wLock.lock();
+		try {
+			if (old != null) {
+				map.put(new Element(key, value));
+			}
+			return old;
+		} finally {
+			wLock.unlock();
 		}
-		return old;
 	}
-	
+
 	@Override
 	public boolean replace(K key, V oldValue, V newValue) {
 		if (oldValue.equals(get(key))) {
@@ -149,99 +179,99 @@ public final class EhcacheMap<K, V> extends AbstractMap<K, V> implements Concurr
 		}
 		return false;
 	}
-	
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public Set<K> keySet() {
 		return new KeySetAdapter<K>(map.getKeys());
 	}
-	
+
 	@Override
 	public Set<Entry<K, V>> entrySet() {
 		return getAll(keySet()).entrySet();
 	}
-	
+
 	/**
 	 * Represents the list of keys as a set, which is guaranteed to be true by
 	 * {@link Ehcache#getKeys()}'s contract.
 	 */
 	private static final class KeySetAdapter<K> implements Set<K> {
 		private final List<K> keys;
-		
+
 		public KeySetAdapter(List<K> keys) {
 			this.keys = keys;
 		}
-		
+
 		@Override
 		public boolean add(K o) {
 			return keys.add(o);
 		}
-		
+
 		@Override
 		public boolean addAll(Collection<? extends K> c) {
 			return keys.addAll(c);
 		}
-		
+
 		@Override
 		public void clear() {
 			keys.clear();
 		}
-		
+
 		@Override
 		public boolean contains(Object o) {
 			return keys.contains(o);
 		}
-		
+
 		@Override
 		public boolean containsAll(Collection<?> c) {
 			return keys.containsAll(c);
 		}
-		
+
 		@Override
 		public boolean isEmpty() {
 			return keys.isEmpty();
 		}
-		
+
 		@Override
 		public Iterator<K> iterator() {
 			return keys.iterator();
 		}
-		
+
 		@Override
 		public boolean remove(Object o) {
 			return keys.remove(o);
 		}
-		
+
 		@Override
 		public boolean removeAll(Collection<?> c) {
 			return keys.removeAll(c);
 		}
-		
+
 		@Override
 		public boolean retainAll(Collection<?> c) {
 			return keys.retainAll(c);
 		}
-		
+
 		@Override
 		public int size() {
 			return keys.size();
 		}
-		
+
 		@Override
 		public boolean equals(Object o) {
 			return keys.equals(o);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return keys.hashCode();
 		}
-		
+
 		@Override
 		public Object[] toArray() {
 			return keys.toArray();
 		}
-		
+
 		@Override
 		public <T> T[] toArray(T[] a) {
 			return keys.toArray(a);

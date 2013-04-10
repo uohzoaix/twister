@@ -28,4 +28,8 @@
     <entry key="redis.slave.port">6379</entry>
     <entry key="redis.slave.password">no</entry>
     
+    <entry key="mongodb.port">37017</entry>
+    <entry key="mongodb.host">10.103.13.18</entry>
+    <entry key="mongodb.db">mapi</entry>
+    
 </properties>

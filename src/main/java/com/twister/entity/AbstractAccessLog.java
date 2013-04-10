@@ -570,9 +570,10 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 					.append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getServer()).append(SEPARATOR)
 					.append(getUri_name());
 		} else {
-			// ver=0
+			// ver=0 default
 			sb.append(getLogVer()).append(SEPARATOR).append(Common.formatDataTimeStr1(getDate_time()))
-					.append(SEPARATOR).append(getRely()).append(SEPARATOR).append(getServer());
+.append(SEPARATOR).append(getRely()).append(SEPARATOR)
+					.append(getServer());
 		}
 		return sb.toString();
 	}

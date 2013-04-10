@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -14,6 +18,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
+import com.twister.storage.redis.JedisManager;
 import com.twister.utils.AppsConfig;
 
 
@@ -53,7 +58,7 @@ public class MongoManager {
 	 * @return List
 	 * @throws UnknownHostException
 	 */
-
+	private final static Logger logger = LoggerFactory.getLogger(MongoManager.class);
 	private DB db = null;
 	private MongoClient mongoClient = null;
 	private DBCollection collection = null;
@@ -123,13 +128,10 @@ public class MongoManager {
 	 */
 	public DB getConnect() {
 		try {
-			Properties prop = new Properties();
-			if (SingleInstance == null) {
-				prop = AppsConfig.loadProperties("conf/mongo.properties");
-			}
-			int port = Integer.valueOf(prop.getProperty("port", "27017"));
-			String[] ips = prop.getProperty("hosts", "127.0.0.1").split(",");
-			database = prop.getProperty("database", database);
+
+			int port = Integer.valueOf(AppsConfig.getInstance().getValue("mongodb.port"));
+			String[] ips = AppsConfig.getInstance().getValue("mongodb.host").split(",");
+			database = AppsConfig.getInstance().getValue("mongodb.db");
 			if (SingleInstance == null) {
 				addr.clear();
 				for (String hs : ips) {
@@ -144,6 +146,7 @@ public class MongoManager {
 					mongoClient = new MongoClient(addr);
 				}
 			}
+
 		} catch (Exception e) {
 			addr.clear();
 			try {
@@ -151,6 +154,7 @@ public class MongoManager {
 				mongoClient = new MongoClient(addr);
 			} catch (UnknownHostException e1) {
 				e1.printStackTrace();
+				logger.error(e1.getStackTrace().toString());
 			}
 		}
 		db = mongoClient.getDB(database);
@@ -223,8 +227,11 @@ public class MongoManager {
 	public List query(String TableName, Map keyMap) {
 		return DBCursorToList(queryByKey(TableName, keyMap));
 	}
-
 	
+	public List query(String TableName, BasicDBObject ref) {
+		return DBCursorToList(getCollection(TableName).find(ref));
+	}
+
 	private List DBCursorToList(DBCursor dbCursor) {
 		List<Map> list = new ArrayList<Map>();
 		while (dbCursor.hasNext()) {

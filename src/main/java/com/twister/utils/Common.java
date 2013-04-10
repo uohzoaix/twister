@@ -645,8 +645,15 @@ public final class Common {
 		return cfg;
 		
 	}
-	
+
+	public static int getRandomInt(int a, int b) {
+		if (a > b || a < 0)
+			return 0;
+		return a + (int) (Math.random() * (b - a + 1));
+	}
+
 	public static void main(String[] args) {
+		System.out.println(getRandomInt(0, 3));
 		//
 		// String str = "/openapi-wireless/videos/XMzg5MzYxMjYw/playurl.json";
 		// ArrayList<Map<String, Serializable>> ur =

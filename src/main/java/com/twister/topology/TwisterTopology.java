@@ -1,5 +1,7 @@
 package com.twister.topology;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,7 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ServerAddress;
 import com.twister.bolt.AccessLogGroup;
 import com.twister.bolt.AccessLogStatis;
 import com.twister.bolt.AccessLogShuffle;
@@ -20,7 +23,7 @@ import com.twister.spout.NioUdpServerSpout;
 import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Constants;
-import com.twister.utils.FileUtils;
+
 
 //import com.twister.spout.TextAccessFileSpout;
 //import com.twister.spout.TailFileSpout;
@@ -51,6 +54,11 @@ public class TwisterTopology {
 
 	public static void main(String[] args) throws Exception {
 		MongoManager mgo = MongoManager.getInstance();
+		List<ServerAddress> ls = mgo.getAddr();
+		for (ServerAddress serverAddress : ls) {
+			System.out.println("mongodb " + serverAddress.getHost() + ":" + serverAddress.getPort() + " mapi");
+		}
+
 		mgo.remove(Constants.SpoutTable, new BasicDBObject().append("desc", "spout"));
 		TopologyBuilder builder = new TopologyBuilder();
 		// setup your spout

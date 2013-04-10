@@ -36,7 +36,7 @@ import com.twister.utils.JacksonUtils;
  * 
  */
 public class AccessLogStatis extends BaseRichBolt {
-	
+
 	private final Logger LOGR = LoggerFactory.getLogger(AccessLogStatis.class.getName());
 	private static final long serialVersionUID = 2246728833921545687L;
 	private Integer taskid;
@@ -50,7 +50,7 @@ public class AccessLogStatis extends BaseRichBolt {
 	private String tips = "";
 	// 更新频率值
 	private long frequency = Constants.FREQUENCY;
-	
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -61,21 +61,20 @@ public class AccessLogStatis extends BaseRichBolt {
 		alogManager = new AccessLogCacheManager();
 		ehcache = alogManager.getMapEhcache();
 		mgo = MongoManager.getInstance();
-		// Jedis jedis = JedisManager.getInstance().getMasterJedis();
+		// JedisManager jm = JedisManager.getInstance();
 		// this.hashCounter = alogManager.getMapCounter();
-		frequency = AppsConfig.getInstance().getValue("cntpv.frequency") != "" ? Long.valueOf(AppsConfig.getInstance()
-				.getValue("cntpv.frequency")) : frequency;
+		frequency = AppsConfig.getInstance().getValue("cntpv.frequency") != "" ? Long.valueOf(AppsConfig.getInstance().getValue("cntpv.frequency")) : frequency;
 		tips = String.format("componentId name :%s,task id :%s ", this.name, this.taskid);
 		LOGR.info(tips);
-		
+
 	}
-	
+
 	@Override
 	public void execute(Tuple input) {
 		// this tuple 提取次数
 		// GLOB += 1;
 		try {
-			
+
 			// pojo,key为试想拼合的字款 ,time也可以分成2
 			// ukey=ver#time#rely#server
 			// 0#20120613#10:01:00#0
@@ -83,11 +82,9 @@ public class AccessLogStatis extends BaseRichBolt {
 			// LOGR.info(tips + String.format(GLOB + " %s", ukey));
 			AccessLogAnalysis logalys = (AccessLogAnalysis) input.getValueByField("AccessLogAnalysis");
 			logalys.setTxid(String.valueOf(taskid));
+			// 初始可能并发修改
+			// Utils.sleep((int) Math.random() * 1000);
 			synchronized (this) {
-				if (ehcache.size() < 2 || !ehcache.containsKey(ukey)) {
-					// 初始可能并发修改
-					Utils.sleep((int) Math.random() * 1000);
-				}
 				if (ehcache.containsKey(ukey)) {
 					AccessLogAnalysis clog = (AccessLogAnalysis) ehcache.get(ukey);
 					clog.calculate(logalys); // 在对象里算
@@ -102,7 +99,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			// 发射累积的统计结果
 			collector.emit(new Values(ukey, logalys));
 			// dumperValue(ukey, logalys);
-			
+
 			// 更新次数
 			// if (hashCounter.containsKey(ukey)) {
 			// int cnt = hashCounter.get(ukey).intValue();
@@ -111,7 +108,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			// } else {
 			// hashCounter.put(ukey, 1);
 			// }
-			
+
 			// dumper统计结果 to redis
 			if (ehcache.containsKey(ukey)) {
 				AccessLogAnalysis rlt = (AccessLogAnalysis) ehcache.get(ukey);
@@ -120,9 +117,9 @@ public class AccessLogStatis extends BaseRichBolt {
 					// save to
 					saveMongo(ukey, rlt);
 				}
-				LOGR.info(tips + String.format(GLOB + " result:%s,ehcache=%s ", ukey, rlt.getCnt_pv()));
+				// LOGR.info(tips + String.format(GLOB + " result:%s,ehcache=%s ", ukey, rlt.getCnt_pv()));
 			}
-			
+
 			// 通过ack操作确认这个tuple被成功处理
 			collector.ack(input);
 			// LOGR.info(tips + " statis==cntRow===" + GLOB);
@@ -131,7 +128,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			LOGR.error(e.getStackTrace().toString());
 		}
 	}
-	
+
 	private synchronized void dumperValue(final String ukey, final AccessLogAnalysis rlt) {
 		String tmp = ukey + "\t" + rlt.getCnt_pv() + "\t" + rlt.getTxid() + "\r\n";
 		FileWriter fw;
@@ -142,37 +139,31 @@ public class AccessLogStatis extends BaseRichBolt {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	private synchronized void saveMongo(final String ukey, final AccessLogAnalysis rlt) {
 		if (ukey.length() > 0 && rlt != null) {
-			BasicDBObject queryobj = new BasicDBObject().append("ukey", ukey);
-			mgo.insertOrUpdate(Constants.ApiStatisTable, queryobj, rlt.toBasicDBObject());
+			Map<String, String> mp = rlt.splitUkey(0, ukey, "#");
+			if (mp.size() > 0) {
+				BasicDBObject queryobj = new BasicDBObject();
+				queryobj.putAll(mp);
+				mgo.insertOrUpdate(Constants.ApiStatisTable, queryobj, rlt.toBasicDBObject());
+			}
 		}
 	}
 
-	private synchronized void saveRedis(final String ukey, final AccessLogAnalysis rlt) {
-		if (ukey.length() > 0 && rlt != null) {
-			Jedis jedis = JedisManager.getInstance().getMasterJedis();
-			jedis.select(JedisExpireHelps.DBIndex);
-			String jsonStr = JacksonUtils.objectToJson(rlt);
-			jedis.set(ukey, jsonStr);
-			jedis.expire(ukey, JedisExpireHelps.expire_2DAY);
-		}
-	}
-	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		LOGR.info(String.format("AccessLogStatis OutputFieldsDeclarer is %s", "AccessLog"));
 		declarer.declare(new Fields("ukey", "AccessLogAnalysis"));
 	}
-	
+
 	@Override
 	public void cleanup() {
 		// hashCounter.clear();
 		ehcache.clear();
-		
+
 	}
-	
+
 }

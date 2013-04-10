@@ -27,6 +27,10 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
+import com.mongodb.BasicDBObject;
+import com.twister.storage.mongo.MongoManager;
+import com.twister.utils.Common;
+import com.twister.utils.Constants;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,6 +38,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
@@ -60,7 +66,7 @@ public class SendNioUdpClient implements Runnable {
 	// must use Queues.newConcurrentLinkedQueue
 	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private volatile boolean running = false;
-	private final boolean isdebug = true;
+	private final boolean isdebug = false;
 	private String host = "127.0.0.1";
 	private final int port;
 	private static int bufferSize = 1024;
@@ -73,16 +79,44 @@ public class SendNioUdpClient implements Runnable {
 	private File file;
 	private boolean end = true;
 	
+	public SendNioUdpClient() {
+		MongoManager mgo = MongoManager.getInstance();
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "tcp"));
+		int i = Common.getRandomInt(0, list.size() - 1);
+		Map<String, String> mp = list.get(i);
+		this.host = String.valueOf(mp.get("ip")) == null ? "127.0.0.1" : String.valueOf(mp.get("ip"));
+		this.port = Integer.valueOf((String) mp.get("port")) == null ? 10236 : Integer.valueOf((String) mp.get("port"));
+		this.file = new File("src/main/resources/accessLog.txt");
+		dispclient();
+		TailFile();
+	}
+
 	public SendNioUdpClient(String host, int port) {
 		this.host = host;
 		this.port = port;
+		this.file = new File("src/main/resources/accessLog.txt");
+		dispclient();
+		TailFile();
 	}
 	
-	public SendNioUdpClient(String host, int port, String filename, boolean end) {
+	public void dispclient() {
+		MongoManager mgo = MongoManager.getInstance();
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "udp"));
+		for (Map m : list) {
+			System.out.println(m);
+		}
+	}
+
+	public SendNioUdpClient(String host, int port, File filename, boolean end) {
 		this.host = host;
 		this.port = port;
 		this.end = end;
-		file = new File(filename);
+		this.file = filename;
+		dispclient();
+		TailFile();
+	}
+
+	public void TailFile() {
 		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString()
 				+ "' is not exists.");
 		// This listener send each file line in the queue
@@ -262,7 +296,8 @@ public class SendNioUdpClient implements Runnable {
 			// Parse options.
 			final String host = args[0];
 			final int port = Integer.parseInt(args[1]);
-			String logfile = args[2];
+			File logfile = new File(args[2]);
+			// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
 			System.out.println("sending " + host + " " + port + " " + logfile);
 			cli = new SendNioUdpClient(host, port, logfile, false);
 			cli.run();
