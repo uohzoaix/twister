@@ -86,7 +86,7 @@ public class SendNioUdpClient implements Runnable {
 		Map<String, String> mp = list.get(i);
 		this.host = String.valueOf(mp.get("ip")) == null ? "127.0.0.1" : String.valueOf(mp.get("ip"));
 		this.port = Integer.valueOf((String) mp.get("port")) == null ? 10236 : Integer.valueOf((String) mp.get("port"));
-		this.file = new File("src/main/resources/accessLog.txt");
+		this.file = new File("/opt/logs/nginx/access/log");
 		dispclient();
 		TailFile();
 	}
@@ -94,7 +94,7 @@ public class SendNioUdpClient implements Runnable {
 	public SendNioUdpClient(String host, int port) {
 		this.host = host;
 		this.port = port;
-		this.file = new File("src/main/resources/accessLog.txt");
+		this.file = new File("/opt/logs/nginx/access/log");
 		dispclient();
 		TailFile();
 	}
@@ -299,7 +299,7 @@ public class SendNioUdpClient implements Runnable {
 			File logfile = new File(args[2]);
 			// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
 			System.out.println("sending " + host + " " + port + " " + logfile);
-			cli = new SendNioUdpClient(host, port, logfile, false);
+			cli = new SendNioUdpClient(host, port, logfile, true);
 			cli.run();
 		} catch (Exception e) {
 			// TODO: handle exception

@@ -84,7 +84,7 @@ public class SendNioTcpClient implements Runnable {
 		System.out.println(mp);
 		this.host = String.valueOf(mp.get("ip")) == null ? "127.0.0.1" : String.valueOf(mp.get("ip"));
 		this.port = Integer.valueOf((String) mp.get("port")) == null ? 10236 : Integer.valueOf((String) mp.get("port"));
-		this.file = new File("src/main/resources/accessLog.txt");
+		this.file = new File("/opt/logs/nginx/access/log");
 		dispclient();
 		TailFile();
 	}
@@ -100,7 +100,7 @@ public class SendNioTcpClient implements Runnable {
 	public SendNioTcpClient(String host, int port) {
 		this.host = host;
 		this.port = port;
-		this.file = new File("src/main/resources/accessLog.txt");
+		this.file = new File("/opt/logs/nginx/access/log");
 		dispclient();
 		TailFile();
 	}
@@ -309,7 +309,7 @@ public class SendNioTcpClient implements Runnable {
 			File logfile = new File(args[2]);
 			System.out.println("sending " + host + " " + port + " " + logfile);
 			// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
-			cli = new SendNioTcpClient(host, port, logfile, false);
+			cli = new SendNioTcpClient(host, port, logfile, true);
 			cli.run();
 		} catch (Exception e) {
 			cli.stop();
