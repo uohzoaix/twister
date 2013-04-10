@@ -150,14 +150,14 @@ public abstract class AbstractAccessLog<T> implements Serializable, IAccessLog<T
 					isTudou = "1";
 				}
 				vec.add(ua);
-				if (realMatcher.groupCount() > 10 && realMatcher.group(11).length() > 0) {
+				if (realMatcher.groupCount() > 11 && realMatcher.group(11).length() > 0) {
 					// server ip
 					Matcher seripv4 = Ipv4.matcher(realMatcher.group(11).toString());
-					if (seripv4.find()) {
+					if (seripv4.groupCount() > 1 && seripv4.find()) {
 						server = seripv4.group(1);
 					} else {
 						String[] lastcols = realMatcher.group(11).toString().trim().split("\\s");
-						server = lastcols[0];
+						server = lastcols[0] == null ? "0" : lastcols[0];
 					}
 				}
 				vec.add(server.toString());
