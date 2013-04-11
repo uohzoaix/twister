@@ -310,7 +310,7 @@ public class SendNioTcpClient {
 			File logfile = new File(Constants.nginxAccess);
 			logger.info("Usage 1: " + SendNioTcpClient.class.getName() + " <accessFile>");
 			logger.info("Usage 2: " + SendNioTcpClient.class.getName() + " <host> <port>");
-			logger.info("Usage 2: " + SendNioTcpClient.class.getName() + " <host> <port> <accessFile>");
+			logger.info("Usage 3: " + SendNioTcpClient.class.getName() + " <host> <port> <accessFile>");
 			if (args.length == 3) {
 				host = args[0];
 				port = Integer.valueOf(args[1]);

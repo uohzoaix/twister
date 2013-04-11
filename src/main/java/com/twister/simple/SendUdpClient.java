@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-
 /**
  * 普通的udp,没有用nio,模拟syslog-ng
  * 
@@ -25,12 +24,12 @@ import com.google.common.base.Preconditions;
  */
 public class SendUdpClient {
 	public static Logger logger = LoggerFactory.getLogger(SendUdpClient.class);
-	public static String logfile = "src/main/resources/accessLog.txt";	
-	private static Charset charSet = Charset.forName("UTF-8");
-	public static String host = "127.0.0.1";
-	public static int port = 10237; // 客户端发送数据端口
 
 	public static void main(String[] args) {
+		String logfile = "/tmp/access.log";
+		Charset charSet = Charset.forName("UTF-8");
+		String host = "127.0.0.1";
+		int port = 10237; // 客户端发送数据端口
 		logger.info("Usage : " + SendUdpClient.class.getName() + " <host> <port> <accessFile>");
 		if (args.length > 1) {
 			host = args[0];
@@ -43,11 +42,10 @@ public class SendUdpClient {
 		}
 		try {
 			File tmpfile = new File(logfile);
-			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
-					+ "' is not exists.");			
+			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile + "' is not exists.");
 
 			InetAddress ip = InetAddress.getByName(host);
-			DatagramSocket socket = new DatagramSocket();			
+			DatagramSocket socket = new DatagramSocket();
 			logger.info("nio udp cli " + ip.toString() + "" + port);
 			int numberOfPackets = 100;
 			int packetLength = 45;
@@ -73,16 +71,16 @@ public class SendUdpClient {
 						if (packet.length() > 0 && packet.charAt(packet.length() - 1) != '\n') {
 							packet.append("\n");
 						}
-//						if (i > 20) {
-//							line = null;
-//							break;
-//						}
+						// if (i > 20) {
+						// line = null;
+						// break;
+						// }
 						System.out.print(i + " " + packet.toString());
 						// 创建发送类型的数据报：
 						DatagramPacket datagramPacket = new DatagramPacket(packet.toString().getBytes(charSet), packet.length(), ip, port);
 						// 通过套接字发送数据：
 						socket.send(datagramPacket);
-						
+
 					}
 					filePointer = file.getFilePointer();
 					if (line == null) {
@@ -92,12 +90,12 @@ public class SendUdpClient {
 				}
 			}
 			file.close();
-			
+
 			// 关闭套接字
 			socket.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 }

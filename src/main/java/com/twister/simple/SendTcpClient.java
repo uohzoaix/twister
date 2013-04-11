@@ -20,39 +20,30 @@ import backtype.storm.utils.Utils;
 
 public class SendTcpClient {
 	public static Logger logger = LoggerFactory.getLogger(SendTcpClient.class);
-	public static String logfile = "src/main/resources/accessLog.txt";
-	private static String host = "127.0.0.1";
-	private static int PORT = 10236;
-	private static Charset charSet = Charset.forName("UTF-8");
-	
+
 	public static void main(String[] args) {
+		String logfile = "/tmp/access.log";
+		String host = "127.0.0.1";
+		int PORT = 10236;
+		Charset charSet = Charset.forName("UTF-8");
 		logger.info("Usage : " + SendTcpClient.class.getName() + " <host> <port> <accessFile>");
-		try {
-			if (args.length > 1) {
-				host = args[0];
-			}
-			if (args.length > 2) {
-				PORT = Integer.valueOf(args[1]);
-			}
-			if (args.length > 3) {
-				logfile = args[2];
-			}
-			logger.info("tcp client start host " + host + ":" + PORT);
-			run();
-		} catch (Exception e) {
-			logger.info("Host ID not found!");
-			System.exit(1);
+
+		if (args.length > 1) {
+			host = args[0];
 		}
-		
-	}
-	
-	private static void run() {
+		if (args.length > 2) {
+			PORT = Integer.valueOf(args[1]);
+		}
+		if (args.length > 3) {
+			logfile = args[2];
+		}
+		logger.info("tcp client start host " + host + ":" + PORT);
+
 		Socket socket = null;
 		RandomAccessFile file = null;
 		try {
 			File tmpfile = new File(logfile);
-			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
-					+ "' is not exists.");
+			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile + "' is not exists.");
 			int numberOfPackets = 100;
 			int packetLength = 20;
 			List<String> packets = new ArrayList<String>(numberOfPackets);
@@ -111,7 +102,9 @@ public class SendTcpClient {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			System.exit(0);
 		}
-		
+
 	}
+
 }
