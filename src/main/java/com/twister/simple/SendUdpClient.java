@@ -33,17 +33,13 @@ public class SendUdpClient {
 	public static void main(String[] args) {
 		logger.info("Usage : " + SendUdpClient.class.getName() + " <host> <port> <accessFile>");
 		if (args.length > 1) {
-			host = args[1];
-		} else {
-			host = "127.0.0.1";
+			host = args[0];
 		}
 		if (args.length > 2) {
-			port = Integer.valueOf(args[2]);
-		} else {
-			port = 10237;
+			port = Integer.valueOf(args[1]);
 		}
 		if (args.length > 3) {
-			logfile = args[3];
+			logfile = args[2];
 		}
 		try {
 			File tmpfile = new File(logfile);

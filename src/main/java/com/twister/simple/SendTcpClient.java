@@ -29,13 +29,13 @@ public class SendTcpClient {
 		logger.info("Usage : " + SendTcpClient.class.getName() + " <host> <port> <accessFile>");
 		try {
 			if (args.length > 1) {
-				host = args[1];
+				host = args[0];
 			}
 			if (args.length > 2) {
-				PORT = Integer.valueOf(args[2]);
+				PORT = Integer.valueOf(args[1]);
 			}
 			if (args.length > 3) {
-				logfile = args[3];
+				logfile = args[2];
 			}
 			logger.info("tcp client start host " + host + ":" + PORT);
 			run();
