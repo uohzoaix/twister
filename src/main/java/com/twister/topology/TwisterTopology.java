@@ -114,12 +114,12 @@ public class TwisterTopology {
 		
 		if (null != args && args.length > 0) {
 			// 使用集群模式运行
-			conf.setNumWorkers(30);
+			conf.setNumWorkers(4);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
 			logger.info("StormCluster");
 		} else {
 			// 使用本地模式运行
-			conf.setMaxTaskParallelism(5);
+			conf.setMaxTaskParallelism(4);
 			LocalCluster cluster = new LocalCluster();
 			logger.info("LocalCluster");
 			cluster.submitTopology("twister", conf, builder.createTopology());

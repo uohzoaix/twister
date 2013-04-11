@@ -169,7 +169,7 @@ public class WordCountTopology {
 		
 		if (args != null && args.length > 0) {
 			// 使用集群模式运行
-			conf.setNumWorkers(5);
+			conf.setNumWorkers(4);
 			StormSubmitter.submitTopology(progname, conf, builder.createTopology());
 		} else {
 			// 使用本地模式运行
