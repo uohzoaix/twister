@@ -291,7 +291,6 @@ public class AccessLogAnalysis extends AbstractAnalysis<AccessLogAnalysis> imple
 
 	public BasicDBObject toBasicDBObject() {
 		Map<String, String> mp = this.toAllMap();
-		mp.remove("ukey");
 		BasicDBObject dbobj = new BasicDBObject(mp);
 		return dbobj;
 	}

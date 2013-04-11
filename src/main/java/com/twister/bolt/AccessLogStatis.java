@@ -147,6 +147,7 @@ public class AccessLogStatis extends BaseRichBolt {
 			Map<String, String> mp = rlt.splitUkey(0, ukey, "#");
 			if (mp.size() > 0) {
 				BasicDBObject queryobj = new BasicDBObject();
+				queryobj.put("ukey", ukey);
 				queryobj.putAll(mp);
 				mgo.insertOrUpdate(Constants.ApiStatisTable, queryobj, rlt.toBasicDBObject());
 			}
