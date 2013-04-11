@@ -26,11 +26,15 @@ public class SenderTcpClient {
 	private static Charset charSet = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
-		if (args.length > 0) {
-			logfile = args[0];
-		}
 		try {
-			host = InetAddress.getLocalHost();
+			if (args.length > 0) {
+				logfile = args[0];
+			}
+			if (args.length > 1) {
+				host = InetAddress.getByName(args[1]);
+			} else {
+				host = InetAddress.getLocalHost();
+			}
 			logger.info("tcp client start host " + host.getHostAddress() + ":" + PORT);
 			run();
 		} catch (UnknownHostException e) {

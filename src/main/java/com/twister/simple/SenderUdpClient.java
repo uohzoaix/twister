@@ -26,17 +26,21 @@ public class SenderUdpClient {
 	public static Logger logger = LoggerFactory.getLogger(SenderUdpClient.class);
 	public static String logfile = "src/main/resources/accessLog.txt";	
 	private static Charset charSet = Charset.forName("UTF-8");
+	public static String host = "127.0.0.1";
 	
 	public static void main(String[] args) {
 		if (args.length > 0) {
 			logfile = args[0];
+		}
+		if (args.length > 1) {
+			host = args[1];
 		}
 		try {
 			File tmpfile = new File(logfile);
 			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
 					+ "' is not exists.");			
 			int port = 10237; // 客户端发送数据端口
-			InetAddress ip = InetAddress.getLocalHost();
+			InetAddress ip = InetAddress.getByName(host);
 			DatagramSocket socket = new DatagramSocket();			
 			logger.info("nio udp cli " + ip.toString() + "" + port);
 			int numberOfPackets = 100;
@@ -69,8 +73,7 @@ public class SenderUdpClient {
 //						}
 						System.out.print(i + " " + packet.toString());
 						// 创建发送类型的数据报：
-						DatagramPacket datagramPacket = new DatagramPacket(packet.toString().getBytes(charSet),
-								packet.length(), ip, port);
+						DatagramPacket datagramPacket = new DatagramPacket(packet.toString().getBytes(charSet), packet.length(), ip, port);
 						// 通过套接字发送数据：
 						socket.send(datagramPacket);
 						

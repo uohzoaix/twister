@@ -43,7 +43,7 @@ import com.twister.storage.mongo.MongoManager;
  * @author guoqing
  * 
  */
-public class NioTcpServer {
+public class NioTcpServer implements Runnable {
 	private ServerBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;

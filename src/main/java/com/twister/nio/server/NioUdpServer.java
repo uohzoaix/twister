@@ -44,7 +44,7 @@ import com.twister.utils.Constants;
  * @author guoqing
  * 
  */
-public class NioUdpServer {
+public class NioUdpServer implements Runnable {
 	private ConnectionlessBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;

@@ -74,7 +74,7 @@ public class SendNioTcpClient implements Runnable {
 	private long interval = 100;
 
 	private File file = new File(Constants.nginxAccess);
-	private boolean end = true;
+	private boolean end = false;
 
 	public SendNioTcpClient() {
 		MongoManager mgo = MongoManager.getInstance();
