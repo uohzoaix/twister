@@ -65,8 +65,9 @@ public class SendNioTcpClient {
 	private final boolean isdebug = false;
 	private String host = "127.0.0.1";
 	private int port = 10236;
-	private static int bufferSize = 1024;
 	private long ct = 0;
+	private long begtime;
+	private long lasttime;
 	/**
 	 * The listener to notify of events when tailing.
 	 */
@@ -86,6 +87,7 @@ public class SendNioTcpClient {
 		dispclient();
 		TailFile();
 	}
+
 	public SendNioTcpClient(File filename) {
 		MongoManager mgo = MongoManager.getInstance();
 		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "tcp"));
@@ -138,6 +140,7 @@ public class SendNioTcpClient {
 	public void run() {
 		try {
 			this.running = true;
+			begtime = System.currentTimeMillis();
 			// Configure the client.
 			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 4, 4);
 			bootstrap = new ClientBootstrap(channelFactory);
@@ -146,7 +149,7 @@ public class SendNioTcpClient {
 			bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
-					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
@@ -203,6 +206,7 @@ public class SendNioTcpClient {
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
+
 				queue.offer(line);
 				// logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
 			} catch (Exception e) {
@@ -264,16 +268,24 @@ public class SendNioTcpClient {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
 				try {
-
 					String line = queue.poll();
+					lasttime = System.currentTimeMillis();
 					if (line != null) {
 						channel.write(line);
-						if (isdebug) {
-							transline.incrementAndGet();
-							logger.info(transline + " line=[" + line + "],size=" + line.length());
+						if (transline.equals(Long.MAX_VALUE)) {
+							transline.set(0);
 						}
-
+						transline.incrementAndGet();
+						if (isdebug) {
+							logger.info(transline + " line=[" + line + "],size=" + line.length());
+						} else {
+							if (begtime + Constants.OutPutTime < lasttime) {
+								begtime = lasttime;
+								logger.info(transline + " line=[" + line + "],size=" + line.length());
+							}
+						}
 					}
+
 				} catch (Exception e1) {
 					e1.printStackTrace();
 					logger.error(e1.getStackTrace().toString());

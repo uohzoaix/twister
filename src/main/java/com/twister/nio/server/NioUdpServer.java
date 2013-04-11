@@ -93,7 +93,7 @@ public class NioUdpServer {
 				}
 			});
 			bootstrap.setOption("reuseAddress", true);
-			// bootstrap.setOption("child.tcpNoDelay", true);
+			bootstrap.setOption("child.udpNoDelay", true);
 			bootstrap.setOption("child.keepAlive", true);
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			String localip = InetAddress.getLocalHost().getHostAddress();

@@ -64,7 +64,6 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private ConnectionlessBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
-	private final static int bufferSize = 1024;
 	private long transLines = 0l;
 
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
@@ -103,7 +102,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
 					// Add the text line codec combination first,
-					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
@@ -112,7 +111,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 				}
 			});
 			bootstrap.setOption("reuseAddress", true);
-			// bootstrap.setOption("child.tcpNoDelay", true);
+			bootstrap.setOption("child.udpNoDelay", true);
 			bootstrap.setOption("child.keepAlive", true);
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			String localip = InetAddress.getLocalHost().getHostAddress();

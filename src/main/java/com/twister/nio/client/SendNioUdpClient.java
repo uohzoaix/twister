@@ -59,14 +59,13 @@ public class SendNioUdpClient {
 	private DatagramChannel clientChannel;
 	private ChannelFuture future;
 	private Tailer tailer;
-	private final AtomicLong transLines = new AtomicLong();
+	private final AtomicLong transline = new AtomicLong();
 	// must use Queues.newConcurrentLinkedQueue
 	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private volatile boolean running = false;
-	private final boolean isdebug = true;
+	private final boolean isdebug = false;
 	private String host = "127.0.0.1";
 	private int port = 10237;
-	private static int bufferSize = 1024;
 	private long ct = 0;
 	/**
 	 * The listener to notify of events when tailing.
@@ -76,6 +75,8 @@ public class SendNioUdpClient {
 	private File file = new File(Constants.nginxAccess);
 	// is true start begin
 	private boolean end = false;
+	private long begtime;
+	private long lasttime;
 
 	public SendNioUdpClient() {
 		MongoManager mgo = MongoManager.getInstance();
@@ -138,6 +139,7 @@ public class SendNioUdpClient {
 
 	public void run() {
 		this.running = true;
+		begtime = System.currentTimeMillis();
 		// Configure the client.
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
@@ -146,7 +148,7 @@ public class SendNioUdpClient {
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 			public ChannelPipeline getPipeline() throws Exception {
 				ChannelPipeline pipeline = Channels.pipeline();
-				pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+				pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 				pipeline.addLast("decoder", new StringDecoder());
 				pipeline.addLast("encoder", new StringEncoder());
 				// and then business logic.
@@ -156,7 +158,7 @@ public class SendNioUdpClient {
 
 		});
 
-		// bootstrap.setOption("udpNoDelay", true);
+		bootstrap.setOption("udpNoDelay", true);
 		bootstrap.setOption("keepAlive", true);
 
 		// Start the connection attempt.
@@ -255,15 +257,22 @@ public class SendNioUdpClient {
 			Channel channel = e.getChannel();
 			while (channel.isWritable()) {
 				try {
-
 					String line = queue.poll();
+					lasttime = System.currentTimeMillis();
 					if (line != null) {
 						channel.write(line);
-						if (isdebug) {
-							transLines.incrementAndGet();
-							logger.info("poll queue " + transLines + " line= [" + line + "],size=" + line.length());
+						if (transline.equals(Long.MAX_VALUE)) {
+							transline.set(0);
 						}
-
+						transline.incrementAndGet();
+						if (isdebug) {
+							logger.info(transline + " line=[" + line + "],size=" + line.length());
+						} else {
+							if (begtime + Constants.OutPutTime < lasttime) {
+								begtime = lasttime;
+								logger.info(transline + " line=[" + line + "],size=" + line.length());
+							}
+						}
 					}
 				} catch (Exception e1) {
 					e1.printStackTrace();

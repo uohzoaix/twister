@@ -65,7 +65,6 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	private ServerBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
-	private final int bufferSize = 1024;
 	private final static boolean isdebug = Constants.isdebug;
 	private volatile boolean running = false;
 	private MongoManager mgo;
@@ -108,7 +107,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
 					// Add the text line codec combination first,
-					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
