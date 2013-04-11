@@ -28,30 +28,30 @@ import org.jboss.netty.handler.codec.string.StringEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
 
 import com.google.common.collect.Queues;
 import com.mongodb.BasicDBObject;
 import com.twister.storage.AccessLogCacheManager;
 import com.twister.storage.mongo.MongoManager;
-import com.twister.storage.redis.JedisManager.JedisExpireHelps;
+
 import com.twister.utils.Common;
 import com.twister.utils.Constants;
 
 /**
- * is udp server
+ * is test udp server
  * 
  * @author guoqing
  * 
  */
-public class NioUdpServer implements Runnable {
+public class NioUdpServer {
 	private ConnectionlessBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
 	private final int port;
 	private final static int bufferSize = 1024;
 	private static final Logger logger = LoggerFactory.getLogger(NioUdpServer.class.getName());
-	private final boolean isdebug;
+	private final static boolean isdebug = true;
+	private final String talbe = "test";
 	private volatile boolean running = false;
 	private long transLines = 0l;
 	private AccessLogCacheManager alogManager; // reids
@@ -65,12 +65,14 @@ public class NioUdpServer implements Runnable {
 	 * @param port
 	 * @param isdebug,debug=true exec shareQueue queue.poll(),debug=false not exec poll
 	 */
-	public NioUdpServer(final Queue<String> shareQueue, int port, boolean isdebug) {
+	public NioUdpServer(final Queue<String> shareQueue, int port) {
 		this.queue = shareQueue;
 		this.port = port;
-		this.isdebug = isdebug;
 	}
 
+	/**
+	 * test
+	 */
 	public void run() {
 		mgo = MongoManager.getInstance();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
@@ -104,7 +106,7 @@ public class NioUdpServer implements Runnable {
 			sermap.put("kind", "udp");
 			sermap.put("desc", "spout");
 			sermap.put("day", dts);
-			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
+			mgo.insertOrUpdate(talbe, sermap, sermap);
 			logger.info("服务端已准备好 " + serinfo);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -134,40 +136,32 @@ public class NioUdpServer implements Runnable {
 			try {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				// transLines += 1;
-				// logger.info("udp recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "] " + isdebug);
-				queue.offer(buffer);
-				synchronized (this) {
-					if (isdebug) {
-						queue.poll();
-					}
-				}
+				transLines += 1;
+				logger.info("udp recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "] " + isdebug);
+
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
 			}
-
 		}
-
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
 			// e.getChannel().close();
 		}
-
 	}
 
-	// public static void main(String[] args) {
-	// Queue<String> udpQueue = Queues.newConcurrentLinkedQueue();
-	// int port;
-	// if (args.length > 0) {
-	// port = Integer.parseInt(args[0]);
-	// } else {
-	// port = 10237;
-	// }
-	// boolean debug = true;
-	// NioUdpServer uss = new NioUdpServer(udpQueue, port, debug);
-	// logger.info("port:" + port + " isdebug " + debug);
-	// uss.run();
-	// }
+	public static void main(String[] args) {
+		Queue<String> udpQueue = Queues.newConcurrentLinkedQueue();
+		int port;
+		if (args.length > 0) {
+			port = Integer.parseInt(args[0]);
+		} else {
+			port = 10237;
+		}
+		boolean debug = true;
+		NioUdpServer uss = new NioUdpServer(udpQueue, port);
+		logger.info("port:" + port + " isdebug " + debug);
+		uss.run();
+	}
 }

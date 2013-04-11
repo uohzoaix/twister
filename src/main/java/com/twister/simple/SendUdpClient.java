@@ -16,30 +16,40 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+
 /**
  * 普通的udp,没有用nio,模拟syslog-ng
  * 
  * @author guoqing
  * 
  */
-public class SenderUdpClient {
-	public static Logger logger = LoggerFactory.getLogger(SenderUdpClient.class);
+public class SendUdpClient {
+	public static Logger logger = LoggerFactory.getLogger(SendUdpClient.class);
 	public static String logfile = "src/main/resources/accessLog.txt";	
 	private static Charset charSet = Charset.forName("UTF-8");
 	public static String host = "127.0.0.1";
-	
+	public static int port = 10237; // 客户端发送数据端口
+
 	public static void main(String[] args) {
-		if (args.length > 0) {
-			logfile = args[0];
-		}
+		logger.info("Usage : " + SendUdpClient.class.getName() + " <host> <port> <accessFile>");
 		if (args.length > 1) {
 			host = args[1];
+		} else {
+			host = "127.0.0.1";
+		}
+		if (args.length > 2) {
+			port = Integer.valueOf(args[2]);
+		} else {
+			port = 10237;
+		}
+		if (args.length > 3) {
+			logfile = args[3];
 		}
 		try {
 			File tmpfile = new File(logfile);
 			Preconditions.checkArgument(tmpfile.isFile(), "TextFileSpout expects a file but '" + tmpfile
 					+ "' is not exists.");			
-			int port = 10237; // 客户端发送数据端口
+
 			InetAddress ip = InetAddress.getByName(host);
 			DatagramSocket socket = new DatagramSocket();			
 			logger.info("nio udp cli " + ip.toString() + "" + port);

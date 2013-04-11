@@ -1,22 +1,37 @@
 package com.twister.spout;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
-import java.util.ArrayList;
-
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
+import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.jboss.netty.handler.codec.frame.LineBasedFrameDecoder;
+import org.jboss.netty.handler.codec.string.StringDecoder;
+import org.jboss.netty.handler.codec.string.StringEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.collect.Queues;
+import com.mongodb.BasicDBObject;
 import com.twister.entity.AccessLog;
-import com.twister.nio.server.NioUdpServer;
-
+import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.Common;
+import com.twister.utils.Constants;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -31,7 +46,7 @@ import backtype.storm.tuple.Values;
  * 
  */
 public class NioUdpServerSpout extends BaseRichSpout {
-	
+
 	private static final long serialVersionUID = 2549996244567293L;
 	private final Logger logger = LoggerFactory.getLogger(NioUdpServerSpout.class.getName());
 	public SpoutOutputCollector collector;
@@ -42,21 +57,32 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private String tips = "";
 	private String localip = "127.0.0.1";
 	public final Pattern Ipv4 = Common.Ipv4;
+	private final static boolean isdebug = Constants.isdebug;
 	private volatile boolean running = false;
 	private Fields _fields = new Fields("AccessLog");
-	private String[] ports;
 	private int port = 10237;
-	private final List<NioUdpServer> ser = new ArrayList<NioUdpServer>();
+	private ConnectionlessBootstrap bootstrap;
+	private ChannelFactory channelFactory;
+	private Channel serverChannel;
+	private final static int bufferSize = 1024;
+	private long transLines = 0l;
+
+	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
 	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
-	
+	private MongoManager mgo;
+
 	public NioUdpServerSpout(int port) {
 		this.port = port;
 	}
-	
+
 	public boolean isRunning() {
 		return running;
 	}
-	
+
+	public boolean isdebug() {
+		return isdebug;
+	}
+
 	@Override
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		this.collector = collector;
@@ -68,26 +94,53 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		try {
 			localip = InetAddress.getLocalHost().getHostAddress();
 			String sk = localip + ":" + port;
-			NioUdpServer ts = new NioUdpServer(queue, port, false);
-			ts.run();
-			ser.add(ts);
+			mgo = MongoManager.getInstance();
+			channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
+			bootstrap = new ConnectionlessBootstrap(channelFactory);
+			// Set up the pipeline factory.
+			bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+				@Override
+				public ChannelPipeline getPipeline() throws Exception {
+					ChannelPipeline pipeline = Channels.pipeline();
+					// Add the text line codec combination first,
+					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("decoder", new StringDecoder());
+					pipeline.addLast("encoder", new StringEncoder());
+					// and then business logic.
+					pipeline.addLast("handler", new UdpEventHandler());
+					return pipeline;
+				}
+			});
+			bootstrap.setOption("reuseAddress", true);
+			// bootstrap.setOption("child.tcpNoDelay", true);
+			bootstrap.setOption("child.keepAlive", true);
+			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
+			String localip = InetAddress.getLocalHost().getHostAddress();
+			running = true;
+			String dts = Common.createDataStr();
+			String serinfo = "udp:" + localip + ":" + port + " " + dts;
+			BasicDBObject sermap = new BasicDBObject();
+			sermap.put("ip", localip);
+			sermap.put("port", port);
+			sermap.put("kind", "udp");
+			sermap.put("desc", "spout");
+			sermap.put("day", dts);
+			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
+			logger.info("服务端已准备好 " + serinfo);
 			logger.info(tips + "" + localip + ":" + port);
+		} catch (UnknownHostException e) {
+			logger.error(e.getStackTrace().toString());
 		} catch (Exception e) {
-			NioUdpServer ts2 = new NioUdpServer(queue, port + 4, false);
-			ts2.run();
-			ser.add(ts2);
-			logger.info(tips + "random " + localip + ":" + port);
 			logger.error(e.getStackTrace().toString());
 		}
-		
+
 	}
-	
+
 	/**
 	 * 消费者
 	 */
 	@Override
 	public void nextTuple() {
-		
 		AccessLog alog = null;
 		try {
 			String txt = null;
@@ -108,41 +161,71 @@ public class NioUdpServerSpout extends BaseRichSpout {
 							logger.info(alog.toString());
 						}
 					}
-					
+
 				}
 			}
-			
+
 		} catch (Exception e) {
 			logger.error(e.getStackTrace().toString());
 		}
 	}
-	
+
 	@Override
 	public void close() {
-
 		try {
-			for (NioUdpServer ts : ser) {
-				ts.stop();
-			}
+			logger.info("stopping UDP server");
+			channelFactory.releaseExternalResources();
+			serverChannel.close();
+			bootstrap.releaseExternalResources();
+			running = false;
+			logger.info("server stopped");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ser.clear();
 	}
-	
+
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(_fields);
 	}
-	
+
 	@Override
 	public void ack(Object msgid) {
 		logger.debug("ack msgid " + msgid.toString());
 	}
-	
+
 	@Override
 	public void fail(Object msgid) {
 		logger.debug("fail msgid " + msgid.toString());
 	}
 
+	/**
+	 * 生产者
+	 */
+	public class UdpEventHandler extends SimpleChannelUpstreamHandler {
+		public UdpEventHandler() {
+		}
+
+		@Override
+		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
+			try {
+				// see LineBasedFrameDecoder
+				String buffer = (String) e.getMessage();
+				// transLines += 1;
+				// logger.info("udp recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "] " + isdebug);
+				synchronized (this) {
+					queue.offer(buffer);
+				}
+			} catch (Exception e2) {
+				logger.error(transLines + " " + e2.getStackTrace().toString());
+			}
+		}
+
+		@Override
+		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+			// Close the connection when an exception is raised.
+			logger.warn("Unexpected exception from downstream.", e.getCause());
+			// e.getChannel().close();
+		}
+	}
 }

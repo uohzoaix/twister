@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author guoqing
  * 
  */
-public class SendNioUdpClient implements Runnable {
+public class SendNioUdpClient {
 	private static Logger logger = LoggerFactory.getLogger(SendNioUdpClient.class);
 	private DatagramChannelFactory channelFactory;
 	private ConnectionlessBootstrap bootstrap;
@@ -63,7 +63,7 @@ public class SendNioUdpClient implements Runnable {
 	// must use Queues.newConcurrentLinkedQueue
 	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
 	private volatile boolean running = false;
-	private final boolean isdebug = false;
+	private final boolean isdebug = true;
 	private String host = "127.0.0.1";
 	private int port = 10237;
 	private static int bufferSize = 1024;
@@ -74,7 +74,7 @@ public class SendNioUdpClient implements Runnable {
 
 	private long interval = 100;
 	private File file = new File(Constants.nginxAccess);
-	// is start begin
+	// is true start begin
 	private boolean end = false;
 
 	public SendNioUdpClient() {
@@ -120,17 +120,20 @@ public class SendNioUdpClient implements Runnable {
 		this.file = filename;
 		dispclient();
 		TailFile();
+		logger.info("" + host + ":" + port + "" + file.toString() + " " + end);
 	}
 
 	public void TailFile() {
 		Preconditions.checkArgument(file.isFile(), "TextFileSpout expects a file but '" + file.toString() + "' is not exists.");
 		// This listener send each file line in the queue
 		TailerListener listener = new UdpQueueSender();
+		// param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
 		tailer = new Tailer(this.file, listener, this.interval, this.end);
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
 		thread.setDaemon(true);
 		thread.start();
+
 	}
 
 	public void run() {
@@ -297,7 +300,8 @@ public class SendNioUdpClient implements Runnable {
 			int port = 10237;
 			File logfile = new File(Constants.nginxAccess);
 			logger.info("Usage 1: " + SendNioUdpClient.class.getName() + " <accessFile>");
-			logger.info("Usage 2: " + SendNioUdpClient.class.getName() + " <host> <port> <accessFile>");
+			logger.info("Usage 2: " + SendNioUdpClient.class.getName() + " <host> <port>");
+			logger.info("Usage 3: " + SendNioUdpClient.class.getName() + " <host> <port> <accessFile>");
 			if (args.length == 3) {
 				host = args[0];
 				port = Integer.valueOf(args[1]);

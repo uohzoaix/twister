@@ -1,6 +1,7 @@
 package com.twister.utils;
 
 public class Constants {
+	public final static boolean isdebug = true;
 	public static final long FREQUENCY = 1L;
 	//nginxAccess 
 	public static String nginxAccess = "/opt/logs/nginx/access/log";

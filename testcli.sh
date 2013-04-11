@@ -8,7 +8,7 @@ DIR=$(cd $(dirname $0); pwd)
 cd $DIR
 if [ -z $1 ]
 then     
-    File=/opt/logs/nginx/access/log
+    File=/tmp/access.log
 else  
     File=$1
 fi 
@@ -20,8 +20,9 @@ else
 fi
 echo "$YDAY run twister"  
 #  /v3/data/syslog/day/$YDAY/access_$YDAY 
-#echo "syslog /v3/data/syslog/day/20130411/access_20130411"
-echo "java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient $File" 
+echo "$File /v3/data/syslog/day/$YDAY/access_$YDAY"
+echo "java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.simple.SendNioTcpClient"
+echo "java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.simple.SendNioTcpClient"
 java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.DisplaySpoutIp
-java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient $File > $YDAY.out &
+java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.simple.SendNioTcpClient $File > $YDAY.out &
 echo "ok"

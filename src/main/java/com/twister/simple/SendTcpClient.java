@@ -18,22 +18,26 @@ import com.google.common.base.Preconditions;
 
 import backtype.storm.utils.Utils;
 
-public class SenderTcpClient {
-	public static Logger logger = LoggerFactory.getLogger(SenderTcpClient.class);
+public class SendTcpClient {
+	public static Logger logger = LoggerFactory.getLogger(SendTcpClient.class);
 	public static String logfile = "src/main/resources/accessLog.txt";
 	private static InetAddress host;
-	private static final int PORT = 10237;
+	private static int PORT = 10236;
 	private static Charset charSet = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
+		logger.info("Usage : " + SendTcpClient.class.getName() + " <host> <port> <accessFile>");
 		try {
-			if (args.length > 0) {
-				logfile = args[0];
-			}
 			if (args.length > 1) {
 				host = InetAddress.getByName(args[1]);
 			} else {
 				host = InetAddress.getLocalHost();
+			}
+			if (args.length > 2) {
+				PORT = Integer.valueOf(args[2]);
+			}
+			if (args.length > 3) {
+				logfile = args[3];
 			}
 			logger.info("tcp client start host " + host.getHostAddress() + ":" + PORT);
 			run();

@@ -38,18 +38,18 @@ import com.twister.utils.Constants;
 import com.twister.storage.mongo.MongoManager;
 
 /**
- * is udp server,connent info to mongodb twisterServer
+ * is test tcp server,connent info to mongodb twisterServer
  * 
  * @author guoqing
  * 
  */
-public class NioTcpServer implements Runnable {
+public class NioTcpServer {
 	private ServerBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
 	private final int port;
 	private final int bufferSize = 1024;
-	private final boolean isdebug;
+	private final static boolean isdebug = true;
 	private volatile boolean running = false;
 	private static final Logger logger = LoggerFactory.getLogger(NioTcpServer.class.getName());
 	private final AtomicLong transLines = new AtomicLong();
@@ -64,12 +64,15 @@ public class NioTcpServer implements Runnable {
 	 * @param port
 	 * @param isdebug,debug=true exec shareQueue queue.poll(),debug=false not exec poll
 	 */
-	public NioTcpServer(final Queue<String> shareQueue, int port, boolean isdebug) {
+	public NioTcpServer(final Queue<String> shareQueue, int port) {
 		this.queue = shareQueue;
 		this.port = port;
-		this.isdebug = isdebug;
+
 	}
 
+	/**
+	 * test
+	 */
 
 	public void run() {
 		mgo = MongoManager.getInstance();
@@ -149,13 +152,8 @@ public class NioTcpServer implements Runnable {
 				String buffer = (String) e.getMessage();
 				transLines.incrementAndGet();
 				// SynchronousQueue put ,spout poll
-				logger.debug("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
-				synchronized (this) {
-					queue.offer(buffer);
-					if (isdebug) {
-						queue.poll();
-					}
-				}
+				logger.info("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
+
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
 			}
@@ -171,16 +169,16 @@ public class NioTcpServer implements Runnable {
 
 	}
 
-	// public static void main(String[] args) {
-	// Queue<String> tcpQueue = Queues.newConcurrentLinkedQueue();
-	// int port;
-	// if (args.length > 0) {
-	// port = Integer.parseInt(args[0]);
-	// } else {
-	// port = 10236;
-	// }
-	// logger.info("port:" + port);
-	// NioTcpServer ser = new NioTcpServer(tcpQueue, port, true);
-	// ser.run();
-	// }
+	public static void main(String[] args) {
+		Queue<String> tcpQueue = Queues.newConcurrentLinkedQueue();
+		int port;
+		if (args.length > 0) {
+			port = Integer.parseInt(args[0]);
+		} else {
+			port = 10236;
+		}
+		logger.info("port:" + port);
+		NioTcpServer ser = new NioTcpServer(tcpQueue, port);
+		ser.run();
+	}
 }

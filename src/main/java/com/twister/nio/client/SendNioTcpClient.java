@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author guoqing
  * 
  */
-public class SendNioTcpClient implements Runnable {
+public class SendNioTcpClient {
 	private static Logger logger = LoggerFactory.getLogger(SendNioTcpClient.class);
 	private ChannelFactory channelFactory;
 	private ClientBootstrap bootstrap;
@@ -132,7 +132,7 @@ public class SendNioTcpClient implements Runnable {
 		Thread thread = new Thread(tailer);
 		thread.setDaemon(true);
 		thread.start();
-		System.out.println("" + host + " " + port + " " + file.toString() + " " + this.end);
+		logger.info("" + host + " " + port + " " + file.toString() + " " + this.end);
 	}
 
 	public void run() {
@@ -309,6 +309,7 @@ public class SendNioTcpClient implements Runnable {
 			int port = 10236;
 			File logfile = new File(Constants.nginxAccess);
 			logger.info("Usage 1: " + SendNioTcpClient.class.getName() + " <accessFile>");
+			logger.info("Usage 2: " + SendNioTcpClient.class.getName() + " <host> <port>");
 			logger.info("Usage 2: " + SendNioTcpClient.class.getName() + " <host> <port> <accessFile>");
 			if (args.length == 3) {
 				host = args[0];
