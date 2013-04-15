@@ -21,10 +21,10 @@
     <entry key="redis.slave.host">127.0.0.1</entry>  
     <entry key="redis.slave.port">6379</entry>
     <entry key="redis.slave.password">no</entry>
-    
+    -->
     <entry key="mongodb.port">27017</entry>
     <entry key="mongodb.host">127.0.0.1</entry>
     <entry key="mongodb.db">mapi</entry>
-    -->
+    
     
 </properties>

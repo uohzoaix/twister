@@ -20,6 +20,6 @@ else
 fi
 echo "$YDAY run twister"  
 #  /v3/data/syslog/day/$YDAY/access_$YDAY 
-java -cp classes -classpath $DIR//twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.DisplaySpoutIp
-java -cp classes -classpath $DIR//twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioUdpClient $File > $YDAY.out &
+java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.DisplaySpoutIp
+java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioUdpClient $File > $YDAY.out &
 echo "ok"

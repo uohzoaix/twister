@@ -68,7 +68,7 @@ public class TwisterTopology {
 		// TailFileSpout("src/main/resources/words.txt");
 		// Initial filter
 		// 随机分组，平衡计算结点 String id, IRichBolt, thread num
-		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), 30);
+		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), Constants.ShuffleBolt);
 
 		for (int i = 0; i < Tport.length; i++) {
 			// use nio tcp good
@@ -101,11 +101,11 @@ public class TwisterTopology {
 		// AccessLogShuffle(),30).shuffleGrouping("udpTwisterSpout").shuffleGrouping("tcpTwisterSpout");
 		
 		// group bolt
-		builder.setBolt("fieldsGroupBolt", new AccessLogGroup(), 30).fieldsGrouping("shuffleBolt",
+		builder.setBolt("fieldsGroupBolt", new AccessLogGroup(), Constants.FieldsGroupBolt).fieldsGrouping("shuffleBolt",
 				new Fields("ukey", "AccessLogAnalysis"));
 		
 		// 汇总,统计结点 bolt,入redis内存
-		builder.setBolt("statisBolt", new AccessLogStatis(), 60).fieldsGrouping("fieldsGroupBolt",
+		builder.setBolt("statisBolt", new AccessLogStatis(), Constants.StatisBolt).fieldsGrouping("fieldsGroupBolt",
 				new Fields("ukey", "AccessLogAnalysis"));
 		
 		// config
@@ -114,12 +114,12 @@ public class TwisterTopology {
 		
 		if (null != args && args.length > 0) {
 			// 使用集群模式运行
-			conf.setNumWorkers(4);
+			conf.setNumWorkers(Constants.NumWorkers);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
 			logger.info("StormCluster");
 		} else {
 			// 使用本地模式运行
-			conf.setMaxTaskParallelism(4);
+			conf.setMaxTaskParallelism(Constants.NumWorkers);
 			LocalCluster cluster = new LocalCluster();
 			logger.info("LocalCluster");
 			cluster.submitTopology("twister", conf, builder.createTopology());
