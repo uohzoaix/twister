@@ -12,19 +12,19 @@
 		如果该值是 0 就意味着元素可以停顿无穷长的时间。 timeToLiveSeconds：缓存数据的生存时间，也就是一个元素从构建到消亡的最大时间间隔值， 
 		这只能在元素不是永久驻留时有效，如果该值是0就意味着元素可以停顿无穷长的时间。 overflowToDisk：内存不足时，是否启用磁盘缓存。 memoryStoreEvictionPolicy：缓存满了之后的淘汰LFU算法,即最不经常使用页置换算法。 -->
 	<cache name="AccessLogCache" maxElementsInMemory="10000000"
-		eternal="false" overflowToDisk="true" timeToIdleSeconds="480"
-		timeToLiveSeconds="480" diskExpiryThreadIntervalSeconds="480"
+		eternal="false" overflowToDisk="true" timeToIdleSeconds="240"
+		timeToLiveSeconds="240" diskExpiryThreadIntervalSeconds="240"
 		memoryStoreEvictionPolicy="LFU">
 	</cache>
 
 	<cache name="EhcacheMap" maxElementsInMemory="10000000" eternal="false"
-		overflowToDisk="true" timeToIdleSeconds="480" timeToLiveSeconds="480"
-		diskExpiryThreadIntervalSeconds="480" memoryStoreEvictionPolicy="LFU">
+		overflowToDisk="true" timeToIdleSeconds="240" timeToLiveSeconds="240"
+		diskExpiryThreadIntervalSeconds="240" memoryStoreEvictionPolicy="LFU">
 	</cache>
 	
 	    <cache name="defaultMap" maxElementsInMemory="10000000" eternal="false"
-        overflowToDisk="true" timeToIdleSeconds="480" timeToLiveSeconds="480"
-        diskExpiryThreadIntervalSeconds="480" memoryStoreEvictionPolicy="LFU">
+        overflowToDisk="true" timeToIdleSeconds="240" timeToLiveSeconds="240"
+        diskExpiryThreadIntervalSeconds="240" memoryStoreEvictionPolicy="LFU">
     </cache>
     
 </ehcache>
