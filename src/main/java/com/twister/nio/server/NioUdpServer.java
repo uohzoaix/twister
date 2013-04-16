@@ -51,7 +51,7 @@ public class NioUdpServer {
 	private String host;
 	private static final Logger logger = LoggerFactory.getLogger(NioUdpServer.class.getName());
 	private volatile boolean run = false;
-	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
+	// SynchronousQueue ;
 	private final Queue<String> queue;
 	private MongoManager mgo;
 	private MoniterQueue moniter;
@@ -150,7 +150,7 @@ public class NioUdpServer {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
 				queue.offer(buffer);
-				logger.info("udp recvd " + " [" + buffer.toString() + "] ");
+				// logger.info("udp recvd " + " [" + buffer.toString() + "] ");
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
 			}

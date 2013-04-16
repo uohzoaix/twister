@@ -67,7 +67,7 @@ public class TwisterTopology {
 		}
 
 		mgo.remove(Constants.SpoutTable, new BasicDBObject().append("desc", "spout"));
-		Queue<String> queues = Queues.newConcurrentLinkedQueue();
+		Queue<String> queues = Queues.newSynchronousQueue();
 		String localip = InetAddress.getLocalHost().getHostAddress();
 		TopologyBuilder builder = new TopologyBuilder();
 		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), Constants.ShuffleBolt);

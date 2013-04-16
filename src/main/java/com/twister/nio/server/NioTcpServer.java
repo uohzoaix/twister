@@ -51,7 +51,7 @@ public class NioTcpServer {
 	private String host;
 	private static final Logger logger = LoggerFactory.getLogger(NioTcpServer.class.getName());
 
-	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
+	// SynchronousQueue ;
 	private final Queue<String> queue;
 	private MongoManager mgo;
 	private MoniterQueue moniter;
@@ -162,7 +162,7 @@ public class NioTcpServer {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
 				// SynchronousQueue put ,spout poll
-				logger.info("recvd " + " bytes [" + buffer.toString() + "]");
+				// logger.info("recvd " + " bytes [" + buffer.toString() + "]");
 				queue.offer(buffer);
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
