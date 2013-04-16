@@ -7,14 +7,15 @@ public class Constants {
 	// stripDelimiter：解码时是否去掉分隔符
 	// failFast：为true，当frame长度超过maxFrameLength时立即报TooLongFrameException异常，为false，读取完整个帧再报异常
 	public final static int NumWorkers = 4;
-	// public final static int PullSpout = 40;
-	// public final static int ShuffleBolt = 40;
-	// public final static int FieldsGroupBolt = 120;
-	// public final static int StatisBolt = 120;
-	public final static int PullSpout = 4;
-	public final static int ShuffleBolt = 4;
-	public final static int FieldsGroupBolt = 6;
-	public final static int StatisBolt = 6;
+	public final static int PullSpout = 40;
+	public final static int ShuffleBolt = 40;
+	public final static int FieldsGroupBolt = 120;
+	public final static int StatisBolt = 120;
+
+	// public final static int PullSpout = 4;
+	// public final static int ShuffleBolt = 4;
+	// public final static int FieldsGroupBolt = 6;
+	// public final static int StatisBolt = 6;
 
 	public final static int MaxFrameLength = 1500;
 	public final static boolean FailFast = false;

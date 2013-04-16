@@ -14,7 +14,7 @@ public class Pulltest {
 
 		// Parse options.
 		String host = "127.0.0.1";
-		int port = 10238;
+		int port = 10239;
 		File logfile = new File(Constants.nginxAccess);
 		System.out.println("Usage : " + PullCli.class.getName() + " <host> <port>");
 		if (args.length == 2) {
