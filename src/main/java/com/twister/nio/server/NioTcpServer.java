@@ -47,16 +47,14 @@ public class NioTcpServer {
 	private ServerBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
-	private final int port;
-	private final int bufferSize = 1024;
-	private final static boolean isdebug = true;
-	private volatile boolean running = false;
+	private int port;
+	private String host;
 	private static final Logger logger = LoggerFactory.getLogger(NioTcpServer.class.getName());
-	private final AtomicLong transLines = new AtomicLong();
+
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
 	private final Queue<String> queue;
-	public MongoManager mgo;
-
+	private MongoManager mgo;
+	private MoniterQueue moniter;
 
 	/**
 	 * 
@@ -70,12 +68,30 @@ public class NioTcpServer {
 
 	}
 
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
 	/**
 	 * test
 	 */
 
 	public void run() {
 		mgo = MongoManager.getInstance();
+		moniter = new MoniterQueue(this.queue, "MoniterQueue");
+		moniter.show();
 		channelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
 		bootstrap = new ServerBootstrap(channelFactory);
 		try {
@@ -85,7 +101,7 @@ public class NioTcpServer {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
 					// Add the text line codec combination first,
-					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 
@@ -100,8 +116,8 @@ public class NioTcpServer {
 			bootstrap.setOption("child.keepAlive", true);
 			// Bind and start to accept incoming connections.
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
-			running = true;
 			String localip = InetAddress.getLocalHost().getHostAddress();
+			this.setHost(localip);
 			String dts = Common.createDataStr();
 			String serinfo = "tcp:" + localip + ":" + port + " " + dts;
 			BasicDBObject sermap = new BasicDBObject();
@@ -112,7 +128,6 @@ public class NioTcpServer {
 			sermap.put("day", dts);
 			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
 			logger.info("服务端已准备好 " + serinfo);
-
 		} catch (UnknownHostException e) {
 			stop();
 		}
@@ -123,13 +138,9 @@ public class NioTcpServer {
 		channelFactory.releaseExternalResources();
 		serverChannel.close();
 		bootstrap.releaseExternalResources();
-		running = false;
 		logger.info("server stopped");
 	}
 
-	public boolean isRunning() {
-		return running;
-	}
 
 	public class TcpEventHandler extends SimpleChannelUpstreamHandler {
 		public TcpEventHandler() {
@@ -150,10 +161,9 @@ public class NioTcpServer {
 			try {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				transLines.incrementAndGet();
 				// SynchronousQueue put ,spout poll
-				logger.info("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
-
+				logger.info("recvd " + " bytes [" + buffer.toString() + "]");
+				queue.offer(buffer);
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
 			}
@@ -169,16 +179,16 @@ public class NioTcpServer {
 
 	}
 
-	public static void main(String[] args) {
-		Queue<String> tcpQueue = Queues.newConcurrentLinkedQueue();
-		int port;
-		if (args.length > 0) {
-			port = Integer.parseInt(args[0]);
-		} else {
-			port = 10236;
-		}
-		logger.info("port:" + port);
-		NioTcpServer ser = new NioTcpServer(tcpQueue, port);
-		ser.run();
-	}
+	// public static void main(String[] args) {
+	// Queue<String> tcpQueue = Queues.newConcurrentLinkedQueue();
+	// int port;
+	// if (args.length > 0) {
+	// port = Integer.parseInt(args[0]);
+	// } else {
+	// port = 10236;
+	// }
+	// logger.info("port:" + port);
+	// NioTcpServer ser = new NioTcpServer(tcpQueue, port);
+	// ser.run();
+	// }
 }

@@ -100,6 +100,7 @@ public class SendNioUdpClient {
 		dispclient();
 		TailFile();
 	}
+
 	public SendNioUdpClient(String host, int port) {
 		this.host = host;
 		this.port = port;
@@ -137,8 +138,25 @@ public class SendNioUdpClient {
 
 	}
 
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	public boolean isEnd() {
+		return end;
+	}
+
+	public void setEnd(boolean end) {
+		this.end = end;
+	}
+
 	public void run() {
 		this.running = true;
+		this.setEnd(true);
 		begtime = System.currentTimeMillis();
 		// Configure the client.
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
@@ -311,6 +329,7 @@ public class SendNioUdpClient {
 			logger.info("Usage 1: " + SendNioUdpClient.class.getName() + " <accessFile>");
 			logger.info("Usage 2: " + SendNioUdpClient.class.getName() + " <host> <port>");
 			logger.info("Usage 3: " + SendNioUdpClient.class.getName() + " <host> <port> <accessFile>");
+
 			if (args.length == 3) {
 				host = args[0];
 				port = Integer.valueOf(args[1]);

@@ -47,17 +47,14 @@ public class NioUdpServer {
 	private ConnectionlessBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
-	private final int port;
-	private final static int bufferSize = 1024;
+	private int port;
+	private String host;
 	private static final Logger logger = LoggerFactory.getLogger(NioUdpServer.class.getName());
-	private final static boolean isdebug = true;
-	private final String talbe = "test";
-	private volatile boolean running = false;
-	private long transLines = 0l;
-	private AccessLogCacheManager alogManager; // reids
+	private volatile boolean run = false;
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
 	private final Queue<String> queue;
-	public MongoManager mgo;
+	private MongoManager mgo;
+	private MoniterQueue moniter;
 
 	/**
 	 * 
@@ -70,11 +67,26 @@ public class NioUdpServer {
 		this.port = port;
 	}
 
-	/**
-	 * test
-	 */
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
 	public void run() {
 		mgo = MongoManager.getInstance();
+		moniter = new MoniterQueue(this.queue, "MoniterQueue");
+		moniter.show();
 		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
@@ -84,7 +96,7 @@ public class NioUdpServer {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
 					// Add the text line codec combination first,
-					pipeline.addLast("framer", new LineBasedFrameDecoder(bufferSize));
+					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
@@ -97,7 +109,8 @@ public class NioUdpServer {
 			bootstrap.setOption("child.keepAlive", true);
 			serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getLocalHost(), port));
 			String localip = InetAddress.getLocalHost().getHostAddress();
-			running = true;
+			this.setHost(localip);
+			run = true;
 			String dts = Common.createDataStr();
 			String serinfo = "udp:" + localip + ":" + port + " " + dts;
 			BasicDBObject sermap = new BasicDBObject();
@@ -106,7 +119,7 @@ public class NioUdpServer {
 			sermap.put("kind", "udp");
 			sermap.put("desc", "spout");
 			sermap.put("day", dts);
-			mgo.insertOrUpdate(talbe, sermap, sermap);
+			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
 			logger.info("服务端已准备好 " + serinfo);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -120,12 +133,12 @@ public class NioUdpServer {
 		channelFactory.releaseExternalResources();
 		// serverChannel.close();
 		bootstrap.releaseExternalResources();
-		running = false;
+		run = false;
 		logger.info("server stopped");
 	}
 
 	public boolean isRunning() {
-		return running;
+		return run;
 	}
 
 	public class UdpEventHandler extends SimpleChannelUpstreamHandler {
@@ -136,9 +149,8 @@ public class NioUdpServer {
 			try {
 				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				transLines += 1;
-				logger.info("udp recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "] " + isdebug);
-
+				queue.offer(buffer);
+				logger.info("udp recvd " + " [" + buffer.toString() + "] ");
 			} catch (Exception e2) {
 				logger.error(e2.getStackTrace().toString());
 			}
@@ -151,17 +163,17 @@ public class NioUdpServer {
 		}
 	}
 
-	public static void main(String[] args) {
-		Queue<String> udpQueue = Queues.newConcurrentLinkedQueue();
-		int port;
-		if (args.length > 0) {
-			port = Integer.parseInt(args[0]);
-		} else {
-			port = 10237;
-		}
-		boolean debug = true;
-		NioUdpServer uss = new NioUdpServer(udpQueue, port);
-		logger.info("port:" + port + " isdebug " + debug);
-		uss.run();
-	}
+	// public static void main(String[] args) {
+	// Queue<String> udpQueue = Queues.newConcurrentLinkedQueue();
+	// int port;
+	// if (args.length > 0) {
+	// port = Integer.parseInt(args[0]);
+	// } else {
+	// port = 10237;
+	// }
+	//
+	// NioUdpServer uss = new NioUdpServer(udpQueue, port);
+	// logger.info("port:" + port);
+	// uss.run();
+	// }
 }

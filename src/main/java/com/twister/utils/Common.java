@@ -56,7 +56,9 @@ public final class Common {
 																		// jar
 	public static String YoukuUriRegexHDFSFile = "/workspace/mobile/Statis/mapi/conf/youkuUriRegex.conf"; // on
 																											// hdfs
-	
+	public static String AccessYouku = "Mar  5 10:59:59 a02 112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/layout/phone2/item_list\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Youku;2.5;Android;2.3.5;LT18i\"";
+	public static String AccessTudou = "Mar  5 10:59:59 a02-api-3g-b28-tudou 112.117.200.169 \"2013-03-03T00:00:14+08:00\" GET \"/home2\" \"pid=10ec7521b331887d&t=1362240233&e=md5&s=0f0ef2b2fe756bf3aa8f71ba97734557&guid=a299fee374d507d34968dc65ba5cf558\" \"-\" 200 3326 0.012 \"Tudou;3.0;Android;2.3.4;LT18i\"";
+
 	public static long timeunit = 1000l;
 	public static long TMIN = 15; // t<15ms,优秀
 	public static long TB = 60; // 15ms≤t<60ms ,良好

@@ -76,6 +76,22 @@ public class SendNioTcpClient {
 
 	private File file = new File(Constants.nginxAccess);
 	private boolean end = false;
+    
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	public boolean isEnd() {
+		return end;
+	}
+
+	public void setEnd(boolean end) {
+		this.end = end;
+	}
 
 	public SendNioTcpClient() {
 		MongoManager mgo = MongoManager.getInstance();
@@ -125,21 +141,27 @@ public class SendNioTcpClient {
 	}
 
 	public void TailFile() {
-
 		Preconditions.checkArgument(this.file.isFile(), "TextFileSpout expects a file but '" + this.file.toString() + "' is not exists.");
 		// This listener send each file line in the queue
 		TailerListener listener = new TcpQueueSender();
-		tailer = new Tailer(this.file, listener, this.interval, this.end);
+		try {
+			tailer = new Tailer(this.file, listener, this.interval, this.end);
+		} catch (Exception e) {
+			tailer = new Tailer(this.file, listener, this.interval, this.end);
+		}
 		// Start a tailer thread
 		Thread thread = new Thread(tailer);
 		thread.setDaemon(true);
 		thread.start();
-		logger.info("" + host + " " + port + " " + file.toString() + " " + this.end);
+		logger.info(file.toString() + " " + this.end);
+		logger.info("" + host + " " + port);
 	}
+	
 
 	public void run() {
 		try {
 			this.running = true;
+			this.setEnd(true);
 			begtime = System.currentTimeMillis();
 			// Configure the client.
 			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 4, 4);
@@ -206,7 +228,6 @@ public class SendNioTcpClient {
 				if (!line.endsWith("\n")) {
 					line += "\n";
 				}
-
 				queue.offer(line);
 				// logger.debug("add queue length=" + line.length() + "/" + ct + " line = [" + line + "]");
 			} catch (Exception e) {

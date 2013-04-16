@@ -4,10 +4,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
@@ -29,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Queues;
 import com.mongodb.BasicDBObject;
 import com.twister.entity.AccessLog;
+import com.twister.entity.AccessLogAnalysis;
+import com.twister.storage.cache.EhcacheMap;
 import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.Common;
 import com.twister.utils.Constants;
@@ -40,7 +46,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
 /**
- * is tcp nio server
+ * is tcp nio server,跑2个小时就卡住不动
  * 
  * @author guoqing
  * 
@@ -91,6 +97,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		this.taskid = context.getThisTaskId();
 		this.tips = String.format("componentId name :%s,task id :%s ", this.componentId, this.taskid);
 		try {
+			MoniterQueue mo = new MoniterQueue(queue);
 			localip = InetAddress.getLocalHost().getHostAddress();
 			String sk = localip + ":" + port;
 			mgo = MongoManager.getInstance();
@@ -128,6 +135,10 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
 			logger.info("服务端已准备好 " + serinfo);
 			logger.info(tips + "" + localip + ":" + port);
+			Thread th = new Thread(mo, "MoniterQueue");
+			th.setDaemon(true);
+			th.start();
+
 		} catch (UnknownHostException e) {
 			logger.error(e.getStackTrace().toString());
 		} catch (Exception e) {
@@ -224,5 +235,30 @@ public class NioUdpServerSpout extends BaseRichSpout {
 			logger.warn("Unexpected exception from downstream.", e.getCause());
 			// e.getChannel().close();
 		}
+	}
+
+	public class MoniterQueue implements Runnable {
+		private final Queue<String> q;
+
+		private long begtime;
+		private long lasttime;
+
+		public MoniterQueue(Queue<String> a) {
+			q = a;
+			begtime = System.currentTimeMillis();
+			lasttime = System.currentTimeMillis();
+		}
+
+		@Override
+		public void run() {
+			while (true) {
+				lasttime = System.currentTimeMillis();
+				if (begtime + Constants.OutPutTime < lasttime) {
+					begtime = lasttime;
+					logger.info("MoniterQueue " + lasttime + " size " + q.size());
+				}
+			}
+		}
+
 	}
 }

@@ -44,7 +44,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 
 /**
- * is tcp nio server
+ * is tcp nio server,跑2个小时就卡住不动
  * 
  * @author guoqing
  * 

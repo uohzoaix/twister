@@ -68,7 +68,6 @@ public class MaopaoSort {
 			quickSort(arr, pivot + 1, hig);
 		}
 	}
-
 	public static int partition(int[] arr, int l, int r) {
 		int pivot = arr[r];
 		// 将小于等于pivot的元素移到左边区域
@@ -82,7 +81,6 @@ public class MaopaoSort {
 		swap(arr, index, r);
 		return index;
 	}
-
 	public static void swap(int[] a, int i, int j) {
 		int temp;
 		temp = a[i];
