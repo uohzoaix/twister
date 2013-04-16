@@ -159,7 +159,7 @@ public class SendNioUdpClient {
 		this.setEnd(true);
 		begtime = System.currentTimeMillis();
 		// Configure the client.
-		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 4);
+		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool());
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 
 		// Set up the pipeline factory.

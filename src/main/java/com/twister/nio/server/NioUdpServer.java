@@ -87,7 +87,7 @@ public class NioUdpServer {
 		mgo = MongoManager.getInstance();
 		moniter = new MoniterQueue(this.queue, "MoniterQueue");
 		moniter.show();
-		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool(), 6);
+		channelFactory = new NioDatagramChannelFactory(Executors.newCachedThreadPool());
 		bootstrap = new ConnectionlessBootstrap(channelFactory);
 		try {
 			// Set up the pipeline factory.
