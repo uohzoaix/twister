@@ -3,6 +3,8 @@ package com.twister.topology;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,17 @@ import com.twister.utils.Constants;
 //import com.twister.spout.TailFileSpout;
 
 /**
+ * Queue 
+------------ 
+1.ArrayDeque, （数组双端队列） 
+2.PriorityQueue, （优先级队列） 
+3.ConcurrentLinkedQueue, （基于链表的并发队列） 
+4.DelayQueue, （延期阻塞队列）（阻塞队列实现了BlockingQueue接口） 
+5.ArrayBlockingQueue, （基于数组的并发阻塞队列） 
+6.LinkedBlockingQueue, （基于链表的FIFO阻塞队列） 
+7.LinkedBlockingDeque, （基于链表的FIFO双端阻塞队列） 
+8.PriorityBlockingQueue, （带优先级的无界阻塞队列） 
+9.SynchronousQueue （并发同步阻塞队列 size=0） 
  * <p>
  * Description : TwisterTopology <br>
  * usage: Topology 不支持事务，没有批量提交 storm jar
@@ -67,7 +80,8 @@ public class TwisterTopology {
 		}
 
 		mgo.remove(Constants.SpoutTable, new BasicDBObject().append("desc", "spout"));
-		Queue<String> queues = Queues.newSynchronousQueue();
+		// newConcurrentLinkedQueue LinkedBlockingQueue newArrayBlockingQueue
+		Queue<String> queues = Queues.newArrayBlockingQueue(Constants.QueueSize);
 		String localip = InetAddress.getLocalHost().getHostAddress();
 		TopologyBuilder builder = new TopologyBuilder();
 		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), Constants.ShuffleBolt);
@@ -83,20 +97,21 @@ public class TwisterTopology {
 			NioUdpServer udpServer = new NioUdpServer(queues, port);
 			udpServer.run();
 		}
+
 		// push/pull to spout
+		ExecutorService pushService = Executors.newCachedThreadPool();
 		for (int i = 0; i < Pport.length; i++) {
 			int port = Integer.valueOf(Pport[i]);
 			PushSer push = new PushSer(queues, port);
-			Thread thr = new Thread(push, "pushSer" + port);
-			thr.setDaemon(true);
-			thr.start();
+			pushService.submit(push);
+			pushService.submit(push);
+			pushService.submit(push);
 			String title = "push_pull_spout_" + port;
 			SpoutDeclarer sd = builder.setSpout(title, new PullSpout(localip, port), Constants.PullSpout);
 			bde.shuffleGrouping(title);
 			logger.info(title);
 		}
-
-
+		logger.info(pushService.toString());
 		// setup your spout
 		// TextAccessFileSpout textSpout = new
 		// TextAccessFileSpout("src/main/resources/words.txt");
@@ -128,6 +143,7 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(Constants.NumWorkers);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
+			pushService.shutdownNow();
 			logger.info("StormCluster");
 		} else {
 			// 使用本地模式运行
@@ -136,6 +152,7 @@ public class TwisterTopology {
 			logger.info("LocalCluster");
 			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
+			pushService.shutdownNow();
 			// cluster.shutdown();
 
 		}

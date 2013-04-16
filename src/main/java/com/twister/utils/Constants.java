@@ -3,6 +3,7 @@ package com.twister.utils;
 public class Constants {
 	public final static boolean isdebug = false;
 	public final static int bufferSize = 1024;
+	public final static int QueueSize = 2000000;
 	// maxFrameLength：解码的帧的最大长度
 	// stripDelimiter：解码时是否去掉分隔符
 	// failFast：为true，当frame长度超过maxFrameLength时立即报TooLongFrameException异常，为false，读取完整个帧再报异常
@@ -12,7 +13,7 @@ public class Constants {
 	public final static int ShuffleBolt = 40;
 	public final static int FieldsGroupBolt = 120;
 	public final static int StatisBolt = 120;
-
+	//
 	// public final static int PullSpout = 4;
 	// public final static int ShuffleBolt = 4;
 	// public final static int FieldsGroupBolt = 6;

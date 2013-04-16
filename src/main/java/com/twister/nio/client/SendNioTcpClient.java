@@ -164,7 +164,7 @@ public class SendNioTcpClient {
 			this.setEnd(true);
 			begtime = System.currentTimeMillis();
 			// Configure the client.
-			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 4, 4);
+			channelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 6, 6);
 			bootstrap = new ClientBootstrap(channelFactory);
 
 			// Set up the pipeline factory.
