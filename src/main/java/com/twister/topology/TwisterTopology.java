@@ -1,10 +1,15 @@
 package com.twister.topology;
 
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,41 +83,37 @@ public class TwisterTopology {
 		for (ServerAddress serverAddress : ls) {
 			System.out.println("mongodb " + serverAddress.getHost() + ":" + serverAddress.getPort() + " mapi");
 		}
-
-		mgo.remove(Constants.SpoutTable, new BasicDBObject().append("desc", "spout"));
-		// newConcurrentLinkedQueue LinkedBlockingQueue newArrayBlockingQueue
-		Queue<String> queues = Queues.newArrayBlockingQueue(Constants.QueueSize);
-
+		// read push server
+		List<Map> list = mgo.query(Constants.SpoutTable, new BasicDBObject().append("desc", "spout").append("kind", "push"));
+		System.out.println(Constants.SpoutTable + " rows " + list.size());
+		Map<String,Integer> ser=new HashMap<String,Integer>();
+		for (Map m : list) {
+			System.out.println(m);
+			String ip=String.valueOf(m.get("ip"));
+			int port = Integer.valueOf(String.valueOf(m.get("port")));
+			ser.put(ip, port);
+		}
+		if (list.size() == 0 || ser.size() == 0) {
+			System.out.println("firse run pushService!!!!");
+			System.exit(0);
+		}
 		String localip = InetAddress.getLocalHost().getHostAddress();
+		logger.info("topology ip " + localip);
 		TopologyBuilder builder = new TopologyBuilder();
 		BoltDeclarer bde = builder.setBolt("shuffleBolt", new AccessLogShuffle(), Constants.ShuffleBolt);
-		// tcp receive lines
-		for (int i = 0; i < Tport.length; i++) {
-			int port = Integer.valueOf(Tport[i]);
-			NioTcpServer tcpServer = new NioTcpServer(queues, port);
-			tcpServer.run();
-		}
-		// udp receive lines
-		for (int i = 0; i < Uport.length; i++) {
-			int port = Integer.valueOf(Uport[i]);
-			NioUdpServer udpServer = new NioUdpServer(queues, port);
-			udpServer.run();
-		}
-
 		// push/pull to spout
-		ExecutorService pushService = Executors.newCachedThreadPool();
-		for (int i = 0; i < Pport.length; i++) {
-			int port = Integer.valueOf(Pport[i]);
-			PushSer push = new PushSer(queues, port);
-			pushService.submit(push);
-			pushService.submit(push);
-			pushService.submit(push);
+		Iterator<Map.Entry<String, Integer>> iter = ser.entrySet().iterator();
+		while (iter.hasNext()) { 
+			Map.Entry<String, Integer> entry = iter.next();
+			String ip = entry.getKey();
+			int port = entry.getValue();
 			String title = "push_pull_spout_" + port;
-			SpoutDeclarer sd = builder.setSpout(title, new PullSpout(localip, port), Constants.PullSpout);
+			logger.info("push/pull [ tcp://" + ip + ":" + port + " ]");
+			SpoutDeclarer sd = builder.setSpout(title, new PullSpout(ip, port), Constants.PullSpout);
 			bde.shuffleGrouping(title);
 			logger.info(title);
 		}
-		logger.info(pushService.toString());
+
 		// setup your spout
 		// TextAccessFileSpout textSpout = new
 		// TextAccessFileSpout("src/main/resources/words.txt");
@@ -144,7 +145,6 @@ public class TwisterTopology {
 			// 使用集群模式运行
 			conf.setNumWorkers(Constants.NumWorkers);
 			StormSubmitter.submitTopology("TwisterTopology", conf, builder.createTopology());
-			pushService.shutdownNow();
 			logger.info("StormCluster");
 		} else {
 			// 使用本地模式运行
@@ -153,7 +153,6 @@ public class TwisterTopology {
 			logger.info("LocalCluster");
 			cluster.submitTopology("twister", conf, builder.createTopology());
 			Thread.sleep(2 * 1000);
-			pushService.shutdownNow();
 			// cluster.shutdown();
 
 		}

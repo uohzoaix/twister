@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
@@ -69,7 +70,7 @@ public class NioTcpServerSpout extends BaseRichSpout {
 	private volatile boolean running = false;
 	private MongoManager mgo;
 	// 共享数据队列
-	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
+	private final BlockingQueue<String> queue = Queues.newLinkedBlockingQueue(Constants.QueueSize);
 	private Fields _fields = new Fields("AccessLog");
 
 	/**
@@ -147,7 +148,10 @@ public class NioTcpServerSpout extends BaseRichSpout {
 		AccessLog alog = null;
 		try {
 			String txt = null;
-			txt = queue.poll();
+			if (queue.size() == Constants.QueueSize) {
+				logger.error(Thread.currentThread().getName() + " 队列已满" + queue.size());
+			}
+			txt = queue.take();
 
 			if (txt != null && txt.length() > 10) {
 				// send obj
@@ -166,9 +170,12 @@ public class NioTcpServerSpout extends BaseRichSpout {
 
 				}
 			}
-
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			logger.error(Thread.currentThread().getName() + " 队列已满" + queue.size());
 		} catch (Exception e) {
-			logger.error(e.getStackTrace().toString());
+			e.printStackTrace();
 		}
 
 	}
@@ -219,18 +226,21 @@ public class NioTcpServerSpout extends BaseRichSpout {
 
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-			// transLines.incrementAndGet();
+
 			try {
-				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				// SynchronousQueue put ,spout poll
-				// logger.debug("recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "]");
-				queue.offer(buffer);
-
-			} catch (Exception e2) {
-				logger.error(e2.getStackTrace().toString());
+				if (queue.size() == Constants.QueueSize) {
+					logger.error(Thread.currentThread().getName() + "队列已满");
+					logger.error(buffer);
+					queue.put(buffer);
+				} else {
+					queue.put(buffer);
+				}
+				Thread.sleep(2 * 1000); // 休息下
+			} catch (InterruptedException e1) {
+				logger.error(Thread.currentThread().getName() + "队列已满 " + queue.size() + " " + e1.toString());
+				e1.printStackTrace();
 			}
-
 		}
 
 		@Override

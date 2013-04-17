@@ -29,6 +29,9 @@ public class MoniterQueue {
 	}
 
 	public void show() {
+		if (q.size() == Constants.QueueSize) {
+			logger.error(Thread.currentThread().getName() + " 队列已满" + q.size());
+		}
 		lasttime = System.currentTimeMillis();
 		if (begtime + Constants.SyncInterval < lasttime) {
 			begtime = lasttime;

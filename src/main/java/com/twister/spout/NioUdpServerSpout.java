@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -73,7 +74,7 @@ public class NioUdpServerSpout extends BaseRichSpout {
 	private long transLines = 0l;
 
 	// SynchronousQueue or ArrayBlockingQueue ,LinkedList;
-	private final Queue<String> queue = Queues.newConcurrentLinkedQueue();
+	private final BlockingQueue<String> queue = Queues.newLinkedBlockingQueue();
 	private MongoManager mgo;
 
 	public NioUdpServerSpout(int port) {
@@ -155,7 +156,10 @@ public class NioUdpServerSpout extends BaseRichSpout {
 		AccessLog alog = null;
 		try {
 			String txt = null;
-			txt = queue.poll();
+			if (queue.size() == Constants.QueueSize) {
+				logger.error(Thread.currentThread().getName() + " 队列已满" + queue.size());
+			}
+			txt = queue.take();
 			if (txt != null && txt.length() > 10) {
 				// send obj
 				String[] lines = txt.split("\n");
@@ -217,16 +221,23 @@ public class NioUdpServerSpout extends BaseRichSpout {
 
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-			try {
-				// see LineBasedFrameDecoder
-				String buffer = (String) e.getMessage();
-				// transLines += 1;
-				// logger.info("udp recvd length " + buffer.length() + "/" + transLines + " bytes [" + buffer.toString() + "] " + isdebug);
-				queue.offer(buffer);
 
-			} catch (Exception e2) {
-				logger.error(transLines + " " + e2.getStackTrace().toString());
+			try {
+				String buffer = (String) e.getMessage();
+				if (queue.size() == Constants.QueueSize) {
+					logger.error(Thread.currentThread().getName() + "队列已满");
+					logger.error(buffer);
+					queue.put(buffer);
+				} else {
+					queue.put(buffer);
+				}
+				Thread.sleep(2 * 1000); // 休息下
+			} catch (InterruptedException e1) {
+				logger.error(Thread.currentThread().getName() + "队列已满 " + queue.size() + " " + e1.toString());
+				e1.printStackTrace();
 			}
+
+
 		}
 
 		@Override

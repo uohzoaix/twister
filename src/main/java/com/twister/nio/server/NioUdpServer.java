@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -43,7 +44,7 @@ import com.twister.utils.Constants;
  * @author guoqing
  * 
  */
-public class NioUdpServer {
+public class NioUdpServer implements Runnable {
 	private ConnectionlessBootstrap bootstrap;
 	private ChannelFactory channelFactory;
 	private Channel serverChannel;
@@ -52,7 +53,7 @@ public class NioUdpServer {
 	private static final Logger logger = LoggerFactory.getLogger(NioUdpServer.class.getName());
 	private volatile boolean run = false;
 	// SynchronousQueue ;
-	private final Queue<String> queue;
+	private final BlockingQueue<String> queue;
 	private MongoManager mgo;
 	private MoniterQueue moniter;
 
@@ -62,7 +63,7 @@ public class NioUdpServer {
 	 * @param port
 	 * @param isdebug,debug=true exec shareQueue queue.poll(),debug=false not exec poll
 	 */
-	public NioUdpServer(final Queue<String> shareQueue, int port) {
+	public NioUdpServer(final BlockingQueue<String> shareQueue, int port) {
 		this.queue = shareQueue;
 		this.port = port;
 	}
@@ -135,6 +136,7 @@ public class NioUdpServer {
 		bootstrap.releaseExternalResources();
 		run = false;
 		logger.info("server stopped");
+		queue.clear();
 	}
 
 	public boolean isRunning() {
@@ -147,13 +149,20 @@ public class NioUdpServer {
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
 			try {
-				// see LineBasedFrameDecoder
 				String buffer = (String) e.getMessage();
-				queue.offer(buffer);
-				// logger.info("udp recvd " + " [" + buffer.toString() + "] ");
-			} catch (Exception e2) {
-				logger.error(e2.getStackTrace().toString());
+				if (queue.size() == Constants.QueueSize) {
+					logger.error(Thread.currentThread().getName() + "队列已满");
+					logger.error(buffer);
+					queue.put(buffer);
+					Thread.sleep(2 * 1000); // 休息下
+				} else {
+					queue.put(buffer);
+				}
+			} catch (InterruptedException e1) {
+				logger.error(Thread.currentThread().getName() + "队列已满 " + queue.size() + " " + e1.toString());
+				e1.printStackTrace();
 			}
+
 		}
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {

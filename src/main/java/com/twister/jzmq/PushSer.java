@@ -2,6 +2,7 @@ package com.twister.jzmq;
 
 import java.net.InetAddress;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ public class PushSer implements Runnable {
 	 * @param args
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(PushSer.class);
-	private final Queue<String> queue;
+	private final BlockingQueue<String> queue;
 	private final int port;
 	private MongoManager mgo;
 	private ZMQ.Context context;
@@ -28,7 +29,7 @@ public class PushSer implements Runnable {
 	public boolean run = true;
 	public MoniterQueue moniter;
 
-	public PushSer(final Queue<String> shareQueue, int port) {
+	public PushSer(final BlockingQueue<String> shareQueue, int port) {
 		this.queue = shareQueue;
 		this.port = port;
 		this.open();
@@ -53,7 +54,7 @@ public class PushSer implements Runnable {
 			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
 			run = true;
 			moniter = new MoniterQueue(this.queue, "MoniterQueue");
-			logger.info("push/pull服务端已准备好 " + serinfo);
+			logger.info("push/pull - 服务端已准备好 " + serinfo);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info(e.getStackTrace().toString());
@@ -72,12 +73,20 @@ public class PushSer implements Runnable {
 		while (run) {
 			try {
 				moniter.show();
-				String line = queue.poll();
+				String line = queue.take();
+				if (line == null) {
+					logger.error(Thread.currentThread().getName() + "队列已满 or null " + queue.size());
+					continue;
+				}
 				String txt = String.format("%s", line);
 				if (txt != null && txt.length() > 10 && Common.Ipv4.matcher(txt).find()) {
 					boolean sd = sender.send(txt.getBytes(), 0);
 					// logger.info(txt + "   " + sd);
 				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				logger.error(Thread.currentThread().getName() + " 队列已满" + queue.size());
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.info(e.getStackTrace().toString());
