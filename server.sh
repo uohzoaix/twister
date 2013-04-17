@@ -13,6 +13,7 @@ then
     else  
     YDAY=$1    
 fi
-echo "$YDAY run twister"  
-storm jar $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.TwisterTopology TwisterTopology $YDAY >$YDAY.out&
+echo "$YDAY run twister"
+storm jar $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.PushService $YDAY >>$YDAY.out &
+storm jar $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.topology.TwisterTopology TwisterTopology $YDAY >>$YDAY.out &
 echo "ok!"
