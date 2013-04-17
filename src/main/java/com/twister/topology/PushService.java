@@ -1,44 +1,22 @@
 package com.twister.topology;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import backtype.storm.Config;
-import backtype.storm.LocalCluster;
-import backtype.storm.StormSubmitter;
-import backtype.storm.topology.BoltDeclarer;
-import backtype.storm.topology.SpoutDeclarer;
-import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.tuple.Fields;
-import bsh.Interpreter;
-import bsh.InterpreterError;
-
 import com.google.common.collect.Queues;
 import com.mongodb.BasicDBObject;
 import com.mongodb.ServerAddress;
-import com.twister.bolt.AccessLogGroup;
-import com.twister.bolt.AccessLogStatis;
-import com.twister.bolt.AccessLogShuffle;
 import com.twister.jzmq.PushSer;
 import com.twister.nio.client.DisplaySpoutIp;
 import com.twister.nio.server.NioTcpServer;
 import com.twister.nio.server.NioUdpServer;
-//import com.twister.spout.NioTcpServerSpout;
-//import com.twister.spout.NioUdpServerSpout;
-import com.twister.spout.PullSpout;
 import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Constants;
-
-//import com.twister.spout.TextAccessFileSpout;
-//import com.twister.spout.TailFileSpout;
 
 /**
  * Queue 
