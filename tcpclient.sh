@@ -20,8 +20,7 @@ else
 fi
 echo "$YDAY run twister"  
 #  /v3/data/syslog/day/$YDAY/access_$YDAY 
-#echo "syslog /v3/data/syslog/day/20130411/access_20130411"
-echo "java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient $File" 
-java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.DisplaySpoutIp
-java -cp classes -classpath $DIR/twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient $File > $YDAY.out &
+#echo "syslog /v3/data/syslog/day/20130411/access_20130411" 
+java -Djava.library.path=/usr/local/lib:/opt/local/lib:/usr/lib -cp ..:/opt/java/default/lib:/opt/storm-0.8.2:/opt/storm-0.8.2/lib:/opt/storm-0.8.2/libext -classpath twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.DisplaySpoutIp
+java -Djava.library.path=/usr/local/lib:/opt/local/lib:/usr/lib -cp ..:/opt/java/default/lib:/opt/storm-0.8.2:/opt/storm-0.8.2/lib:/opt/storm-0.8.2/libext -classpath twister-0.0.1-jar-with-dependencies.jar com.twister.nio.client.SendNioTcpClient $File > $YDAY.out &
 echo "ok"

@@ -207,7 +207,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass></mainClass>
+							<mainClass>${driverClass}</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

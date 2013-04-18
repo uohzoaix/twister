@@ -80,6 +80,7 @@ public class MainService {
 	}
 
 	public static void main(String[] args) {
+		System.out.println("service start");
 		try {
 			run();
 		} catch (Exception e) {
