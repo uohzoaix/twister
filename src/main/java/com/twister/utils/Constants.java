@@ -19,7 +19,7 @@ public class Constants {
 	// public final static int FieldsGroupBolt = 6;
 	// public final static int StatisBolt = 6;
 
-	public final static int MaxFrameLength = 1500;
+	public final static int MaxFrameLength = 8192;
 	public final static boolean FailFast = false;
 	public final static boolean StripDelimiter = true;
 	public static final long FREQUENCY = 1L;

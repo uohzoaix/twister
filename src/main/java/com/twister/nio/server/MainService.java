@@ -1,4 +1,4 @@
-package com.twister.topology;
+package com.twister.nio.server;
 
 import java.net.InetAddress;
 
@@ -12,8 +12,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.ServerAddress;
 import com.twister.jzmq.PushSer;
 import com.twister.nio.client.DisplaySpoutIp;
-import com.twister.nio.server.NioTcpServer;
-import com.twister.nio.server.NioUdpServer;
 import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.AppsConfig;
 import com.twister.utils.Constants;
@@ -34,8 +32,8 @@ import com.twister.utils.Constants;
  * 
  */
 
-public class PushService {
-	public static Logger logger = LoggerFactory.getLogger(PushService.class);
+public class MainService {
+	public static Logger logger = LoggerFactory.getLogger(MainService.class);
 	public static String[] Tport = AppsConfig.getInstance().getValue("tcp.spout.port").split(",");
 	public static String[] Uport = AppsConfig.getInstance().getValue("udp.spout.port").split(",");
 	public static String[] Pport = AppsConfig.getInstance().getValue("pull.spout.port").split(",");
@@ -66,7 +64,7 @@ public class PushService {
 			udpServer.run();
 			th.offer(udpServer);
 		}
-
+		// first start pullclient
 		// push/pull to spout
 
 		for (int i = 0; i < Pport.length; i++) {

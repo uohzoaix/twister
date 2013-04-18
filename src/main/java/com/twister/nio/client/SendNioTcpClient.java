@@ -18,24 +18,22 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.DatagramChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.frame.LineBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.DelimiterBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.Delimiters;
 import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
 import com.mongodb.BasicDBObject;
-import com.twister.entity.AccessLogAnalysis;
+
 import com.twister.storage.mongo.MongoManager;
 import com.twister.utils.Common;
 import com.twister.utils.Constants;
-
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
@@ -171,7 +169,7 @@ public class SendNioTcpClient {
 			bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
-					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
+					pipeline.addLast("framer", new DelimiterBasedFrameDecoder(Constants.MaxFrameLength, Delimiters.lineDelimiter()));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
@@ -272,9 +270,8 @@ public class SendNioTcpClient {
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
 			// back the received msg to the server
 			// Server is supposed to send nothing. Therefore, do nothing.
-
 			String buffer = (String) e.getMessage();
-			dumperValue(buffer);
+			System.out.println(buffer);
 			// logger.info("back recvd " + buffer.length() + "/" + " bytes [" + buffer.toString() + "]");
 		}
 
@@ -282,6 +279,7 @@ public class SendNioTcpClient {
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
+			e.getChannel().close();
 
 		}
 
@@ -318,21 +316,6 @@ public class SendNioTcpClient {
 
 	}
 
-	private synchronized void dumperValue(final String line) {
-		String tmp = line;
-		if (tmp.endsWith("\n")) {
-			tmp += "\n";
-		}
-		FileWriter fw;
-		try {
-			fw = new FileWriter("SendNioTcpClientReceived.txt", true);
-			fw.write(tmp);
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
 
 	public static void main(String[] args) {
 		SendNioTcpClient cli = null;

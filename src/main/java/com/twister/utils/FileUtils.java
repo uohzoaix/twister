@@ -5,11 +5,19 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -21,9 +29,35 @@ import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
 public class FileUtils {
 	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 	
-	private FileUtils() {
+	public FileUtils() {
+	}
+
+	public static String createDataStr() {
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+		String dateString = formatter.format(currentTime);
+		return dateString;
 	}
 	
+	public static String getAccessFile() {
+		return "logs/AccessLog_" + createDataStr() + ".log";
+	}
+
+	public static void dumperValue(final String filename, final String line) {
+		String tmp = line;
+		if (tmp.endsWith("\n")) {
+			tmp += "\n";
+		}
+		FileWriter fw = null;
+		try {
+			fw = new FileWriter(filename, true);
+			fw.write(tmp);
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static File createTempFile() {
 		File file = null;
 		try {
@@ -105,12 +139,55 @@ public class FileUtils {
 		return lines;
 	}
 	
+	public static ArrayList<String> listFile(String filename) {
+		File file = new File(filename);
+		ArrayList<String> ls = new ArrayList<String>();
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+				ls.add(file.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		File dir = new File(file.getParent());
+		if (dir.isDirectory()) {
+			String[] fs = dir.list();
+			for (String fileName : fs) {
+				File f = new File(dir.getPath() + File.separator + fileName);
+				if (f.isFile()) {
+					ls.add(f.toString());
+				} else if (f.isDirectory()) {
+					ls.add(f.toString());
+				}
+			}
+		}
+		return ls;
+	}
+
+	public static void fileCopy(String filein, String fileout) {
+		try {
+			FileInputStream fi = new FileInputStream(filein);
+			FileOutputStream fo = new FileOutputStream(fileout);
+			byte[] buff = new byte[256];
+			int len = 0;
+			while ((len = fi.read(buff)) > 0) {
+				fo.write(buff, 0, len);
+			}
+			fi.close();
+			fo.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public static Logger debug(String text) {
 		logger.debug(text);
 		return logger;
 	}
 	
-	public static void main(String[] args) {
-		// debug("ttt");
-	}
+
 }

@@ -23,6 +23,8 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
 import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.jboss.netty.handler.codec.frame.DelimiterBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.Delimiters;
 import org.jboss.netty.handler.codec.frame.LineBasedFrameDecoder;
 import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
@@ -37,6 +39,7 @@ import com.twister.storage.mongo.MongoManager;
 
 import com.twister.utils.Common;
 import com.twister.utils.Constants;
+import com.twister.utils.FileUtils;
 
 /**
  * is test udp server
@@ -97,7 +100,7 @@ public class NioUdpServer implements Runnable {
 				public ChannelPipeline getPipeline() throws Exception {
 					ChannelPipeline pipeline = Channels.pipeline();
 					// Add the text line codec combination first,
-					pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
+					pipeline.addLast("framer", new DelimiterBasedFrameDecoder(Constants.MaxFrameLength, Delimiters.lineDelimiter()));
 					pipeline.addLast("decoder", new StringDecoder());
 					pipeline.addLast("encoder", new StringEncoder());
 					// and then business logic.
@@ -148,12 +151,11 @@ public class NioUdpServer implements Runnable {
 		}
 		@Override
 		public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
+			String buffer = (String) e.getMessage();
 			try {
-				String buffer = (String) e.getMessage();
 				if (queue.size() == Constants.QueueSize) {
-					logger.error(Thread.currentThread().getName() + "队列已满");
-					logger.error(buffer);
-					queue.put(buffer);
+					logger.error(Thread.currentThread().getName() + "队列已满 " + queue.size() + " " + buffer);
+					FileUtils.dumperValue(FileUtils.getAccessFile(), buffer);
 					Thread.sleep(2 * 1000); // 休息下
 				} else {
 					queue.put(buffer);
@@ -161,6 +163,7 @@ public class NioUdpServer implements Runnable {
 			} catch (InterruptedException e1) {
 				logger.error(Thread.currentThread().getName() + "队列已满 " + queue.size() + " " + e1.toString());
 				e1.printStackTrace();
+				FileUtils.dumperValue(FileUtils.getAccessFile(), buffer);
 			}
 
 		}

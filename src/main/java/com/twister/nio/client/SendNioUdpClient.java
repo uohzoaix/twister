@@ -19,6 +19,8 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.DatagramChannel;
 import org.jboss.netty.channel.socket.DatagramChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.jboss.netty.handler.codec.frame.DelimiterBasedFrameDecoder;
+import org.jboss.netty.handler.codec.frame.Delimiters;
 import org.jboss.netty.handler.codec.frame.LineBasedFrameDecoder;
 import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
@@ -166,7 +168,7 @@ public class SendNioUdpClient {
 		bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 			public ChannelPipeline getPipeline() throws Exception {
 				ChannelPipeline pipeline = Channels.pipeline();
-				pipeline.addLast("framer", new LineBasedFrameDecoder(Constants.MaxFrameLength));
+				pipeline.addLast("framer", new DelimiterBasedFrameDecoder(Constants.MaxFrameLength, Delimiters.lineDelimiter()));
 				pipeline.addLast("decoder", new StringDecoder());
 				pipeline.addLast("encoder", new StringEncoder());
 				// and then business logic.
@@ -268,7 +270,7 @@ public class SendNioUdpClient {
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
 			// Close the connection when an exception is raised.
 			logger.warn("Unexpected exception from downstream.", e.getCause());
-			// e.getChannel().close();
+			e.getChannel().close();
 		}
 
 		public void SendHandle(ChannelHandlerContext ctx, ChannelStateEvent e) {

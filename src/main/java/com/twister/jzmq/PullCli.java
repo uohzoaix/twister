@@ -79,16 +79,4 @@ public class PullCli implements Runnable {
 		}
 	}
 
-	// public static void main(String[] args) {
-	// PullCli pull = new PullCli("127.0.0.1", 5557);
-	// System.out.println("pull");
-	// Thread thr1 = new Thread(pull, "pullcli");
-	// thr1.setDaemon(false);
-	// thr1.start();
-	// while (true) {
-	// pull.recv();
-	// }
-	//
-	// }
-
 }

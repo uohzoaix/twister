@@ -26,13 +26,14 @@ public class PushSer implements Runnable {
 	private MongoManager mgo;
 	private ZMQ.Context context;
 	private ZMQ.Socket sender;
-	public boolean run = true;
-	public MoniterQueue moniter;
+	private boolean run = true;
+	private MoniterQueue moniter;
 
 	public PushSer(final BlockingQueue<String> shareQueue, int port) {
 		this.queue = shareQueue;
 		this.port = port;
 		this.open();
+		this.moniter = new MoniterQueue(this.queue, "MoniterQueue");
 	}
 
 	public void open() {
@@ -53,7 +54,6 @@ public class PushSer implements Runnable {
 			sermap.put("day", dts);
 			mgo.insertOrUpdate(Constants.SpoutTable, sermap, sermap);
 			run = true;
-			moniter = new MoniterQueue(this.queue, "MoniterQueue");
 			logger.info("push/pull - 服务端已准备好 " + serinfo);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -95,16 +95,4 @@ public class PushSer implements Runnable {
 		}
 	}
 
-	// public static void main(String[] args) {
-	// Queue<String> qu = Queues.newConcurrentLinkedQueue();
-	// for (int i = 0; i < 10; i++) {
-	// qu.offer(Common.AccessYouku);
-	// qu.offer(Common.AccessTudou);
-	// }
-	// PushSer push = new PushSer(qu, 5557);
-	// System.out.println("push");
-	// Thread thr = new Thread(push, "pushSer");
-	// thr.setDaemon(false);
-	// thr.start();
-	// }
 }

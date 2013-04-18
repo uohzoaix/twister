@@ -5,7 +5,7 @@ import java.io.File;
 
 import com.twister.utils.Constants;
 
-public class Pulltest {
+public class PulltestCli {
 
 	/**
 	 * @param args
@@ -26,10 +26,10 @@ public class Pulltest {
 		Thread thr1 = new Thread(pull, "pullcli");
 		thr1.setDaemon(false);
 		thr1.start();
-		for (int i = 0; i < 10; i++) {
-			pull.recv();
+		while (true) {
+			String rc = pull.recv();
+			System.out.println(rc);
 		}
-		pull.close();
 	}
 
 }
