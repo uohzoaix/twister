@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.twister.storage.linkedhashmap;
+package com.twister.storage.cache;
 
-import static com.twister.storage.linkedhashmap.ConcurrentLinkedHashMap.checkNotNull;
+import static com.twister.storage.cache.ConcurrentLinkedHashMap.checkNotNull;
 
 import java.io.Serializable;
 import java.util.Collection;

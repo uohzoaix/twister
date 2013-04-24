@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import com.twister.storage.linkedhashmap.ConcurrentLinkedHashMap;
 
 /**
  * MomoLRUMap 基于LRU（最近使用)算法,最多存几个capacity

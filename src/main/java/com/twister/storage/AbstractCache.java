@@ -10,7 +10,7 @@ import net.sf.ehcache.CacheManager;
  
 import com.twister.utils.JacksonUtils;
 
-public abstract class AbstractCache<T> implements Icache<T> {
+public abstract class AbstractCache<T> {
 	
 	public final AtomicInteger atomicInteger = new AtomicInteger(0);
 	public final String ehcachecfg = "conf/ehcache.xml";
